@@ -1,0 +1,1437 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title th:text="${post.boardTitle} + ' | A.P.T톡'">글 보기 | A.P.T톡</title>
+
+<link rel="stylesheet" th:href="@{/css/sidebar.css}">
+
+<link rel="stylesheet" th:href="@{/css/font.css}" />
+
+<!-- Favicon -->
+<link rel="icon" href="/icons/favicon.png" type="image/png">
+
+<style>
+/* 중요: footer와 comment-input-area의 높이, 그리고 사이드바 너비를 기준으로 값을 설정합니다. */
+/* 실제 디자인에 따라 이 값들을 정확히 조절해야 합니다. */
+:root {
+	--header-height: 70px;
+	/* 실제 헤더 높이를 측정하여 여기에 입력해주세요 (padding, border 포함) */
+	--comment-input-height: 62px; /* 댓글 입력창의 대략적인 높이 (패딩, 마진 포함) */
+	--footer-height: 70px; /* 푸터의 대략적인 높이 (패딩, 마진 포함) */
+	--total-fixed-height: calc(var(--comment-input-height)+ var(--footer-height));
+}
+
+body {
+	margin: 0;
+	background-color: #fdfdfd;
+	min-height: 100vh; /* 최소 높이를 뷰포트 높이로 설정 */
+}
+
+/* 새로운 래퍼 추가: 사이드바와 메인 콘텐츠를 감싸고 flex로 정렬 */
+.page-wrapper {
+	display: flex; /* 사이드바와 메인 컨텐츠를 가로로 나열 */
+	min-height: 100vh; /* 뷰포트 전체 높이를 차지하도록 */
+	/* 푸터와 고정 댓글 입력창이 가릴 공간을 page-wrapper의 하단에 확보 */
+	padding-bottom: var(--total-fixed-height);
+	box-sizing: border-box;
+	padding-bottom: var(--total-fixed-height); /* 패딩이 전체 너비/높이에 포함되도록 */
+}
+
+.main-content-wrapper {
+	flex-grow: 1; /* 남은 공간을 모두 차지 */
+	display: flex;
+	justify-content: center; /* container를 중앙 정렬 */
+}
+
+.container {
+	width: 100%;
+	max-width: 800px;
+	background-color: #fdfdfd;
+	margin-bottom: 132px;
+	height: calc(100% - 132px);
+}
+
+.header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 15px 20px;
+	border-bottom: 1px solid #eee;
+	background-color: #fff;
+	position: sticky; /* 헤더 고정 */
+	top: 0;
+	z-index: 100;
+}
+
+.header .title {
+	font-weight: bold;
+	font-size: 24px;
+	color: #292929;
+	letter-spacing: 1px;
+}
+
+.header .title:hover {
+	color: #62B0FF;
+}
+
+.header a {
+	color: inherit; /* 부모 요소의 글씨 색상을 상속받음 */
+	text-decoration: none; /* 밑줄 제거 */
+}
+
+/* 방문한 링크의 색상도 동일하게 유지하려면 */
+.header a:visited {
+	color: inherit;
+}
+
+.header .buttons {
+	display: flex;
+}
+
+.header .button {
+	padding: 8px 15px;
+	border-radius: 10px;
+	font-size: 14px;
+	cursor: pointer;
+	text-decoration: none;
+}
+
+/* 글쓰기 버튼 */
+.header .button.primary {
+	background-color: #62B0FF; /* 파란색 버튼 */
+	color: white;
+	margin-left: 10px;
+	transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+	/* border-color도 transition에 추가 */
+	border: 1px solid transparent; /* 기본 상태에 투명 테두리 추가 */
+}
+
+.header .button.primary:hover {
+	background-color: #fff; /* 파란색 버튼 */
+	color: #62B0FF;
+	border: 1px solid #62B0FF;
+}
+
+/* 내 활동 버튼 */
+.header .button.secondary {
+	background-color: #fff;
+	color: #62B0FF;
+	margin-left: 10px;
+	border: 1px solid #62B0FF;
+	transition: background-color 0.2s, color 0.2s;
+}
+
+.header .button.secondary:hover {
+	background-color: #62B0FF; /* 파란색 버튼 */
+	color: #ffffff;
+}
+
+.post {
+	display: flex;
+	padding: 20px;
+}
+
+.post .avatar {
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	margin-right: 15px;
+	flex-shrink: 0;
+	background-image: url('/icons/profile.png'); /* 이미지 URL을 여기에 넣으세요 */
+	background-size: cover; /* 이미지가 avatar 영역을 꽉 채우도록 합니다. */
+	background-position: center; /* 이미지를 가운데 정렬합니다. */
+}
+
+.post .content {
+	flex-grow: 1;
+}
+
+.post .user-info {
+	display: flex;
+	align-items: center;
+	margin-bottom: 5px;
+}
+
+.post .username {
+	font-weight: 500;
+	margin-right: 5px;
+	font-size: 18px;
+	color: #363636;
+	margin-right: 5px;
+}
+
+.post .location-time {
+	font-size: 14px;
+	color: #888;
+}
+
+.post .menu-icon {
+	font-size: 24px;
+	color: #888;
+	cursor: pointer;
+}
+
+.comments-section .menu-icon {
+	font-size: 20px;
+	color: #888;
+	cursor: pointer;
+}
+
+.post .post-title {
+	font-weight: bold; /* 제목은 더 강조 */
+	font-size: 20px; /* 본문보다 약간 크게 */
+	margin-bottom: 10px; /* 제목과 본문 사이 간격 */
+	line-height: 1.4;
+	color: #292929;
+}
+
+.post .post-body {
+	line-height: 1.5;
+	margin-bottom: 10px; /* 본문과 댓글 수 사이 간격 */
+	font-size: 16px; /* 본문 글자 크기 */
+	color: #292929; /* 본문 글자색 */
+}
+
+.comment-count {
+	display: flex;
+	align-items: center;
+	color: #888;
+	font-size: 14px;
+	margin-top: 20px;
+	margin-left: -50px;
+}
+
+.comments-section {
+	padding: 0 20px;
+}
+
+.comment {
+	display: flex;
+	padding: 15px 0;
+	border-top: 1px solid #eee;
+}
+
+.comment .avatar {
+	width: 30px;
+	height: 30px;
+	border-radius: 50%;
+	background-image: url('/icons/profile.png'); /* 이미지 URL을 여기에 넣으세요 */
+	background-size: cover; /* 이미지가 avatar 영역을 꽉 채우도록 합니다. */
+	background-position: center; /* 이미지를 가운데 정렬합니다. */
+	margin-right: 10px;
+	flex-shrink: 0;
+	background-size: cover; /* 이미지가 avatar 영역을 꽉 채우도록 합니다. */
+	background-position: center;
+}
+
+.comment .content {
+	flex-grow: 1;
+}
+
+.comment .user-info {
+	display: flex;
+	align-items: center;
+	margin-bottom: 3px;
+	color: #292929;
+}
+
+.comment .username {
+	font-weight: bold;
+	font-size: 13px;
+	margin-right: 5px;
+}
+
+.comment .location-time {
+	font-size: 12px;
+	color: #888;
+}
+
+/* 게시물/댓글 시간 표시를 위한 클래스 (초기에는 숨김) */
+.dynamic-time {
+	visibility: hidden;
+}
+
+.comment .comment-text {
+	font-size: 14px;
+	line-height: 1.4;
+	margin-top: 5px;
+}
+
+/* 답댓글 스타일 추가 */
+.reply-comment {
+	margin-left: 40px; /* 원 댓글보다 안쪽으로 들여쓰기 */
+	border-top: none; /* 답댓글 위에는 선이 없도록 */
+	padding-top: 5px; /* 상단 여백 조절 */
+	padding-bottom: 5px; /* 하단 여백 조절 */
+}
+
+.reply-comment .avatar {
+	width: 25px; /* 답댓글 아바타는 조금 더 작게 */
+	height: 25px;
+}
+
+/* 댓글 입력창 - 고정 위치 및 뷰포트 중앙 정렬 */
+.comment-input-area {
+	position: fixed;
+	bottom: var(--footer-height); /* 푸터 높이만큼 위로 올림 */
+	width: 100%;
+	max-width: 800px; /* 컨테이너의 max-width와 동일하게 설정 */
+	background-color: #fff;
+	border-top: 1px solid #eee;
+	padding: 10px 20px;
+	display: flex;
+	align-items: center;
+	box-sizing: border-box;
+	z-index: 90;
+	left: 0;
+	right: 0;
+	margin: 0 auto;
+}
+
+.comment-input-area .avatar {
+	width: 35px;
+	height: 35px;
+	border-radius: 50%;
+	background-image: url('/icons/profile.png'); /* 이미지 URL을 여기에 넣으세요 */
+	background-size: cover; /* 이미지가 avatar 영역을 꽉 채우도록 합니다. */
+	background-position: center; /* 이미지를 가운데 정렬합니다. */
+	margin-right: 15px;
+	flex-shrink: 0;
+}
+
+.comment-input-area .input-field {
+	flex-grow: 1;
+	padding: 10px 15px;
+	border: 1px solid #ddd;
+	border-radius: 20px;
+	outline: none;
+	font-size: 15px;
+	margin-right: 10px;
+}
+
+.comment-input-area .submit-button {
+	padding: 10px 20px;
+	background-color: #f0f0f0;
+	border: none;
+	border-radius: 20px;
+	font-size: 15px;
+	color: #888;
+	cursor: pointer;
+	white-space: nowrap; /* 버튼 텍스트 줄바꿈 방지 */
+	transition: background-color 0.2s, color 0.2s;
+}
+
+.comment-input-area .submit-button:hover {
+	background-color: #62B0FF;
+	color: #fff;
+}
+
+/* 대댓글 스타일 */
+/* 답댓글 폼 스타일 */
+.reply-form {
+	background-color: #fdfdfd;
+	padding: 10px 15px;
+	display: flex;
+	align-items: center;
+	margin-top: 10px;
+	margin-left: 0;
+	margin-right: 0;
+	border-radius: 0;
+	width: 100%;
+}
+
+/* 답댓글 달기 버튼 스타일 */
+.reply-button {
+	/* location-time과 동일한 폰트 크기 및 색상 적용 */
+	font-size: 12px; /* location-time과 동일 */
+	color: #888; /* location-time과 동일 */
+	/* 버튼의 기본 스타일 제거 */
+	background: none; /* 배경색 없음 */
+	border: none; /* 테두리 없음 */
+	padding: 0; /* 패딩 없음 */
+	margin: 0; /* 마진 없음 (필요에 따라 margin-left는 유지 가능) */
+	outline: none; /* 포커스 시 아웃라인 제거 */
+	cursor: pointer; /* 마우스 오버 시 포인터 변경 (링크처럼 보임) */
+	text-decoration: underline; /* 텍스트에 밑줄 추가 (링크처럼 보임, 선택 사항) */
+	white-space: nowrap; /* 텍스트가 줄바꿈되지 않도록 방지 */
+	margin-left: 10px; /* 기존 위치 유지를 위해 이 마진은 유지할 수 있습니다 */
+}
+
+/* 마우스 오버 시 색상 변경 등 효과 추가 (선택 사항) */
+.reply-button:hover {
+	color: #555; /* 마우스 오버 시 약간 진한 색상 */
+}
+
+.reply-form .avatar {
+	display: none; /* 아바타를 화면에서 숨김 */
+}
+
+/* 답댓글 폼 내 등록 버튼 - 기본 스타일 */
+.reply-form .submit-reply-button {
+	padding: 10px 20px;
+	background-color: #f0f0f0; /* 기본 배경색 */
+	border: none;
+	border-radius: 20px;
+	font-size: 16px;
+	color: #888; /* 기본 글자색 */
+	cursor: pointer;
+	white-space: nowrap;
+	transition: background-color 0.2s, color 0.2s; /* 부드러운 전환 효과 */
+	font-family: inherit; /* 부모 폰트 상속 */
+}
+
+.reply-form .submit-reply-button:hover {
+	background-color: #62B0FF;
+	color: #fff;
+}
+
+/* 답댓글 폼 내 입력 필드 (textarea) */
+.reply-form .reply-input-field {
+	flex-grow: 1;
+	padding: 10px 15px;
+	border: 1px solid #ddd;
+	border-radius: 20px;
+	outline: none;
+	font-size: 14px;
+	margin-right: 10px;
+	resize: none; /* 크기 조절 핸들 제거 */
+	height: 39px;
+	box-sizing: border-box;
+	font-family: inherit; /* 부모 폰트 상속 */
+}
+
+.reply-form .submit-reply {
+	background-color: #4CAF50; /* 등록 버튼 색상 */
+	color: white;
+	border: none;
+	border-radius: 4px;
+	padding: 8px 15px;
+	cursor: pointer;
+	font-size: 14px;
+	white-space: nowrap; /* 텍스트 줄바꿈 방지 */
+}
+
+.reply-form .submit-reply:hover {
+	background-color: #45a049;
+}
+
+.dropdown-menu {
+	position: absolute;
+	right: 0;
+	top: 25px;
+	background-color: white;
+	border: 1px solid #ccc;
+	border-radius: 8px;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+	z-index: 100;
+	width: 120px; /* 메뉴 크기 고정 (원하는 크기로 조절 가능) */
+	overflow: hidden;
+}
+
+/* 드롭다운 메뉴 아이템 */
+.dropdown-menu .menu-item {
+	display: block; /* 링크를 블록 요소로 만들어 전체 너비 차지 */
+	padding: 10px 15px; /* 패딩 */
+	text-decoration: none; /* 밑줄 제거 */
+	color: #333; /* 글자색 */
+	font-size: 14px; /* 글자 크기 */
+	transition: background-color 0.2s; /* 호버 효과 */
+}
+
+.dropdown-menu .menu-item:hover {
+	background-color: #f0f0f0; /* 호버 시 배경색 변경 */
+}
+
+/* 모달 스타일 */
+.modal-overlay {
+	display: none; /* 기본적으로 숨김 */
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(0, 0, 0, 0.5);
+	justify-content: center;
+	align-items: center;
+	z-index: 1000;
+}
+
+.modal-content {
+	background-color: #fff;
+	padding: 30px;
+	border-radius: 10px;
+	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+	text-align: center;
+	width: 300px;
+}
+
+.modal-content p {
+	font-size: 18px;
+	margin-bottom: 25px;
+	color: #292929;
+}
+
+.modal-buttons button {
+	background-color: #fff;
+	color: #62B0FF;
+	border: none;
+	padding: 10px 20px;
+	cursor: pointer;
+	font-size: 16px;
+	margin: 0 10px;
+}
+
+.modal-buttons button#cancelDelete {
+	background-color: #fff;
+	color: #919191;
+}
+
+/* 게시글 수정 폼 */
+.post-edit-form {
+    width: 100%; /* 예시: 부모 요소의 100% 너비로 설정 */
+    max-width: 700px; /* 예시: 최대 너비 설정 (너무 넓어지지 않게) */
+    box-sizing: border-box; /* padding이 width에 포함되도록 */
+    /* 필요하다면 배경색이나 테두리 추가하여 디자인 */
+    /* background-color: #f9f9f9; */
+    /* border: 1px solid #e0e0e0; */
+    border-radius: 8px;
+    margin-top: 15px; /* 게시물 제목/본문 아래 간격 */
+    margin-bottom: 15px; /* 댓글 카운트 위 간격 */
+    margin-left: -10px;
+}
+
+/* 수정 폼 내의 제목 입력 필드 스타일 */
+.edit-title-input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    font-size: 18px;
+    font-weight: 500;
+    color: #292929;
+}
+
+.edit-title-input:focus {
+    border-color: #62B0FF;
+    outline: none; /* 브라우저 기본 포커스 아웃라인 제거 */
+}
+
+/* 수정 폼 내의 본문 입력 필드 스타일 */
+.edit-body-textarea {
+    width: 100%;
+    min-height: 150px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    font-size: 16px;
+    line-height: 1.5;
+    resize: none; /* 사용자 리사이즈 비활성화 */
+    color: #292929;
+}
+
+.edit-body-textarea:focus {
+    border-color: #62B0FF;
+    outline: none; /* 브라우저 기본 포커스 아웃라인 제거 */
+}
+
+/* 수정 버튼 그룹 스타일 */
+.edit-buttons {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 10px;
+    gap: 10px;
+}
+
+/* 기본 버튼 스타일 (기존 코드와 통일) */
+.button-base {
+    padding: 8px 15px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.button-outline {
+    background-color: transparent;
+    border: 1px solid #919191; /* 원하는 색상으로 변경 */
+    color: #919191; /* 원하는 색상으로 변경 */
+}
+
+.save-edit-btn {
+    background-color: #fdfdf; /* 원하는 색상으로 변경 */
+    border-color: #62B0FF;
+    color: #62B0FF;
+}
+
+.save-post-edit-btn {
+    background-color: #fdfdf; /* 원하는 색상으로 변경 */
+    border-color: #62B0FF;
+    color: #62B0FF;
+}
+
+/* 대댓글 입력 필드 */
+.re-reply-input-field {
+    background-color: #fdfdfd;
+    padding: 10px 15px;
+    /* display: flex;  --> textarea에서는 일반적으로 필요하지 않습니다. 제거하는 것을 고려해 보세요. */
+    /* align-items: center; --> display: flex;가 없다면 의미 없음 */
+    margin-top: 10px;
+    margin-left: 0;
+    margin-right: 0;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    width: 100%;
+    min-height: 40px; /* 적절한 최소 높이 설정 */
+    max-height: 60px; /* 최대 높이 유지 */
+    resize: none; /* 사용자 리사이즈 비활성화 */
+    overflow-y: auto; /* 내용 초과 시 스크롤바 생성 */
+    box-sizing: border-box; /* padding이 width에 포함되도록 */
+    font-size: 13px; /* 폰트 사이즈도 일관성 있게 */
+    line-height: 1.5; /* 라인 높이도 일관성 있게 */
+    font-family: 'Pretendard', sans-serif;
+}
+
+.re-reply-input-field:focus {
+    border-color: #62B0FF;
+    outline: none; /* 브라우저 기본 포커스 아웃라인 제거 */
+}
+
+/* 푸터 - 고정 위치 */
+footer {
+	position: fixed;
+	bottom: 0;
+	background-color: #f2f2f2;
+	padding: 15px 0;
+	text-align: center;
+	font-size: 14px;
+	color: #666;
+	width: 100%; /* max-width가 적용된 상태에서 100%를 차지 */
+	box-sizing: border-box;
+	z-index: 80;
+	/* 메인 콘텐츠 영역 기준으로 중앙 정렬 */
+	left: var(--sidebar-width); /* 사이드바 끝나는 지점에서 시작 */
+	right: 0; /* 우측 끝까지 확장 */
+	margin: 0 auto; /* max-width가 적용된 상태에서 중앙 정렬 */
+}
+</style>
+</head>
+<body>
+	<div class="page-wrapper">
+		<div th:replace="common/sidebar :: sidebar"></div>
+
+		<div class="main-content-wrapper">
+			<div class="container">
+				<div class="header">
+					<div class="title">
+						<a th:href="@{communityMain}">A.P.T톡</a>
+					</div>
+					<div style="display: flex; align-items: center;">
+						<div class="buttons">
+							<a th:href="@{communityMy}" class="button secondary">내 활동</a> <a
+								th:href="@{communityWrite}" class="button primary">글쓰기</a>
+						</div>
+					</div>
+				</div>
+				<!-- 게시물 시작  -->
+				<div class="post">
+					<div class="avatar"></div>
+					<div class="content">
+						<div class="user-info">
+							<span class="username" th:text="${post.nickname}+'님'">주황머리
+								앤님</span> <span class="location-time" th:text="${post.apartmentName}">초록마을
+								5단지</span> <span class="location-time">&nbsp;·&nbsp;</span> <span
+								class="location-time dynamic-time"
+								th:attr="data-published-date=${#dates.format(post.publishedDate, 'yyyy-MM-dd''T''HH:mm:ss')}">
+								[[${#dates.format(post.publishedDate, 'yyyy.MM.dd HH:mm')}]]</span>
+						</div>
+						<div class="post-title" th:text="${post.boardTitle}">안녕하세요</div>
+						<div class="post-body" th:text="${post.boardContent}">이번 달에
+							새로 입주했어요! 반가워요!</div>
+						<div class="comment-count">
+							<img src="/icons/talk_bubble.png"
+								style="width: 18px; height: auto; margin-right: 10px;"> 댓글
+							<span th:text="${commentCount}" style="margin-left: 4px">0</span>
+						</div>
+					</div>
+					<div class="menu-icon-wrapper" style="position: relative;">
+						<div class="menu-icon">&#x22EE;</div>
+						<div class="dropdown-menu" style="display: none;">
+							<a
+								th:if="${loggedInUserId != null and loggedInUserId.equals(post.userId)}"
+								href="#" class="menu-item" id="editPostBtn">수정하기</a> <a
+								th:if="${loggedInUserId != null and loggedInUserId.equals(post.userId)}"
+								href="#" class="menu-item" id="deletePostBtn">삭제하기</a> <a
+								th:if="${loggedInUserId == null or !loggedInUserId.equals(post.userId)}"
+								href="#" class="menu-item" id="reportPostBtn">신고하기</a>
+						</div>
+					</div>
+					
+				</div>
+				<!-- 게시물 끝 -->
+				<!-- 댓글 시작 -->
+				<div class="comments-section">
+				    <div th:if="${#lists.isEmpty(nestedReplies)}">
+				        <p style="text-align: center; color: #888; padding: 20px;">아직 댓글이 없습니다.</p>
+				    </div>
+				
+				    <div th:each="wrapper : ${nestedReplies}">
+				        <!-- 부모 댓글 -->
+				        <div th:class="'comment'" th:attr="data-reply-no=${wrapper.parent.replyNo}">
+				            <div class="avatar"></div>
+				            <div class="content">
+				                <div class="user-info">
+				                    <span class="username" th:text="${wrapper.parent.nickname} + '님'">댓글작성자</span>
+				                    <span class="location-time" th:text="${wrapper.parent.apartmentName}">초록마을 5단지</span>
+				                    <span class="location-time">&nbsp;·&nbsp;</span>
+				                    <span class="location-time dynamic-time"
+				                          th:attr="data-published-date=${#dates.format(wrapper.parent.publishedDate, 'yyyy-MM-dd''T''HH:mm:ss')}">
+				                        [[${#dates.format(wrapper.parent.publishedDate, 'yyyy.MM.dd HH:mm')}]]
+				                    </span>
+				                    <button th:if="${wrapper.parent.parentNo == null}" class="reply-button location-time">답댓글 달기</button>
+				                </div>
+				                <div class="comment-text" th:text="${wrapper.parent.replyContent}">댓글 내용</div>
+				            </div>
+				            <div class="menu-icon-wrapper" style="position: relative;">
+				                <div class="menu-icon">&#x22EE;</div>
+				                <div class="dropdown-menu" style="display: none;">
+				                    <a th:if="${loggedInUserId != null and loggedInUserId.equals(wrapper.parent.userId)}"
+				                       href="#" class="menu-item edit-reply-btn"
+				                       th:data-reply-no="${wrapper.parent.replyNo}">수정하기</a>
+				                    <a th:if="${loggedInUserId != null and loggedInUserId.equals(wrapper.parent.userId)}"
+				                       href="#" class="menu-item delete-reply-btn"
+				                       th:data-reply-no="${wrapper.parent.replyNo}">삭제하기</a>
+				                    <a th:if="${loggedInUserId == null or !loggedInUserId.equals(wrapper.parent.userId)}"
+				                       href="#" class="menu-item report-reply-btn"
+				                       th:data-reply-no="${wrapper.parent.replyNo}">신고하기</a>
+				                </div>
+				            </div>
+				        </div>
+				
+				        <!-- 대댓글 반복 -->
+				        <div th:each="child : ${wrapper.children}"
+				             th:class="'comment reply-comment'"
+				             th:attr="data-reply-no=${child.replyNo}">
+				            <div class="avatar"></div>
+				            <div class="content">
+				                <div class="user-info">
+				                    <span class="username" th:text="${child.nickname} + '님'">답댓글 작성자</span>
+				                    <span class="location-time" th:text="${child.apartmentName}">초록마을 5단지</span>
+				                    <span class="location-time">&nbsp;·&nbsp;</span>
+				                    <span class="location-time dynamic-time"
+				                          th:attr="data-published-date=${#dates.format(child.publishedDate, 'yyyy-MM-dd''T''HH:mm:ss')}">
+				                        [[${#dates.format(child.publishedDate, 'yyyy.MM.dd HH:mm')}]]
+				                    </span>
+				                    <button th:if="${child.parentNo == null}" class="reply-button location-time">답댓글 달기</button>
+				                </div>
+				                <div class="comment-text" th:text="${child.replyContent}">답댓글 내용</div>
+				            </div>
+				            <div class="menu-icon-wrapper" style="position: relative;">
+				                <div class="menu-icon">&#x22EE;</div>
+				                <div class="dropdown-menu" style="display: none;">
+				                    <a th:if="${loggedInUserId != null and loggedInUserId.equals(child.userId)}"
+				                       href="#" class="menu-item edit-reply-btn"
+				                       th:data-reply-no="${child.replyNo}">수정하기</a>
+				                    <a th:if="${loggedInUserId != null and loggedInUserId.equals(child.userId)}"
+				                       href="#" class="menu-item delete-reply-btn"
+				                       th:data-reply-no="${child.replyNo}">삭제하기</a>
+				                    <a th:if="${loggedInUserId == null or !loggedInUserId.equals(child.userId)}"
+				                       href="#" class="menu-item report-reply-btn"
+				                       th:data-reply-no="${child.replyNo}">신고하기</a>
+				                </div>
+				            </div>
+				        </div>
+				    </div>
+				</div>
+			</div>
+		</div>
+		<div class="comment-input-area">
+			<div class="avatar"></div>
+			<input type="text" class="input-field" id="replyInputField"
+				placeholder="댓글을 작성해주세요">
+			<button class="submit-button" id="submitReplyButton">등록</button>
+		</div>
+	</div>
+	<div class="modal-overlay" id="deleteModal">
+		<div class="modal-content">
+			<p>정말 삭제하시겠습니까?</p>
+			<div class="modal-buttons">
+				<button id="confirmDelete">예</button>
+				<button id="cancelDelete">아니오</button>
+			</div>
+		</div>
+	</div>
+
+	<footer>
+		<div>
+			<p style="margin: 0;">© 2025 A.P.T. All rights reserved.</p>
+			<p style="margin: 5px 0 0;">
+				Made with <span class="computer-icon">💻</span> by 팀 EF
+			</p>
+		</div>
+	</footer>
+	<script th:inline="javascript">
+	/*<![CDATA[*/
+	// 시간 계산 함수 (communityMain.html에서 가져옴)
+	function timeAgo(date) {
+	    const now = new Date();
+	    const publishedDate = new Date(date);
+	    const seconds = Math.floor((now - publishedDate) / 1000);
+
+	    let interval = seconds / 31536000;
+	    if (interval > 1) {
+	        return Math.floor(interval) + "년 전";
+	    }
+	    interval = seconds / 2592000;
+	    if (interval > 1) {
+	        return Math.floor(interval) + "개월 전";
+	    }
+	    interval = seconds / 86400;
+	    if (interval > 1) {
+	        return Math.floor(interval) + "일 전";
+	    }
+	    interval = seconds / 3600;
+	    if (interval > 1) {
+	        return Math.floor(interval) + "시간 전";
+	    }
+	    interval = seconds / 60;
+	    if (interval > 1) {
+	        return Math.floor(interval) + "분 전";
+	    }
+	    return Math.floor(seconds) + "초 전";
+	}
+	
+	// 페이지 로드 후 모든 게시물 및 댓글 시간 업데이트
+	document.addEventListener('DOMContentLoaded', function() {
+	    const dynamicTimeElements = document.querySelectorAll('.dynamic-time');
+	    dynamicTimeElements.forEach(function(element) {
+	        const rawDateString = element.getAttribute('data-published-date');
+	        if (rawDateString) {
+	            element.textContent = timeAgo(rawDateString);
+	            element.style.visibility = 'visible'; 
+	        } else {
+	        	// data-published-date가 없을 경우, 초기 텍스트를 그대로 보이게 함
+	            element.style.visibility = 'visible'; 
+	        }
+	    });
+	    const replyButtons = document.querySelectorAll('.reply-button');
+
+	    replyButtons.forEach(button => {
+	        button.addEventListener('click', function() {
+	            const commentElement = this.closest('.comment');
+	            let replyForm = commentElement.querySelector('.reply-form');
+
+	            if (replyForm) {
+	                replyForm.remove();
+	            } else {
+	                replyForm = document.createElement('div');
+	                replyForm.classList.add('reply-form');
+
+	                replyForm.innerHTML = `
+	                    <textarea class="reply-input-field" placeholder="답글을 입력하세요."></textarea>
+	                    <button class="submit-reply-button" disabled>등록</button> `;
+
+	                commentElement.querySelector('.comment-text').after(replyForm);
+
+	                const replyTextarea = replyForm.querySelector('.reply-input-field');
+	                const submitButton = replyForm.querySelector('.submit-reply-button');
+
+	                // 초기 로드 시 버튼 상태 설정 (필요하다면)
+	                // 현재는 textarea가 비어있으므로 disabled가 맞습니다.
+
+	                 replyTextarea.addEventListener('input', function() {
+	                    submitButton.disabled = this.value.trim() === '';
+	                    submitButton.classList.toggle('active', this.value.trim() !== '');
+	                });
+
+	                // 답글 등록 버튼 클릭 이벤트 - AJAX 호출
+	                submitButton.addEventListener('click', function() {
+	                    const replyContent = replyTextarea.value;
+	                    const currentBoardNo = /*[[${post.boardNo}]]*/ 0; // Thymeleaf로 게시물 번호 가져오기
+	                 	// 부모 댓글의 ID를 가져와 parentNo로 전달 (답글 기능 구현 시 필요)
+	                    // 현재는 일반 댓글이므로 parentNo는 null로 설정
+	                    const parentCommentElement = this.closest('.comment');
+                    const parentReplyNo = parentCommentElement ? parentCommentElement.dataset.replyNo : null; // 부모 댓글 번호 (답글 시 필요)
+
+                    if (replyContent.trim() !== '') {
+                        // AJAX 요청 보내기
+                        fetch('/community/addReply', { // 컨트롤러의 @PostMapping 경로
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded', // 폼 데이터 형식
+                            },
+                            body: new URLSearchParams({ // 폼 데이터 구성
+                                boardNo: currentBoardNo,
+                                replyContent: replyContent,
+                                parentNo: parentReplyNo // 일반 댓글은 null, 답글은 부모 댓글 번호
+                            }).toString(),
+                        })
+                        .then(response => response.json()) // JSON 응답 파싱
+                        .then(data => {
+                            if (data.status === 'success') {
+                                alert(data.message);
+                                replyForm.remove(); // 폼 제거
+                                // 댓글 목록을 새로고침하거나, 새로 추가된 댓글을 동적으로 DOM에 추가하는 로직 필요
+                                window.location.reload(); // 페이지 새로고침 (간단한 방법)
+                            } else {
+                                alert('오류: ' + data.message);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('댓글 등록 중 오류 발생:', error);
+                            alert('댓글 등록 중 오류가 발생했습니다.');
+                        });
+                    } else {
+                        alert('댓글 내용을 입력해주세요.');
+                    }
+                });
+            }
+	    });
+	});
+	 // 3. 메인 댓글 입력창 로직
+	    const mainReplyInputField = document.getElementById('replyInputField');
+	    const submitMainReplyButton = document.getElementById('submitReplyButton');
+
+	    mainReplyInputField.addEventListener('input', function() {
+	        submitMainReplyButton.disabled = this.value.trim() === '';
+	        submitMainReplyButton.classList.toggle('active', this.value.trim() !== '');
+	    });
+
+	    submitMainReplyButton.addEventListener('click', function() {
+	        const replyContent = mainReplyInputField.value;
+	        const currentBoardNo = /*[[${post.boardNo}]]*/ 0; // Thymeleaf로 게시물 번호 가져오기
+	        
+	        if (replyContent.trim() !== '') {
+	            fetch('/community/addReply', { // 컨트롤러의 @PostMapping 경로
+	                method: 'POST',
+	                headers: {
+	                    'Content-Type': 'application/x-www-form-urlencoded',
+	                },
+	                body: new URLSearchParams({
+	                    boardNo: currentBoardNo,
+	                    replyContent: replyContent
+	                    // parentNo는 일반 댓글이므로 전달하지 않음 (null 처리)
+	                }).toString(),
+	            })
+	            .then(response => response.json())
+	            .then(data => {
+	                if (data.status === 'success') {
+	                    // alert(data.message); // 댓글 입력 성공 시 알림 제거
+	                    mainReplyInputField.value = ''; // 입력창 비우기
+	                    submitMainReplyButton.disabled = true; // 버튼 비활성화
+	                    submitMainReplyButton.classList.remove('active'); // active 클래스 제거
+	                    window.location.reload(); // 페이지 새로고침하여 댓글 목록 업데이트
+	                } else {
+	                    alert('오류: ' + data.message);
+	                }
+	            })
+	            .catch(error => {
+	                console.error('댓글 등록 중 오류 발생:', error);
+	                alert('댓글 등록 중 오류가 발생했습니다.');
+	            });
+	        } else {
+	            alert('댓글 내용을 입력해주세요.');
+	        }
+	    });
+
+	});
+	// 메뉴 토글 기능
+	document.addEventListener('DOMContentLoaded', function () {
+		// 수정 및 삭제 버튼 이벤트 리스너 추가
+		 const boardNo = /*[[${post.boardNo}]]*/ 0; // 게시글 번호
+		 const loggedInUserId = /*[[${loggedInUserId}]]*/ null; // 로그인 사용자 ID
+		 const postTitleElement = document.querySelector('.post-title');
+	     const postBodyElement = document.querySelector('.post-body');
+	     const postContentWrapper = document.querySelector('.post .content'); // 게시물 내용 전체를 감싸는 div
+	     
+	     let originalPostTitle = postTitleElement.textContent.trim();
+	     let originalPostBody = postBodyElement.textContent.trim();
+		 
+		// 게시글 '수정하기' 버튼 클릭 이벤트
+		    const editPostBtn = document.getElementById('editPostBtn');
+		    if (editPostBtn) {
+		        editPostBtn.addEventListener('click', function(e) {
+		            e.preventDefault(); // 기본 링크 동작 방지
+		            e.stopPropagation(); // 드롭다운 메뉴 닫기 방지
+		            
+		         	// 드롭다운 메뉴 닫기
+		            this.closest('.dropdown-menu').style.display = 'none';
+		            
+		         	// 이미 수정 중인 다른 게시물이 있다면 (다중 수정 방지, 이 페이지에선 불필요할 수 있지만 안전하게)
+		            document.querySelectorAll('.post-edit-form').forEach(form => form.remove());
+		            postTitleElement.style.display = 'block';
+		            postBodyElement.style.display = 'block'; // 원본 보이게
+
+		            // 게시물 제목과 본문을 편집 가능한 필드로 변경
+		            postTitleElement.style.display = 'none'; // 제목 숨기기
+		            postBodyElement.style.display = 'none';  // 본문 숨기기
+		            
+		            const editForm = document.createElement('div');
+		            editForm.classList.add('post-edit-form'); // 새로운 클래스 추가
+		            editForm.innerHTML = `
+		                <input type="text" class="edit-title-input" value="${originalPostTitle}">
+		                <textarea class="edit-body-textarea">${originalPostBody}</textarea>
+		                <div class="edit-buttons" style="display: flex; justify-content: flex-end; margin-top: 10px; gap: 10px;">
+		                    <button type="button" class="button-base button-outline save-post-edit-btn">수정</button>
+		                    <button type="button" class="button-base button-outline cancel-post-edit-btn">취소</button>
+		                </div>
+		            `;
+		            
+		            // postContentWrapper.appendChild(editForm); // 이 줄은 여전히 제거되어야 합니다.
+		            // 1. 해당 게시물의 .comment-count 요소를 찾습니다.
+		            const commentCountElement = postContentWrapper.querySelector('.comment-count');
+		
+		            if (commentCountElement) {
+		                // 2. comment-count 요소 바로 앞에 editForm을 삽입합니다. (**** 이 부분이 변경되었습니다 ****)
+		                commentCountElement.before(editForm); // Element.before() 메서드 사용 (권장)
+		                // 또는 구형 브라우저 호환성을 위해:
+		                // commentCountElement.parentElement.insertBefore(editForm, commentCountElement);
+		            } else {
+		                // 만약 어떤 이유로 comment-count를 찾지 못했다면,
+		                // 기존처럼 postContentWrapper의 마지막에 추가합니다 (대안).
+		                postContentWrapper.appendChild(editForm);
+		                console.warn("'.comment-count' 요소를 찾을 수 없어, 'post-edit-form'이 'postContentWrapper'의 마지막에 추가됩니다.");
+		            }
+
+		            const editTitleInput = editForm.querySelector('.edit-title-input');
+		            const editBodyTextarea = editForm.querySelector('.edit-body-textarea');
+		            const savePostEditBtn = editForm.querySelector('.save-post-edit-btn');
+		            const cancelPostEditBtn = editForm.querySelector('.cancel-post-edit-btn');
+
+		            // textarea 높이 자동 조절 (선택 사항)
+		            editBodyTextarea.addEventListener('input', function() {
+		                this.style.height = 'auto';
+		                this.style.height = (this.scrollHeight) + 'px';
+		            });
+		            editBodyTextarea.style.height = 'auto';
+		            editBodyTextarea.style.height = (editBodyTextarea.scrollHeight) + 'px';
+
+		            // '수정' 버튼 (저장) 클릭 이벤트
+		            savePostEditBtn.addEventListener('click', function() {
+		                const newTitle = editTitleInput.value.trim();
+		                const newBody = editBodyTextarea.value.trim();
+
+		                if (newTitle === '' || newBody === '') {
+		                    alert('제목과 내용을 모두 입력해주세요.');
+		                    return;
+		                }
+		                if (newTitle === originalPostTitle && newBody === originalPostBody) {
+		                    alert('수정된 내용이 없습니다.');
+		                    editForm.remove();
+		                    postTitleElement.style.display = 'block';
+		                    postBodyElement.style.display = 'block';
+		                    return;
+		                }
+		             // AJAX 요청 보내기
+		                fetch(`/community/updatePost`, { // 백엔드 API 엔드포인트
+		                    method: 'POST',
+		                    headers: {
+		                        'Content-Type': 'application/x-www-form-urlencoded',
+		                        // CSRF 토큰이 필요할 경우 추가
+		                    },
+		                    body: new URLSearchParams({
+		                        boardNo: boardNo,
+		                        boardTitle: newTitle,
+		                        boardContent: newBody
+		                    }).toString(),
+		                })
+		                .then(response => response.json())
+		                .then(data => {
+		                    if (data.success) {
+		                        alert(data.message);
+		                        // DOM 업데이트: 수정된 내용 반영 및 폼 제거
+		                        postTitleElement.textContent = newTitle;
+		                        postBodyElement.textContent = newBody;
+		                        postTitleElement.style.display = 'block';
+		                        postBodyElement.style.display = 'block';
+		                        editForm.remove();
+
+		                        // 원본 내용 업데이트 (추가 수정 대비)
+		                        originalPostTitle = newTitle;
+		                        originalPostBody = newBody;
+		                    } else {
+		                        alert('게시글 수정 실패: ' + data.message);
+		                    }
+		                })
+		                .catch(error => {
+		                    console.error('게시글 수정 오류:', error);
+		                    alert('게시글 수정 중 오류가 발생했습니다.');
+		                });
+		            });
+		             // '취소' 버튼 클릭 이벤트
+		                cancelPostEditBtn.addEventListener('click', function() {
+		                    // 수정 취소: 폼 제거 및 원래 텍스트 복원
+		                    editForm.remove();
+		                    postTitleElement.textContent = originalPostTitle;
+		                    postBodyElement.textContent = originalPostBody;
+		                    postTitleElement.style.display = 'block';
+		                    postBodyElement.style.display = 'block';
+		                });
+		        });
+		    }
+		    
+		    // '삭제하기' 버튼 클릭 이벤트
+		    const deletePostBtn = document.getElementById('deletePostBtn');
+		    if (deletePostBtn) {
+		        deletePostBtn.addEventListener('click', function(e) {
+		            e.preventDefault(); // 기본 링크 동작 방지
+		            const boardNo = /*[[${post.boardNo}]]*/ 0; // 게시글 번호 가져오기 (Thymeleaf로 주입된 값)
+		            if (confirm('정말로 이 게시글을 삭제하시겠습니까?')) {
+		                fetch(`/community/deletePost`, { // 컨트롤러의 @PostMapping 경로
+		                    method: 'POST', // DELETE 메소드도 가능 (Spring MVC 설정에 따라)
+		                    headers: {
+		                        'Content-Type': 'application/x-www-form-urlencoded',
+		                        // CSRF 토큰이 필요할 경우, 여기에 추가 (Spring Security 사용 시)
+		                        // 'X-CSRF-TOKEN': $('meta[name="_csrf"]').attr('content')
+		                    },
+		                    body: new URLSearchParams({ // boardNo를 요청 본문에 포함
+		                        boardNo: boardNo
+		                    }).toString(),
+		                })
+		                .then(response => response.json())
+		                .then(data => {
+		                    if (data.success) {
+		                        // alert(data.message);
+		                        window.location.href = '/communityMain'; // 삭제 후 메인 페이지로 이동
+		                    } else {
+		                        alert('삭제 실패: ' + data.message);
+		                    }
+		                })
+		                .catch(error => {
+		                    console.error('삭제 오류:', error);
+		                    alert('게시글 삭제 중 오류가 발생했습니다.');
+		                });
+		            }
+		        });
+		    }
+		 // '신고하기' 버튼 클릭 이벤트
+		 // 기존 '신고하기' 버튼 클릭 이벤트를 다음과 같이 수정:
+		 const reportPostBtn = document.getElementById('reportPostBtn');
+		 if (reportPostBtn) {
+		     reportPostBtn.addEventListener('click', function(e) {
+		         e.preventDefault(); // 기본 링크 동작 방지
+		         e.stopPropagation(); // 드롭다운 메뉴 닫기 방지
+		         
+		         // 드롭다운 메뉴 닫기
+		         this.closest('.dropdown-menu').style.display = 'none';
+		         
+		         const boardNo = /*[[${post.boardNo}]]*/ 0; // 게시글 번호
+		         
+		         // 확인 대화상자
+		         if (!confirm('이 게시글을 신고하시겠습니까?')) {
+		             return;
+		         }
+		         
+		         // 서버로 신고 요청 전송
+		         fetch('/community/report', {
+		             method: 'POST',
+		             headers: {
+		                 'Content-Type': 'application/x-www-form-urlencoded',
+		             },
+		             body: `boardNo=${boardNo}&reason=user_report`
+		         })
+		         .then(response => response.json())
+		         .then(data => {
+		             if (data.success) {
+		                 alert('신고가 접수되었습니다.');
+		                 
+		                 // 신고 후 메인 페이지로 이동하거나 신고 버튼 숨기기
+		                 // 옵션 1: 메인 페이지로 이동
+		                 // window.location.href = '/communityMain';
+		                 
+		                 // 옵션 2: 신고 버튼을 "신고됨"으로 변경
+		                 this.textContent = '신고됨';
+		                 this.style.color = '#999';
+		                 this.style.cursor = 'default';
+		                 this.onclick = null; // 클릭 이벤트 제거
+		                 
+		             } else {
+		                 alert(data.message || '신고 처리 중 오류가 발생했습니다.');
+		             }
+		         })
+		         .catch(error => {
+		             console.error('Error:', error);
+		             alert('신고 처리 중 오류가 발생했습니다.');
+		         });
+		     });
+		 }
+
+		 // 댓글 신고 기능도 실제 구현으로 변경
+		 document.querySelectorAll('.report-reply-btn').forEach(button => {
+		     button.addEventListener('click', function(e) {
+		         e.preventDefault();
+		         e.stopPropagation(); // 드롭다운 메뉴 닫기 방지
+		         
+		         // 드롭다운 메뉴 닫기
+		         this.closest('.dropdown-menu').style.display = 'none';
+		         
+		         const replyNo = this.dataset.replyNo; // data-reply-no 값 가져오기
+		         
+		         // 확인 대화상자
+		         if (!confirm('이 댓글을 신고하시겠습니까?')) {
+		             return;
+		         }
+		         
+		         // 댓글 신고는 댓글 테이블에 IS_REPORTED 컬럼이 있다면 구현 가능
+		         // 현재는 게시글 신고만 구현되어 있으므로, 댓글 신고는 알림만 표시
+		         alert(`댓글 신고 기능은 현재 준비 중입니다. (댓글 번호: ${replyNo})`);
+		         
+		         // 실제 댓글 신고 API가 구현되면 다음과 같이 사용:
+		         /*
+		         fetch('/community/reportReply', {
+		             method: 'POST',
+		             headers: {
+		                 'Content-Type': 'application/x-www-form-urlencoded',
+		             },
+		             body: `replyNo=${replyNo}&reason=user_report`
+		         })
+		         .then(response => response.json())
+		         .then(data => {
+		             if (data.success) {
+		                 alert('댓글 신고가 접수되었습니다.');
+		                 this.textContent = '신고됨';
+		                 this.style.color = '#999';
+		                 this.style.cursor = 'default';
+		                 this.onclick = null;
+		             } else {
+		                 alert(data.message || '신고 처리 중 오류가 발생했습니다.');
+		             }
+		         })
+		         .catch(error => {
+		             console.error('Error:', error);
+		             alert('신고 처리 중 오류가 발생했습니다.');
+		         });
+		         */
+		     });
+		 });
+		    // 드롭다운 메뉴 토글 기능 (기존 코드 유지)
+		    document.querySelectorAll('.menu-icon').forEach(icon => {
+		        icon.addEventListener('click', function (e) {
+		            e.stopPropagation();
+		            const wrapper = this.closest('.menu-icon-wrapper');
+		            const dropdown = wrapper.querySelector('.dropdown-menu');
+					// 다른 모든 드롭다운 메뉴 담기
+		            document.querySelectorAll('.dropdown-menu').forEach(menu => {
+		                if (menu !== dropdown) menu.style.display = 'none';
+		            });
+					// 현재 드롭다운 메뉴 토글
+		            dropdown.style.display = (dropdown.style.display === 'block') ? 'none' : 'block';
+		        });
+		    });
+			// 문서의 다른 곳을 클릭하면 모든 드롭다운 메뉴 닫기
+		    document.addEventListener('click', function () {
+		        document.querySelectorAll('.dropdown-menu').forEach(menu => {
+		            menu.style.display = 'none';
+		        });
+		    });
+		   // '댓글 수정하기' 버튼 클릭 이벤트
+	 	   document.querySelectorAll('.edit-reply-btn').forEach(button => {
+		        button.addEventListener('click', function(e) {
+		            e.preventDefault();
+		            e.stopPropagation(); // 드롭다운 메뉴가 다시 열리지 않도록 클릭 이벤트 전파 중단
+
+		            const replyNo = this.dataset.replyNo;
+		            const commentElement = this.closest('.comment');
+		            const commentTextElement = commentElement.querySelector('.comment-text');
+		            const originalCommentContent = commentTextElement.textContent.trim(); // 원본 댓글 내용
+		            // 이미 수정 중인 댓글이 있다면, 해당 수정 폼 닫기 (다중 수정 방지)
+		            document.querySelectorAll('.reply-edit-form').forEach(form => form.remove());
+		            document.querySelectorAll('.comment-text').forEach(text => text.style.display = 'block');
+		            
+		            // 드롭다운 메뉴 닫기
+		            this.closest('.dropdown-menu').style.display = 'none';
+
+		            // 댓글 내용을 textarea로 변경
+		            commentTextElement.style.display = 'none'; // 기존 텍스트 숨기기
+
+		            const editForm = document.createElement('div');
+		            editForm.classList.add('reply-edit-form'); // 새로운 클래스 추가 (스타일링 위함)
+		            editForm.innerHTML = `
+		                <textarea class="re-reply-input-field">${originalCommentContent}</textarea>
+		                <div class="edit-buttons" style="display: flex; justify-content: flex-end; margin-top: 5px; gap: 5px;">
+		                    <button type="button" class="button-base button-outline save-edit-btn">수정</button>
+		                    <button type="button" class="button-base button-outline cancel-edit-btn">취소</button>
+		                </div>
+		            `;
+		            commentTextElement.after(editForm); // 기존 텍스트 바로 뒤에 폼 삽입
+
+		            const editTextarea = editForm.querySelector('.re-reply-input-field');
+		            const saveEditBtn = editForm.querySelector('.save-edit-btn');
+		            const cancelEditBtn = editForm.querySelector('.cancel-edit-btn');
+
+		            // textarea 높이 자동 조절 (선택 사항)
+		            editTextarea.addEventListener('input', function() {
+		                this.style.height = 'auto';
+		                this.style.height = (this.scrollHeight) + 'px';
+		            });
+		            editTextarea.style.height = 'auto'; // 초기 높이 설정
+		            editTextarea.style.height = (editTextarea.scrollHeight) + 'px';
+
+
+		            // '수정' 버튼 (저장) 클릭 이벤트
+		            saveEditBtn.addEventListener('click', function() {
+		                const newContent = editTextarea.value.trim();
+		                if (newContent === '') {
+		                    alert('댓글 내용을 입력해주세요.');
+		                    return;
+		                }
+		                if (newContent === originalCommentContent) {
+		                    alert('수정된 내용이 없습니다.');
+		                    // 수정 폼 닫기
+		                    editForm.remove();
+		                    commentTextElement.textContent = originalCommentContent;
+		                    commentTextElement.style.display = 'block';
+		                    return;
+		                }
+
+		                fetch(`/community/updateReply/${replyNo}`, { // 백엔드 API 엔드포인트
+		                    method: 'POST', // PUT 또는 PATCH도 가능하지만 POST로 통일
+		                    headers: {
+		                        'Content-Type': 'application/x-www-form-urlencoded',
+		                    },
+		                    body: new URLSearchParams({
+		                        replyContent: newContent
+		                    }).toString(),
+		                })
+		                .then(response => response.json())
+		                .then(data => {
+		                    if (data.success) {
+		                        // alert(data.message); 댓글 수정 완료 시 '댓글이 성공적으로 수정되었습니다.' 알림창 제거
+		                        // DOM 업데이트: 수정된 내용 반영 및 폼 제거
+		                        commentTextElement.textContent = newContent;
+		                        commentTextElement.style.display = 'block';
+		                        editForm.remove();
+		                    } else {
+		                        alert('댓글 수정 실패: ' + data.message);
+		                    }
+		                })
+		                .catch(error => {
+		                    console.error('댓글 수정 오류:', error);
+		                    alert('댓글 수정 중 오류가 발생했습니다.');
+		                });
+		            });
+
+		            // '취소' 버튼 클릭 이벤트
+		            cancelEditBtn.addEventListener('click', function() {
+		                // 수정 취소: 폼 제거 및 원래 텍스트 복원
+		                editForm.remove();
+		                commentTextElement.textContent = originalCommentContent; // 원본 내용으로 복원
+		                commentTextElement.style.display = 'block';
+		            });
+		        });
+		    });
+	 		// '삭제하기' 버튼 클릭 이벤트
+	 		const deleteModal = document.getElementById('deleteModal');
+		    const confirmDeleteButton = document.getElementById('confirmDelete');
+		    const cancelDeleteButton = document.getElementById('cancelDelete');
+		    
+		    let itemToDelete = null; // 삭제할 게시글/댓글 DOM 요소를 저장
+		    let currentId = null;     // 게시글 또는 댓글의 ID (boardNo 또는 replyNo)
+		    let isPostDelete = false; // 게시글 삭제인지 댓글 삭제인지 구분하는 플래그
+
+	 	    document.querySelectorAll('#deletPosthBtn, .delete-reply-btn').forEach(button => {
+	 	        button.addEventListener('click', function(e) {
+	 	            e.preventDefault();	// 기본 동작 방지
+	 	           	e.stopPropagation(); // 드롭다운 메뉴 닫기 방지
+	 	           	// 드롭다운 메뉴 담기
+	 	           	this.closest('.dropdown-menu').style.display = 'none';
+	 	           	
+		 	        // 어떤 항목을 삭제할 것인지 정보 저장
+		 	            if (this.id === 'deletePostBtn') { // 게시글 삭제 버튼
+		 	                currentId = /*[[${post.boardNo}]]*/ 0;
+		 	                itemToDelete = document.querySelector('.post'); // 게시글 전체 요소
+		 	                isPostDelete = true;
+		 	            } else if (this.classList.contains('delete-reply-btn')) { // 댓글 삭제 버튼
+		 	                currentId = this.dataset.replyNo;
+		 	                itemToDelete = this.closest('.comment'); // 댓글 전체 요소
+		 	                isPostDelete = false;
+		 	            }
+	
+		 	            deleteModal.style.display = 'flex'; // 모달 표시 (CSS에서 flex로 설정했으므로)
+		 	        });
+		 	    });
+	 	    // '예' 버튼 클릭 시 삭제 수행
+	 	    confirmDeleteButton.addEventListener('click', () => {
+	 	        deleteModal.style.display = 'none'; // 모달 숨김
+
+	 	        if (isPostDelete) {
+	 	            // 게시글 삭제 로직 호출 (CommunityController의 deletePost API)
+	 	            fetch(`/community/deletePost/${currentId}`, {
+	 	                method: 'POST',
+	 	                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+	 	            })
+	 	            .then(response => response.json())
+	 	            .then(data => {
+	 	                if (data.success) {
+	 	                    alert(data.message);
+	 	                    window.location.href = '/communityMain'; // 게시글 삭제 후 메인 페이지로 이동
+	 	                } else {
+	 	                    alert('게시글 삭제 실패: ' + data.message);
+	 	                }
+	 	            })
+	 	            .catch(error => {
+	 	                console.error('게시글 삭제 오류:', error);
+	 	                alert('게시글 삭제 중 오류가 발생했습니다.');
+	 	            });
+	 	        } else {
+	 	            // 댓글 삭제 로직 호출 (CommunityController의 deleteComment API)
+	 	            fetch(`/community/deleteComment`, {
+	 	                method: 'POST',
+	 	                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+	 	                body: new URLSearchParams({ replyNo: currentId }).toString(),
+	 	            })
+	 	            .then(response => response.json())
+	 	            .then(data => {
+	 	                if (data.success) {
+	 	                    // alert(data.message);
+	 	                    if (itemToDelete) {
+	 	                        itemToDelete.remove(); // DOM에서 댓글 요소 제거
+	 	                        // 댓글 수 업데이트 (게시글 상세 페이지의 댓글 수)
+	 	                        const commentCountSpan = document.querySelector('.comment-count span');
+	 	                        if (commentCountSpan) {
+	 	                            let currentCount = parseInt(commentCountSpan.textContent);
+	 	                            if (!isNaN(currentCount) && currentCount > 0) {
+	 	                                commentCountSpan.textContent = (currentCount - 1);
+	 	                            }
+	 	                        }
+	 	                    }
+	 	                } else {
+	 	                    alert('댓글 삭제 실패: ' + data.message);
+	 	                }
+	 	            })
+	 	            .catch(error => {
+	 	                console.error('댓글 삭제 오류:', error);
+	 	                alert('댓글 삭제 중 오류가 발생했습니다.');
+	 	            });
+	 	        }
+	 	        // 상태 초기화
+	 	        /* itemToDelete = null;
+	 	        currentId = null;
+	 	        isPostDelete = false; */
+	 	    });
+
+	 	    // '아니오' 버튼 클릭 시 삭제 취소
+	 	    cancelDeleteButton.addEventListener('click', () => {
+	 	        deleteModal.style.display = 'none'; // 모달 숨김
+	 	        // 상태 초기화
+	 	        itemToDelete = null;
+	 	        currentId = null;
+	 	        isPostDelete = false;
+	 	    });
+	 	            
+	 	    // '댓글 신고하기' 버튼 클릭 이벤트
+	 	    document.querySelectorAll('.report-reply-btn').forEach(button => {
+	 	        button.addEventListener('click', function(e) {
+	 	            e.preventDefault();
+	 	            const replyNo = this.dataset.replyNo; // data-reply-no 값 가져오기
+	 	            alert(`댓글 번호 ${replyNo} 신고하기 (기능 미구현)`);
+	 	            // 여기에 댓글 신고 로직 (예: 모달 팝업, AJAX 요청 등)
+	 	        });
+	 	    });
+	});
+
+	/*]]>*/
+	</script>
+</body>
+</html>

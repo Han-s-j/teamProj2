@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>관리자 메인</title>
+<style>
+body {
+	font-family: 'Pretendard', sans-serif;
+	background-color: #f7f7f7;
+	margin: 0;
+	padding: 40px;
+}
+
+h1 {
+	text-align: center;
+	margin-bottom: 40px;
+}
+
+.menu-container {
+	display: flex;
+	justify-content: center;
+	gap: 40px;
+}
+
+.menu-card {
+	width: 200px;
+	height: 150px;
+	background-color: white;
+	border-radius: 16px;
+	box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+	font-size: 18px;
+	font-weight: bold;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	text-decoration: none;
+	color: #333;
+}
+
+.menu-card:hover {
+	transform: translateY(-5px);
+	background-color: #f0f8ff;
+}
+.back-btn {
+    display: inline-block;
+    margin-bottom: 20px;
+    padding: 10px 20px;
+    background-color: #6c757d;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.back-btn:hover {
+    background-color: #5a6268;
+}
+</style>
+</head>
+<body>
+	<a href="/" class="back-btn">← 메인으로 돌아가기</a>
+	<h1>👑 관리자 페이지</h1>
+
+	<div class="menu-container">
+		<a th:href="@{/admin/users}" class="menu-card">회원 관리</a> <a
+			th:href="@{/admin/community}" class="menu-card">커뮤니티 관리</a> <a
+			th:href="@{/admin/dashboard}" class="menu-card">통계 보기</a>
+	</div>
+</body>
+</html>

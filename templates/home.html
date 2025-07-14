@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>A.P.T</title>
+
+<!-- Pretendard(Font) -->
+<link rel="stylesheet" th:href="@{/css/font.css}" />
+
+<!-- Swiper CSS -->
+<link rel="stylesheet"
+	href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
+
+<!-- AOS CSS (CDN) -->
+<link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css" />
+
+<!-- Favicon -->
+<link rel="icon" href="/icons/favicon.png" type="image/png">
+
+<style>
+body {
+	text-align: center;
+	margin: 0;
+}
+
+h1 {
+	font-size: 70px;
+	color: #4281FF;
+	margin-bottom: 0px;
+	font-weight: 800;
+	letter-spacing: 0.05em;
+}
+
+p.sub {
+	font-size: 34px;
+	margin-bottom: 50px;
+	margin-top: 20px;
+	font-weight: 600;
+	color: #292929;
+	letter-spacing: 0.05em;
+}
+
+/* 카드 슬라이드 */
+.swiper {
+	width: 90%;
+	max-width: 1200px;
+	padding: 20px 0;
+	position: relative;
+}
+
+.swiper-slide {
+	width: auto !important;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.swiper-container-wrapper {
+	position: relative;
+}
+
+/* 좌우 그라데이션 */
+.swiper-gradient {
+	position: absolute;
+	top: 0;
+	width: 60px;
+	height: 100%;
+	z-index: 10;
+	pointer-events: none;
+}
+
+.swiper-gradient.left {
+	left: 0;
+	background: linear-gradient(to right, #FDFDFD 30%, rgba(253, 253, 253, 0.8)
+		50%, rgba(253, 253, 253, 0) 100%);
+}
+
+.swiper-gradient.right {
+	right: 0;
+	background: linear-gradient(to left, #FDFDFD 30%, rgba(253, 253, 253, 0.8)
+		50%, rgba(253, 253, 253, 0) 100%);
+}
+
+/* 카드 */
+.card {
+	width: 264px;
+	height: 352px;
+	border-radius: 20px;
+	background-size: 100% 100%;
+	background-position: center;
+	background-repeat: no-repeat;
+	transition: transform 0.4s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+	transform: scale(1.05) translateY(-6px);
+}
+
+/* 로그인 버튼 */
+.login-link {
+	margin-top: 40px;
+	display: inline-block;
+	font-size: 16px;
+	padding: 14px 28px;
+	border: 1px solid #4281FF;
+	border-radius: 30px;
+	color: #4281FF;
+	text-decoration: none;
+}
+
+.login-link:hover {
+	background-color: #4281FF;
+	color: white;
+}
+
+/* 로그아웃 버튼 */
+.logout-link {
+	text-decoration: none;
+	position: absolute;
+	top: 40px;
+	right: 200px;
+	font-size: 16px;
+	color: #292929;
+}
+
+.logout-link:hover {
+	color: #2979ff;
+}
+
+/* 마이페이지 버튼 */
+.mypage-link {
+	text-decoration: none;
+	position: absolute;
+	top: 40px;
+	right: 280px;
+	font-size: 16px;
+	color: #292929;
+}
+
+.mypage-link:hover {
+	color: #2979ff;
+}
+
+.mypage-link-parse {
+	position: absolute;
+	top: 25px;
+	right: 265px;
+	font-size: 16px;
+	color: #292929;
+}
+
+/* 스크롤 */
+.container {
+	overflow-y: scroll;
+	scroll-snap-type: y mandatory;
+	overflow: hidden;
+}
+
+.section {
+	scroll-snap-align: start;
+	height: 100vh;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	opacity: 0;
+	transform: translateY(50px);
+	transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.section.visible {
+	opacity: 1;
+	transform: translateY(0);
+}
+
+.sub_title {
+	font-weight: 800;
+	font-size: 40px;
+}
+
+.sub_title_info {
+	font-weight: 700;
+	font-size: 36px;
+}
+</style>
+</head>
+<body>
+	<!-- 스크롤 -->
+	<div class="container">
+
+		<!-- 첫 번째 섹션 -->
+		<section class="section">
+			<div
+				style="padding-top: 60px; max-height: 90vh; overflow-y: auto; background-color: #FDFDFD;">
+				<h1>A.P.T</h1>
+				<p class="sub">아파트 생활을 더 효율적이고 절약적으로 만드는 스마트 플랫폼, A.P.T</p>
+
+				<!-- 슬라이드 -->
+				<div class="swiper mySwiper">
+
+					<!-- 좌우 그라데이션 마스킹용 div -->
+					<div class="swiper-gradient left"></div>
+					<div class="swiper-gradient right"></div>
+
+					<div class="swiper-wrapper">
+						<div class="swiper-slide">
+							<a th:href="@{communityMain}" style="display: block;"><div
+									class="card"
+									th:style="'background-image: url(/cards/커뮤니티_카드.png)'"></div></a>
+						</div>
+						<div class="swiper-slide">
+							<a th:href="@{feeMain}" style="display: block;"><div
+									class="card"
+									th:style="'background-image: url(/cards/관리비_매니저_카드.png)'"></div></a>
+						</div>
+						<div class="swiper-slide">
+							<a th:href="@{challengeMain}" style="display: block;"><div
+									class="card"
+									th:style="'background-image: url(/cards/절약챌린지_카드.png)'"></div></a>
+						</div>
+						<div class="swiper-slide">
+							<a th:href="@{guideMain}" style="display: block;"><div
+									class="card"
+									th:style="'background-image: url(/cards/환기_카드.png)'"></div></a>
+						</div>
+						<div class="swiper-slide">
+							<a th:href="@{infoPage}" style="display: block;"><div
+									class="card"
+									th:style="'background-image: url(/cards/알아보기_카드.png)'"></div></a>
+						</div>
+						<div class="swiper-slide">
+							<a th:href="@{communityMain}" style="display: block;"><div
+									class="card"
+									th:style="'background-image: url(/cards/커뮤니티_카드.png)'"></div></a>
+						</div>
+						<div class="swiper-slide">
+							<a th:href="@{feeMain}" style="display: block;"><div
+									class="card"
+									th:style="'background-image: url(/cards/관리비_매니저_카드.png)'"></div></a>
+						</div>
+						<div class="swiper-slide">
+							<a th:href="@{challengeMain}" style="display: block;"><div
+									class="card"
+									th:style="'background-image: url(/cards/절약챌린지_카드.png)'"></div></a>
+						</div>
+						<div class="swiper-slide">
+							<a th:href="@{guideMain}" style="display: block;"><div
+									class="card"
+									th:style="'background-image: url(/cards/환기_카드.png)'"></div></a>
+						</div>
+						<div class="swiper-slide">
+							<a th:href="@{infoPage}" style="display: block;"><div
+									class="card"
+									th:style="'background-image: url(/cards/알아보기_카드.png)'"></div></a>
+						</div>
+						<div class="swiper-slide">
+							<a th:href="@{communityMain}" style="display: block;"><div
+									class="card"
+									th:style="'background-image: url(/cards/커뮤니티_카드.png)'"></div></a>
+						</div>
+						<div class="swiper-slide">
+							<a th:href="@{feeMain}" style="display: block;"><div
+									class="card"
+									th:style="'background-image: url(/cards/관리비_매니저_카드.png)'"></div></a>
+						</div>
+						<div class="swiper-slide">
+							<a th:href="@{challengeMain}" style="display: block;"><div
+									class="card"
+									th:style="'background-image: url(/cards/절약챌린지_카드.png)'"></div></a>
+						</div>
+						<div class="swiper-slide">
+							<a th:href="@{guideMain}" style="display: block;"><div
+									class="card"
+									th:style="'background-image: url(/cards/환기_카드.png)'"></div></a>
+						</div>
+						<div class="swiper-slide">
+							<a th:href="@{infoPage}" style="display: block;"><div
+									class="card"
+									th:style="'background-image: url(/cards/알아보기_카드.png)'"></div></a>
+						</div>
+						<div class="swiper-slide">
+							<a th:href="@{communityMain}" style="display: block;"><div
+									class="card"
+									th:style="'background-image: url(/cards/커뮤니티_카드.png)'"></div></a>
+						</div>
+						<div class="swiper-slide">
+							<a th:href="@{feeMain}" style="display: block;"><div
+									class="card"
+									th:style="'background-image: url(/cards/관리비_매니저_카드.png)'"></div></a>
+						</div>
+						<div class="swiper-slide">
+							<a th:href="@{challengeMain}" style="display: block;"><div
+									class="card"
+									th:style="'background-image: url(/cards/절약챌린지_카드.png)'"></div></a>
+						</div>
+						<div class="swiper-slide">
+							<a th:href="@{guideMain}" style="display: block;"><div
+									class="card"
+									th:style="'background-image: url(/cards/환기_카드.png)'"></div></a>
+						</div>
+						<div class="swiper-slide">
+							<a th:href="@{infoPage}" style="display: block;"><div
+									class="card"
+									th:style="'background-image: url(/cards/알아보기_카드.png)'"></div></a>
+						</div>
+					</div>
+				</div>
+
+				<!-- Swiper JS -->
+				<script
+					src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
+
+				<!-- Swiper 설정 -->
+				<script>
+                  const swiper = new Swiper(".mySwiper", {
+                      slidesPerView: 4,
+                      spaceBetween: 30,
+                      loop: true,
+                      loopedSlides: 30,
+                      loopAdditionalSlides: 12,
+                      speed: 4000,
+                      autoplay: {
+                      delay: 0, // 0으로 주면 멈춤없이 쭉 감
+                      disableOnInteraction: false,
+                      },
+                      allowTouchMove: true, // 필요하면 true
+                      slidesOffsetBefore: 100, // 왼쪽 여백
+                      slidesOffsetAfter: 100,  // 오른쪽 여백
+                  });
+
+                 // 인식 잘 하는지 확인
+				const swiperEl = document.querySelector('.swiper');
+				
+				swiperEl.addEventListener('mouseenter', () => {
+				  swiper.autoplay.stop();
+				  console.log('멈춤!');
+				});
+				swiperEl.addEventListener('mouseleave', () => {
+				  swiper.autoplay.start();
+				  console.log('다시 시작!');
+				});
+				
+              </script>
+				<a th:if="${session.loginUser != null}" th:href="@{mypage}"	class="mypage-link">마이페이지</a>
+				<p th:if="${session.loginUser != null}" class="mypage-link-parse">|</p>
+				<a th:if="${session.loginUser != null}" th:href="@{logout}"	class="logout-link">로그아웃</a>
+				
+				<!-- 관리자 메뉴 -->
+				<a th:if="${session.loginUser != null and session.loginUser.userId == 'admin'}" th:href="@{/admin/main}" class="login-link">관리자 페이지 이동</a>
+				
+				<!-- 로그인 링크 -->
+				<a th:if="${session.loginUser == null}" th:href="@{sign}"
+					class="login-link">로그인하고 더 많은 기능 보기 ></a>
+			</div>
+		</section>
+
+		<!-- 두번째 섹션 -->
+		<section class="section" style="background-color: #F9FAFB;"
+			data-aos="fade-up" data-aos-duration="1200" data-aos-delay="300"
+			data-aos-easing="ease-in-out">
+			<div
+				style="display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 100px; max-width: 1000px; margin: 0 auto; padding: 40px 20px;">
+
+				<!-- 왼쪽 설명 -->
+				<div style="flex: 1; text-align: left;">
+					<h2 class="sub_title"
+						style="color: #61AFFE; font-size: 40px; margin-bottom: 20px;">A.P.T
+						톡</h2>
+					<p class="sub_title_info"
+						style="font-size: 30px; color: #292929; margin-bottom: 16px; white-space: nowrap; margin-top: 10px; line-height: 1.2;">
+						관리비 절약 꿀팁부터 단지 소식까지,<br> 우리 아파트 커뮤니티에서 함께 나누어 보세요
+					</p>
+					<p
+						style="font-size: 25px; color: #6B7684; margin-bottom: 24px; line-height: 1.2; font-weight: 500;">
+						생활비 절약 팁을 공유하고,<br> 아파트 단지의 다양한 이야기도 만나보세요
+					</p>
+					<a th:href="@{communityMain}"> <img class="moveBtn"
+						src="/cards/A.P.T톡 바로가기 버튼.png" alt="절약 챌린지 바로가기"
+						style="width: 240px; height: auto; border-radius: 20px; transition: transform 0.2s ease; cursor: pointer;" />
+					</a>
+				</div>
+
+				<!-- 오른쪽 이미지 -->
+				<div style="flex: 1; min-width: 300px; flex-shrink: 0;">
+					<img src="/images/톡_스샷.png" alt="A.P.T 톡 예시 이미지"
+						style="width: 500px; height: auto; border-radius: 20px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);" />
+				</div>
+
+			</div>
+		</section>
+
+		<!-- 네 번째 섹션-->
+		<section class="section" style="background-color: #FDFDFD;"
+			data-aos-duration="1200" data-aos-delay="300"
+			data-aos-easing="ease-in-out">
+			<div
+				style="display: flex; flex-direction: row-reverse; align-items: center; justify-content: center; gap: 300px; max-width: 1000px; margin: 0 auto; padding: 40px 20px;">
+
+				<!-- 왼쪽 텍스트 -->
+				<div style="width: 50%; text-align: left;">
+					<h2 class="sub_title"
+						style="color: #FF9B98; font-size: 40px; margin-bottom: 20px;">관리비
+						매니저</h2>
+					<p class="sub_title_info"
+						style="font-size: 30px; color: #292929; margin-bottom: 16px; white-space: nowrap; margin-top: 10px; line-height: 1.2;">
+						우리 아파트 관리비를 스마트하게 관리하고,<br> 절약 방법도 함께 확인해보세요
+					</p>
+					<p
+						style="font-size: 25px; color: #6B7684; margin-bottom: 24px; line-height: 1.2; font-weight: 500; white-space: nowrap;">
+						이번 달 관리비 내역을 보고, 스마트하게 절약 방법까지 챙겨보세요.</p>
+					<a th:href="@{feeMain}"> <img class="moveBtn"
+						src="/cards/관리비 매니저 바로가기 버튼.png" alt="절약 챌린지 바로가기"
+						style="width: 240px; height: auto; border-radius: 20px; transition: transform 0.2s ease; cursor: pointer;" />
+					</a>
+				</div>
+
+				<!-- 오른쪽 이미지 -->
+				<div style="width: 50%; min-width: 300px;">
+					<img src="/images/관리비_스샷.png" alt="관리비 매니저 예시 이미지"
+						style="width: 500px; height: auto; border-radius: 20px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);" />
+				</div>
+
+			</div>
+		</section>
+
+		<!-- 다섯 번째 섹션 -->
+		<section class="section" style="background-color: #F9FAFB;"
+			data-aos-duration="1200" data-aos-delay="300"
+			data-aos-easing="ease-in-out">
+			<div
+				style="display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 60px; max-width: 1000px; margin: 0 auto; padding: 40px 20px;">
+
+				<!-- 왼쪽 텍스트 -->
+				<div style="width: 50%; text-align: left;">
+					<h2 class="sub_title"
+						style="color: #887CF1; font-size: 40px; margin-bottom: 20px;">절약
+						챌린지</h2>
+					<p class="sub_title_info"
+						style="font-size: 30px; color: #292929; margin-bottom: 16px; white-space: nowrap; margin-top: 10px; line-height: 1.2;">
+						절약 목표를 설정하고,<br> 작은 습관부터 시작해보세요
+					</p>
+					<p
+						style="font-size: 25px; color: #6B7684; margin-bottom: 24px; line-height: 1.2; font-weight: 500; white-space: nowrap;">
+						절약 목표를 세우고 달성해보세요!<br> 매달 새로운 배지가 기다리고 있어요!
+					</p>
+					<a th:href="@{challengeMain}"> <img class="moveBtn"
+						src="/cards/절약 챌린지 바로가기 버튼.png" alt="절약 챌린지 바로가기"
+						style="width: 240px; height: auto; border-radius: 20px; transition: transform 0.2s ease; cursor: pointer;" />
+					</a>
+				</div>
+
+				<!-- 오른쪽 이미지 -->
+				<div style="width: 50%; min-width: 300px;">
+					<img src="/images/절약_스샷.png" alt="절약 챌린지 예시 이미지"
+						style="width: 500px; height: auto; border-radius: 20px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);" />
+				</div>
+
+			</div>
+		</section>
+
+		<!-- 여섯 번째 섹션(마지막) -->
+		<section class="section" style="background-color: #FDFDFD;"
+			data-aos-duration="1200" data-aos-delay="300"
+			data-aos-easing="ease-in-out">
+			<div
+				style="display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 60px; max-width: 1000px; margin: 0 auto; padding: 40px 20px;">
+
+				<!-- 왼쪽 이미지 -->
+				<div style="width: 50%; min-width: 300px; margin-right: 280px;">
+					<img src="/images/환기_스샷.png" alt="스마트 환기 시스템 예시 이미지"
+						style="width: 560px; height: auto; border-radius: 20px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);" />
+				</div>
+
+				<!-- 오른쪽 텍스트 -->
+				<div style="width: 50%; text-align: left;">
+					<h2 class="sub_title"
+						style="color: #6DCBF9; font-size: 40px; margin-bottom: 20px;">스마트
+						환기 가이드</h2>
+					<p class="sub_title_info"
+						style="font-size: 30px; color: #292929; margin-bottom: 16px; white-space: nowrap; margin-top: 10px; line-height: 1.2;">
+						내 집 맞춤 환기 추천으로<br> 쾌적하고 절약까지 챙기세요
+					</p>
+					<p
+						style="font-size: 25px; color: #6B7684; margin-bottom: 24px; line-height: 1.2; font-weight: 500; white-space: nowrap;">
+						우리 집 위치, 방향, 층수, 그리고 날씨까지 고려해<br> 환기 타이밍을 추천해주는 똑똑한 시스템!
+					</p>
+					<a th:href="@{guideMain}"> <img class="moveBtn"
+						src="/cards/스마트 환기 시스템 바로가기 버튼.png" alt="절약 챌린지 바로가기"
+						style="width: 240px; height: auto; border-radius: 20px; transition: transform 0.2s ease; cursor: pointer;" />
+					</a>
+				</div>
+
+			</div>
+		</section>
+	</div>
+
+	<!-- 스크롤 스크립트 -->
+	<script>
+      const observer = new IntersectionObserver(entries => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('visible');
+            }
+          });
+        }, { threshold: 0.3 });
+
+        document.querySelectorAll('.section').forEach(section => {
+          observer.observe(section);
+      });
+    </script>
+
+	<!-- AOS JS (CDN) -->
+	<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+	<script>
+      AOS.init();
+    </script>
+
+	<!-- Footer 시작 -->
+	<footer
+		style="background-color: #f2f2f2; padding: 15px 0; text-align: center; font-size: 14px; color: #666;">
+		<div>
+			<p style="margin: 0;">© 2025 A.P.T. All rights reserved.</p>
+			<p style="margin: 5px 0 0;">
+				Made with <span class="computer-icon">💻</span> by 팀 EF
+			</p>
+		</div>
+	</footer>
+	<!-- Footer 끝 -->
+</body>
+</html>

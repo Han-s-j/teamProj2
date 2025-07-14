@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>회원 목록</title>
+    <style>
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: #f7f7f7;
+            padding: 40px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+            color: #333;
+        }
+
+        .search-container {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        #searchInput {
+            padding: 10px 16px;
+            width: 300px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            transition: all 0.2s ease-in-out;
+        }
+
+        #searchInput:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 6px rgba(0, 123, 255, 0.2);
+        }
+
+        table {
+            width: 95%;
+            margin: 0 auto;
+            border-collapse: collapse;
+            background-color: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        th, td {
+            padding: 14px;
+            border-bottom: 1px solid #ddd;
+            text-align: center;
+            font-size: 15px;
+        }
+
+        th {
+            background-color: #f1f1f1;
+            color: #444;
+        }
+
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+		.back-btn {
+		    display: inline-block;
+		    margin-bottom: 20px;
+		    padding: 10px 20px;
+		    background-color: #6c757d;
+		    color: white;
+		    text-decoration: none;
+		    border-radius: 8px;
+		    transition: background-color 0.2s ease;
+		}
+
+		.back-btn:hover {
+		    background-color: #5a6268;
+		}
+    </style>
+</head>
+<body>
+	<a href="/admin/main" class="back-btn">← 관리자 메인으로 돌아가기</a>
+    <h2>👥 회원 목록</h2>
+
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="아이디 또는 닉네임 검색">
+    </div>
+
+    <table id="userTable">
+        <thead>
+            <tr>
+                <th>아이디</th>
+                <th>닉네임</th>
+                <th>아파트 코드</th>
+                <th>동</th>
+                <th>층수</th>
+                <th>포인트</th>
+                <th>가입일</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="user : ${userList}">
+                <td th:text="${user.userId}">아이디</td>
+                <td th:text="${user.nickname}">닉네임</td>
+                <td th:text="${user.kaptCode}">아파트 코드</td>
+                <td th:text="${user.userBlock}">동</td>
+                <td th:text="${user.userFloor}">층</td>
+                <td th:text="${user.totalPoint}">포인트</td>
+                <td th:text="${user.signupDate}">가입일</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script>
+        document.getElementById("searchInput").addEventListener("keyup", function () {
+            let keyword = this.value.toLowerCase();
+            let rows = document.querySelectorAll("#userTable tbody tr");
+
+            rows.forEach(row => {
+                let userId = row.cells[0].innerText.toLowerCase();
+                let nickname = row.cells[1].innerText.toLowerCase();
+
+                if (userId.includes(keyword) || nickname.includes(keyword)) {
+                    row.style.display = "";
+                } else {
+                    row.style.display = "none";
+                }
+            });
+        });
+    </script>
+</body>
+</html>

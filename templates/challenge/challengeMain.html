@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>절약 챌린지 | A.P.T</title>
+
+<link rel="stylesheet" th:href="@{/css/font.css}" />
+<link rel="stylesheet" href="/css/sidebar.css">
+<!-- Favicon -->
+<link rel="icon" href="/icons/favicon.png" type="image/png">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<style>
+* {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+	padding: 0;
+	background-color: #fdfdfd;
+	display: flex;
+	flex-direction: column; /* 추가: 자식 요소들을 세로로 정렬 */
+	min-height: 100vh; /* 변경: 최소 높이를 뷰포트 높이의 100%로 설정 */
+	overflow-y: auto; /* 변경: 필요할 때만 스크롤바가 생기도록 */
+	/* height: 100vh;과 overflow: hidden;은 제거하거나 min-height, overflow-y: auto로 변경 */
+}
+
+.main {
+	flex: 1; /* 변경: 남은 공간을 모두 차지하도록 설정 */
+	margin-left: 100px; /* 사이드바 너비만큼 왼쪽 마진 */
+	padding: 40px;
+	/* height: 100vh; 이 부분은 제거 */
+	overflow-y: auto; /* main 영역에서만 스크롤이 필요하면 auto */
+	display: flex;
+	flex-direction: column;
+}
+
+.grid {
+	display: grid;
+	grid-template-areas:
+		"challenge challenge link"
+		"rank point badge"
+		"rank tip tip";
+	grid-template-columns: 1.7fr 1fr 1.1fr;
+	grid-template-rows: auto 1fr 1.2fr;
+	gap: 16px;
+	height: 100%; /* 부모(main)의 높이에 맞추기 */
+	width: 100%;
+	max-width: 950px;
+	margin: 0 auto;
+	padding-bottom: 20px; /* 그리드 하단 여백 */
+}
+
+/* 모든 카드의 기본 스타일 */
+.card {
+	background: #fff;
+	border-radius: 12px;
+	padding: 24px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between; /* 내용이 위아래로 분산되도록 */
+	border: 1px solid #f0f0f0;
+	overflow: hidden; /* 내용이 카드 밖으로 넘치는 것을 방지 */
+}
+
+/* 각 그리드 영역에 해당하는 클래스 이름과 매칭 */
+.challenge {
+    grid-area: challenge;
+    padding: 0;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.challenge img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover; /* 이미지가 비율을 유지하며 영역을 덮도록 조정 */
+	border-radius: 12px;
+}
+
+.link {
+    grid-area: link;
+    padding: 0;
+    background: none; /* 배경색 제거 (투명하게) */
+    box-shadow: none; /* 그림자 제거 (이미지에만 줄 것이므로) */
+    border: none; /* 테두리 제거 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden; /* 이미지 오버플로우 방지 (여전히 중요!) */
+}
+
+.link a {
+    display: block;
+    width: 100%;
+    height: 100%;
+    display: flex; /* flex 컨테이너로 만들어 이미지 중앙 정렬을 돕습니다. */
+    align-items: center;
+    justify-content: center;
+}
+
+.link img {
+    max-width: 100%; /* 부모(a 태그)의 100%를 차지 */
+    height: auto; /* 부모(a 태그)의 100%를 차지 */
+    object-fit: contain; /* 이미지가 잘리지 않고 포함되도록 */
+    border-radius: 12px;
+    cursor: pointer;
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+.link a {
+display: block;
+width: 100%; /* a 태그가 link 영역을 꽉 채우도록 */
+height: 100%;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+
+/* 나머지 카드들도 .card 클래스와 grid-area 클래스를 모두 사용하도록 */
+.rank {
+	grid-area: rank;
+}
+.point {
+	grid-area: point;
+}
+.badge {
+	grid-area: badge;
+}
+.tip {
+	grid-area: tip;
+}
+
+.highlight {
+	font-size: 2rem;
+	font-weight: bold;
+	color: #AB66FF;
+	margin: 0;
+}
+
+.point-text {
+	font-size: 1.2rem;
+	color: #525A6B;
+	margin: 0;
+}
+
+/* 포인트 카드 레이아웃 수정 */
+.point-display {
+	display: flex;
+	flex-direction: row; /* column에서 row로 변경 */
+	align-items: center;
+	justify-content: center;
+	flex: 1;
+	gap: 8px;
+}
+
+.card h3 {
+	margin: 0 0 1px;
+	font-size: 1.3rem;
+	color: #292929;
+}
+
+.rank h3 {
+    margin: 0 0 8px; /* 적당한 간격 */
+    font-size: 1.3rem;
+    color: #292929;
+}
+
+.rank-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+}
+
+/* 닉네임 글자 크기 */
+.rank-item span:first-child {
+    font-size: 20px;
+}
+
+/* 포인트 글자 크기 및 색상 */
+.rank-item span:last-child {
+    font-size: 15px;
+    color: #525A6B;
+}
+
+.tip-content {
+	line-height: 1.6;
+	font-size: 0.95rem;
+	color: #444;
+}
+
+footer {
+	background-color: #f2f2f2;
+	padding: 15px 0;
+	text-align: center;
+	font-size: 14px;
+	color: #666;
+	width: 100%;
+	flex-shrink: 0; /* 추가: 푸터가 줄어들지 않도록 설정 */
+}
+</style>
+</head>
+
+<script>
+	// 세션 정보로 포인트 업데이트
+	function updateMainPagePoints() {
+	    $.ajax({
+	        url: '/challenge/getSessionInfo',
+	        method: 'POST',
+	        success: function(response) {
+	           // console.log('메인페이지 세션 응답:', response);
+	            if (response.success && response.loginUser) {
+	               // console.log('로그인된 사용자:', response.loginUser.nickname);
+	              // console.log('사용자 포인트:', response.userPoints);
+	                
+	                // 포인트 카드의 내용을 업데이트
+	                const pointCard = document.querySelector('.card.point');
+	                if (pointCard) {
+	                    const pointsDisplay = response.userPoints || 0;
+	                    pointCard.innerHTML = `
+	                        <h3>내 포인트</h3>
+	                        <div class="point-display">
+	                            <span class="highlight">${pointsDisplay}</span>
+	                            <span class="point-text">포인트</span>
+	                        </div>
+	                    `;
+	                   // console.log('포인트 카드 업데이트 완료:', pointsDisplay);
+	                }
+	                
+	                // 뱃지 정보도 업데이트
+	                updateMainPageBadges();
+	            } else {
+	               // console.log('로그아웃 상태 또는 세션 정보 없음');
+	                // 로그아웃 상태일 때
+	                const pointCard = document.querySelector('.card.point');
+	                if (pointCard) {
+						pointCard.innerHTML = `
+						    <h3>내 포인트</h3>
+						    <div class="point-display">
+						        <span class="highlight">${pointsDisplay}</span>
+						        <span class="point-text">포인트</span>
+						    </div>
+						`;
+	                }
+	                
+	                // 뱃지도 기본 상태로
+	                const badgeCard = document.querySelector('.card.badge');
+	                if (badgeCard) {
+	                    badgeCard.innerHTML = `
+	                        <h3>내 뱃지</h3>
+	                        <div style="text-align: center; color: #888; font-size: 0.9rem; padding: 20px 0;">
+	                            로그인이 필요합니다
+	                        </div>
+	                    `;
+	                }
+	            }
+	        },
+	        error: function(xhr, status, error) {
+	            console.error('세션 정보 조회 실패:', error);
+	            console.error('응답 상태:', xhr.status);
+	            console.error('응답 텍스트:', xhr.responseText);
+	            
+	            // 오류 시에도 로그인 필요 메시지 표시
+	            const pointCard = document.querySelector('.card.point');
+	            if (pointCard) {
+	                pointCard.innerHTML = `
+	                    <h3>내 포인트</h3>
+	                    <div class="point-display">
+	                        <span style="font-size: 1rem; color: #888;">로그인이 필요합니다</span>
+	                    </div>
+	                `;
+	            }
+	        }
+	    });
+	}
+
+	// 메인 페이지 뱃지 업데이트
+	function updateMainPageBadges() {
+	    $.ajax({
+	        url: '/challenge/getUserBadges',
+	        method: 'POST',
+	        success: function(response) {
+	            console.log('메인페이지 뱃지 응답:', response);
+	            if (response.success && response.badges) {
+	                const badgeCard = document.querySelector('.card.badge');
+	                if (badgeCard && response.badges.length > 0) {
+	                    let badgeHTML = '<h3>내 뱃지</h3>';
+	                    
+	                    // 최대 3개의 뱃지만 표시 (공간 제약)
+	                    const displayBadges = response.badges.slice(0, 3);
+	                    
+	                    displayBadges.forEach(badge => {
+	                        badgeHTML += `
+	                            <div class="badge-item" style="margin-bottom: 8px;">
+	                                <span style="font-size: 1.2rem;">🏆</span>
+	                                <span style="font-size: 1.1rem;">${badge.BADGENAME}</span>
+	                            </div>
+	                        `;
+	                    });
+	                    
+	                    if (response.badges.length > 3) {
+	                        badgeHTML += `<p style="font-size: 0.8rem; color: #777; margin: 10px 0 0;">외 ${response.badges.length - 3}개</p>`;
+	                    }
+	                    
+	                    badgeCard.innerHTML = badgeHTML;
+	                } else {
+	                    // 뱃지가 없는 경우
+	                    const badgeCard = document.querySelector('.card.badge');
+	                    if (badgeCard) {
+	                        badgeCard.innerHTML = `
+	                            <h3>내 뱃지</h3>
+	                            <div style="text-align: center; color: #888; font-size: 0.9rem; padding: 20px 0;">
+	                                아직 획득한 뱃지가 없습니다
+	                            </div>
+	                        `;
+	                    }
+	                }
+	            }
+	        },
+	        error: function(xhr, status, error) {
+	            console.error('뱃지 정보 조회 실패:', error);
+	        }
+	    });
+	}
+
+	// 랭킹 정보 업데이트
+	function updateRanking() {
+	    $.ajax({
+	        url: '/challenge/getRanking',
+	        method: 'POST',
+	        success: function(response) {
+	            console.log('랭킹 응답:', response);
+	            if (response.success && response.ranking) {
+	                const rankCard = document.querySelector('.card.rank');
+	                if (rankCard && response.ranking.length > 0) {
+	                    let rankHTML = '<h3>절약 랭킹</h3>';
+	                    
+						const medals = ['🥇', '🥈', '🥉']; // 1-3등용 메달
+
+						response.ranking.forEach((user, index) => {
+						    let displayText = '';
+						    if (index < 3) {
+						        displayText = `${medals[index]} ${user.NICKNAME}`;
+						    } else {
+						        displayText = `${index + 1}. ${user.NICKNAME}`; // 4등부터는 숫자로 표시
+						    }
+						    
+						    rankHTML += `
+						        <div class="rank-item">
+						            <span>${displayText}</span>
+						            <span>${user.TOTAL_POINT} 포인트</span>
+						        </div>
+						    `;
+						});
+	                    
+	                    rankCard.innerHTML = rankHTML;
+	                } else {
+	                    // 랭킹 데이터가 없는 경우
+	                    const rankCard = document.querySelector('.card.rank');
+	                    if (rankCard) {
+	                        rankCard.innerHTML = `
+	                            <h3>절약 랭킹</h3>
+	                            <div style="text-align: center; color: #888; font-size: 0.9rem; padding: 20px 0;">
+	                                랭킹 데이터가 없습니다
+	                            </div>
+	                        `;
+	                    }
+	                }
+	            }
+	        },
+	        error: function(xhr, status, error) {
+	            console.error('랭킹 정보 조회 실패:', error);
+	        }
+	    });
+	}
+	// 페이지 로드 시 실행
+	window.onload = () => {
+	    console.log('메인페이지 로드 완료');
+	    updateMainPagePoints();
+	    updateRanking(); // 랭킹 정보도 함께 로드
+	};
+
+	// 페이지가 포커스를 받을 때도 업데이트 (다른 페이지에서 돌아왔을 때)
+	window.addEventListener('focus', () => {
+	    console.log('페이지 포커스 받음 - 포인트 및 랭킹 업데이트');
+	    updateMainPagePoints();
+	    updateRanking(); // 랭킹도 함께 업데이트
+	});
+</script>
+<body>
+	<!-- 사이드바 -->
+	<div th:replace="common/sidebar :: sidebar"></div>
+	
+	<div class="main">
+		<div class="grid">
+			<div class="challenge"> <img src="/cards/절약챌린지배너(1).png" alt="절약 챌린지 카드">
+			</div>
+
+			<div class="link"> <a th:href="@{challengeDetail}"> <img src="/cards/내 챌린지.png"
+					alt="내 챌린지 보기">
+				</a>
+			</div>
+
+			<div class="card rank"> 
+				<h3>절약 랭킹</h3>
+				<!-- 기본 표시 (JavaScript로 동적 업데이트됨) -->
+				<div class="rank-item">
+					<span>🥇 로딩중...</span><span>- 포인트</span>
+				</div>
+				<div class="rank-item">
+					<span>🥈 로딩중...</span><span>- 포인트</span>
+				</div>
+				<div class="rank-item">
+					<span>🥉 로딩중...</span><span>- 포인트</span>
+				</div>
+			</div>
+
+			<!-- 포인트 카드 (로그인 상태에 따라 표시) -->
+			<div class="card point">
+			    <h3>내 포인트</h3>
+			    <div th:if="${loginUser != null}" class="point-display">
+			        <span class="highlight" th:text="${userPoints != null ? userPoints : 0}">0</span>
+			        <span class="point-text">포인트</span>
+			    </div>
+			    <!-- 로그아웃 시 표시 -->
+			    <div th:if="${loginUser == null}" class="point-display">
+			        <span style="font-size: 1rem; color: #888;">로그인이 필요합니다</span>
+			    </div>
+			</div>
+
+			<div class="card badge"> <h3>내 뱃지</h3>
+				<div class="badge-item">
+					<span>🌱</span><span>절약 새싹</span>
+				</div>
+				<p style="font-size: 0.85rem; color: #777;">(아이콘)</p>
+			</div>
+
+			<div class="card tip">
+				<h3>절약 TIP</h3>
+				<div class="tip-content">
+					<p>💡 양치컵 사용하기</p>
+					<p>🔌 플러그 뽑기</p>
+					<p>🚿 5분 샤워 실천</p>
+					<p>💧 설거지 물 받아서 하기</p>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<!-- footer 시작 -->
+    <footer>
+		<div>
+			<p style="margin: 0;">© 2025 A.P.T. All rights reserved.</p>
+			<p style="margin: 5px 0 0;">
+				Made with <span class="computer-icon">💻</span> by 팀 EF
+			</p>
+		</div>
+	</footer>
+	<!-- footer 끝 -->
+</body>
+
+</html>

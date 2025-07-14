@@ -1,0 +1,1557 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>절약 챌린지 | A.P.T</title>
+
+    <!-- External Resources -->
+    <link rel="stylesheet" th:href="@{/css/font.css}" />
+    <link rel="stylesheet" href="/css/sidebar_challenge.css">
+    <link rel="icon" href="/icons/favicon.png" type="image/png">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <style>
+        /* ===== BASE STYLES ===== */
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background-color: #fdfdfd;
+        }
+
+        /* ===== LAYOUT ===== */
+        .main-container {
+            margin-left: 90px;
+            min-height: 100vh;
+            background-color: #fdfdfd;
+            display: flex; /* 자식 섹션들이 flex 아이템으로 배치되도록 */
+        	flex-direction: column; /* 세로로 배치 */
+        }
+
+        /* ===== CHALLENGE SECTION ===== */
+        .section-challenge {
+            background: #fdfdfd;
+            /* min-height: 100vh; */
+            padding: 40px;
+            width: 100%;
+        }
+
+        .left-content h2 {
+            font-size: 40px;
+            line-height: 1.5;
+            color: #292929;
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .right-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        .summary-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            width: 640px;
+            max-width: 90%;
+            font-size: 25px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            color: #292929;
+        }
+
+        .nickname {
+            color: #9C6EF4;
+        }
+
+        /* ===== CATEGORY BUTTONS ===== */
+        .category-buttons {
+            display: flex;
+            gap: 10px;
+            width: 640px;
+            max-width: 90%;
+            justify-content: flex-start;
+        }
+
+        .category-buttons img {
+            width: 140px;
+            height: auto;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .category-buttons img:hover {
+            transform: scale(1.05);
+        }
+
+        /* ===== CHALLENGE CARD ===== */
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px 35px;
+            width: 640px;
+            max-width: 90%;
+            font-size: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid #eee;
+            color: #292929;
+        }
+
+        .item:last-child {
+            border-bottom: none;
+        }
+
+        .action-button img {
+            width: 80px;
+            height: auto;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .action-button img:hover {
+            transform: scale(1.1);
+        }
+
+        /* ===== HISTORY SECTION ===== */
+        .section-history {
+            background-color: #fdfdfd;
+            /* min-height: 100vh; */
+            padding: 100px 40px 80px;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .section-history h2 {
+            text-align: center;
+            font-size: 40px;
+            margin-bottom: 60px;
+            line-height: 1.5;
+            color: #292929;
+        }
+
+        .gray-box {
+            width: 100%;
+            max-width: 1200px;
+            padding: 40px 30px;
+            border-radius: 20px;
+            display: flex;
+            gap: 60px;
+            justify-content: center;
+            margin: 0 auto;
+            min-height: 700px;
+            align-items: center;
+        }
+
+        /* ===== HISTORY CARDS ===== */
+        .history-card {
+            flex: 1;
+            min-width: 360px;
+            max-width: 400px;
+            height: 580px;
+            border-radius: 20px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-header {
+            padding: 0 25px;
+            color: #ffffff;
+            height: 60px;
+            line-height: 60px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .calendar-header {
+            background-color: #D3BFF9;
+            text-align: left;
+        }
+
+        .badge-header {
+            background-color: #E7E0FF;
+            color: #8B7EF1;
+            text-align: left;
+        }
+
+        .point-header {
+            background-color: #F1E7FC;
+            color: #C4A6F7;
+            text-align: left;
+        }
+
+        .card-body {
+            padding: 25px;
+            background-color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            align-items: center;
+            flex: 1;
+        }
+		
+		#point-log-body {
+		    align-items: flex-start !important;
+		    overflow-y: auto;
+		    max-height: 480px;
+		    width: 100% !important;
+		}
+
+		#point-log-body .item {
+		    width: 100%;
+		    border-bottom: 1px solid #eee !important;
+		    padding: 15px 0 !important;
+		}
+        /* ===== CALENDAR STYLES ===== */
+        .calendar-body {
+            justify-content: center;
+            height: 100%;
+        }
+
+        .calendar-icon {
+            width: 95px;
+            height: auto;
+            margin-top: -25px;
+            margin-bottom: 25px;
+        }
+
+        .month-label {
+            text-align: center;
+            font-weight: bold;
+            color: #292929;
+            font-size: 24px;
+            letter-spacing: 1px;
+        }
+
+        .calendar {
+            width: 100%;
+            text-align: center;
+            font-size: 15px;
+            border-collapse: collapse;
+        }
+
+        .calendar th:first-child {
+            color: red;
+        }
+
+        .calendar td:nth-child(1) span {
+            color: red;
+        }
+
+        .calendar th {
+            font-weight: normal;
+            color: #888;
+        }
+
+        .calendar td {
+            height: 38px;
+        }
+
+        .highlight {
+            background-color: #D3BFF9;
+            border-radius: 50%;
+            display: inline-block;
+            width: 28px;
+            height: 28px;
+            line-height: 28px;
+        }
+
+        /* ===== BADGE STYLES ===== */
+        .badge-alert {
+            background-color: #F8EFFF;
+            color: #8B7EF1;
+            font-size: 16px;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .badge-alert.hidden {
+            display: none;
+        }
+
+        .badge-alert p {
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        .badge-alert p .bold {
+            font-weight: bold;
+        }
+
+        .badge-alert img {
+            height: 56px;
+            transform: scaleX(-1);
+        }
+
+        .badge-list {
+            display: flex;
+            justify-content: flex-start;
+            gap: 15px;
+            width: 100%;
+            margin-left: 10px;
+            flex-wrap: wrap;
+        }
+
+        .badge-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            margin: 5px;
+        }
+
+        .badge-item:hover {
+            transform: translateY(-3px);
+        }
+
+        .badge-item img {
+            width: 70px;
+            height: 70px;
+            object-fit: contain;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .badge-item.locked img {
+            opacity: 0.3;
+            filter: grayscale(100%);
+        }
+
+        .badge-item.unlocked img {
+            opacity: 1;
+            filter: none;
+            border-color: #9C6EF4;
+            box-shadow: 0 4px 12px rgba(156, 110, 244, 0.3);
+        }
+
+        .badge-name {
+            font-size: 11px;
+            font-weight: bold;
+            margin-top: 6px;
+            text-align: center;
+            color: #333;
+            max-width: 80px;
+            word-break: keep-all;
+            line-height: 1.2;
+        }
+
+        .badge-progress {
+            font-size: 10px;
+            color: #888;
+            margin-top: 3px;
+            text-align: center;
+        }
+
+        .badge-item.unlocked .badge-progress {
+            color: #9C6EF4;
+            font-weight: bold;
+        }
+
+        .new-badge-indicator {
+            position: absolute;
+            top: -3px;
+            right: -3px;
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: pulse 2s infinite;
+            font-weight: bold;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* ===== TOAST NOTIFICATIONS ===== */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+        }
+
+        .toast {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            margin-bottom: 10px;
+            transform: translateX(400px);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            max-width: 350px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .toast.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .toast.warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .toast.info {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            color: #333;
+        }
+
+        .toast-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toast-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .toast-message {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-weight: bold;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+
+        .toast-text {
+            font-size: 13px;
+            opacity: 0.9;
+            line-height: 1.4;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: inherit;
+            font-size: 18px;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toast-close:hover {
+            opacity: 1;
+        }
+
+        /* ===== RESPONSIVE DESIGN ===== */
+        @media (max-width: 768px) {
+            .main-container {
+                margin-left: 0;
+            }
+
+            .section-challenge {
+                padding: 40px 20px;
+            }
+
+            .left-content h2 {
+                font-size: 28px;
+            }
+
+            .summary-card, .card {
+                width: 100%;
+                max-width: none;
+            }
+
+            .category-buttons {
+                justify-content: center;
+                width: 100%;
+                max-width: none;
+            }
+
+            .category-buttons img {
+                width: 110px;
+            }
+
+            .action-button img {
+                width: 80px;
+                position: relative;
+  				display: inline-block;
+            }
+
+            .section-history {
+                padding: 60px 20px 40px;
+            }
+
+            .section-history h2 {
+                font-size: 28px;
+                color: #292929;
+            }
+
+            .gray-box {
+                flex-direction: column;
+                gap: 20px;
+                padding: 20px;
+            }
+
+            .badge-list {
+                gap: 10px;
+            }
+
+            .badge-item img {
+                width: 60px;
+                height: 60px;
+            }
+        }
+
+        /* ===== UTILITIES ===== */
+        .label {
+            font-size: 16px;
+            font-weight: normal;
+            color: #292929;
+            margin: 10px 0;
+            padding: 5px;
+        }
+        /* ==== 모달 스타일 ==== */
+        /* 모달 배경 */
+		.ocr-modal {
+		  display: none;
+		  position: fixed;
+		  z-index: 1000;
+		  left: 0;
+		  top: 0;
+		  width: 100%;
+		  height: 100%;
+		  background-color: rgba(0, 0, 0, 0.5);
+		  justify-content: center;
+		  align-items: center;
+		}
+		
+		/* 모달 내용 */
+		.ocr-modal-content {
+		  background-color: #fff;
+		  padding: 30px;
+		  border-radius: 20px;
+		  text-align: center;
+		  width: 320px;
+		  box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+		  animation: pop 0.2s ease-out;
+		}
+		
+		/* 귀여운 아이콘 */
+		.ocr-icon {
+		  width: 80px;
+		  margin-bottom: 20px;
+		  animation: pop 0.6s ease;
+		}
+		
+		/* 메시지 */
+		.ocr-message {
+		  font-size: 18px;
+		  font-weight: bold;
+		  margin-bottom: 20px;
+		  white-space: nowrap;
+		  color: #333;
+		}
+		
+		/* 확인 버튼 */
+		.ocr-confirm-button {
+		  background-color: #A56EFF;
+		  color: #fff;
+		  border: none;
+		  padding: 10px 26px;
+		  border-radius: 10px;
+		  cursor: pointer;
+		  font-size: 16px;
+		}
+		
+		.ocr-confirm-button:hover {
+		  background-color: #8b54d7;
+		}
+		
+		/* 팝 애니메이션 */
+		@keyframes pop {
+		  0% { transform: scale(0.3); opacity: 0; }
+		  100% { transform: scale(1); opacity: 1; }
+		}
+		/* 설명 툴팁 기본 스타일 */
+		.tooltip-message {
+		  position: absolute;
+		  top: 88%;
+		  left: 75%; /* 오른쪽으로 약간 떨어지게 */
+		  transform: translateX(-50%);
+		  background-color: #9c5cff;
+		  color: #fff;
+		  font-size: 15px;
+		  padding: 8px 12px;
+		  border-radius: 8px;
+		  white-space: nowrap;
+		  z-index: 10;
+		  opacity: 0;
+		  pointer-events: none;
+		  transition: opacity 0.3s ease;
+		}
+		.tooltip-message::before {
+ 		  content: "";
+		  position: absolute;
+		  top: 50%;
+		  left: -16px;
+		  transform: translateY(-50%);
+		  border-width: 8px;
+		  border-style: solid;
+		  border-color: transparent #9c5cff transparent transparent; /* 왼쪽 꼬리 */
+		}
+		/* 호버 시 나타나도록 설정 */
+		.action-button:hover .tooltip-message {
+		  opacity: 1;
+		}
+		
+    </style>
+</head>
+
+<body>
+    <!-- 사이드바 -->
+    <div th:replace="common/sidebar :: sidebar"></div>
+    
+    <div class="toast-container" id="toast-container"></div>
+    
+    <!-- 메인 컨테이너 -->
+    <div class="main-container">
+        <!-- 첫 번째 섹션: 챌린지 -->
+        <div class="section-challenge">
+            <div class="left-content">
+                <h2>세상을 바꾸는<br>작은 행동의 시작</h2>
+                <div class="right-content">
+                    <div class="summary-card">
+                        <div>
+                            <b class="nickname" th:text="${session.loginUser.nickname}">닉네임</b>님의 절약 포인트
+                        </div>
+                        <div id="summary" th:text="${userPoints != null ? userPoints + '포인트' : '0포인트'}">0포인트</div>
+                    </div>
+                    <div class="category-buttons">
+                        <img src="/icons/물절약.png" alt="물절약" onclick="changeCategory('물')" />
+                        <img src="/icons/전기절약.png" alt="전기절약" onclick="changeCategory('전기')" />
+                        <img src="/icons/자원절약.png" alt="자원절약" onclick="changeCategory('자원')" />
+                    </div>
+                    <div class="card" id="actionCard"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 두 번째 섹션: 히스토리 -->
+        <div class="section-history">
+            <h2>챌린지 히스토리</h2>
+            <div class="gray-box">
+                <div class="history-card">
+                    <div class="card-header calendar-header" id="calendar-title"></div>
+                    <div class="card-body calendar-body">
+                        <img src="/icons/절약_달력.png" class="calendar-icon">
+                        <div class="month-label" id="month-name"></div>
+                        <table class="calendar">
+                            <thead>
+                                <tr>
+                                    <th>일</th>
+                                    <th>월</th>
+                                    <th>화</th>
+                                    <th>수</th>
+                                    <th>목</th>
+                                    <th>금</th>
+                                    <th>토</th>
+                                </tr>
+                            </thead>
+                            <tbody id="calendar-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="history-card">
+                    <div class="card-header badge-header">내 뱃지</div>
+                    <div class="card-body">
+						<div class="badge-alert hidden" id="badge-alert">
+						    <p>축하해요!<br> <span class="bold">새로운 뱃지가 생겼어요!</span></p>
+						    <img src="/icons/절약_뱃지_로고.png" alt="new badge">
+						</div>
+                        <div class="badge-list" id="badge-list">
+                            <!-- JavaScript에서 동적으로 생성됩니다 -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="history-card">
+                    <div class="card-header point-header">포인트 적립 내역</div>
+                    <div class="card-body" id="point-log-body" style="align-items: flex-start; overflow-y: auto;">
+                        <!-- 자바스크립트가 내역 자동 삽입 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+	<!-- OCR 결과 모달 -->
+	<div id="ocrModal" class="ocr-modal">
+	  <div class="ocr-modal-content">
+	  	<img src="/icons/challenge_modal.png" alt="축하" class="ocr-icon">
+	    <p id="ocrMessage" class="ocr-message">메일을 00개 정리하셨어요! 👏</p>
+	    <button onclick="confirmOcrSuccess()" class="ocr-confirm-button">확인</button>
+	  </div>
+	</div>
+    <script>
+        /* ===== GLOBAL VARIABLES ===== */
+        // 사용자 정보
+        let loginUser = null;
+        let currentUserPoints = 0;
+        let isLoggedIn = false;
+        let totalPoints = 0;
+        let isDataLoaded = false;
+        
+        // 챌린지 관련
+        let currentCategory = '물';
+        let todayCompletedChallenges = [];
+        
+        // 달력 관련
+        let monthlyCompletedDates = [];
+        let currentCalendarYear = new Date().getFullYear();
+        let currentCalendarMonth = new Date().getMonth();
+		let todayAchievementStatus = false; // 오늘 8개 달성 여부
+
+        // 뱃지 관련
+        let badgeDefinitions = [];
+        let userBadges = [];
+        let newlyEarnedBadges = [];
+        let badgeProgress = {};
+
+        // 챌린지 목록 데이터
+        const challengeData = {
+            '물': ['샤워시간 줄이기', '비누칠시 물 켜두지않기', '양치컵 사용하기', '설거지 시 물 받아쓰기', '빨래 모아서 하기'],
+            '전기': ['불필요한 조명 끄기', '플러그 뽑기', '대기전력 차단', '절전모드 활용하기', '적정온도 조절하기'],
+            '자원': ['분리수거 철저히 하기', '일회용품 줄이기', '텀블러 사용하기', '이메일 삭제 및 정리', '비닐봉지 대신 장바구니']
+        };
+
+        const actionIcons = {
+            action: '/icons/행동.png',
+            success: '/icons/성공.png',
+            disabled: '/icons/disabled.png'
+        };
+
+        /* ===== TOAST NOTIFICATION FUNCTIONS ===== */
+        function showToast(message, type = 'info', title = '', duration = 4000) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+
+            const icons = {
+                success: '🏆',
+                warning: '⚠️',
+                error: '❌',
+                info: 'ℹ️'
+            };
+
+            toast.innerHTML = `
+                <div class="toast-content">
+                    <div class="toast-icon">${icons[type] || icons.info}</div>
+                    <div class="toast-message">
+                        ${title ? `<div class="toast-title">${title}</div>` : ''}
+                        <div class="toast-text">${message}</div>
+                    </div>
+                    <button class="toast-close" onclick="removeToast(this.parentElement)">×</button>
+                </div>
+            `;
+
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 100);
+            setTimeout(() => removeToast(toast), duration);
+            return toast;
+        }
+
+        function removeToast(toast) {
+            if (toast && toast.parentElement) {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    if (toast.parentElement) {
+                        toast.parentElement.removeChild(toast);
+                    }
+                }, 400);
+            }
+        }
+
+        function showSuccessToast(message, title = '성공!') {
+            showToast(message, 'success', title);
+        }
+
+        function showWarningToast(message, title = '알림') {
+            showToast(message, 'warning', title);
+        }
+
+        function showInfoToast(message, title = '정보') {
+            showToast(message, 'info', title);
+        }
+
+        /* ===== SESSION & AUTHENTICATION ===== */
+        function checkSessionInfo() {
+            console.log('세션 정보 확인 시작');
+            $.ajax({
+                url: '/challenge/getSessionInfo',
+                method: 'POST',
+                success: function (response) {
+                    console.log('세션 정보 응답:', response);
+                    if (response.success) {
+                        loginUser = response.loginUser;
+                        currentUserPoints = response.userPoints || 0;
+                        totalPoints = currentUserPoints;
+                        isLoggedIn = true;
+                        console.log('로그인 성공 - 사용자:', loginUser.nickname, '포인트:', totalPoints);
+                    } else {
+                        console.log('세션에 로그인 정보 없음');
+                        resetUserData();
+                    }
+                    initializePage();
+                },
+                error: function (xhr, status, error) {
+                    console.error('세션 정보 조회 실패:', error);
+                    resetUserData();
+                    initializePage();
+                }
+            });
+        }
+
+        function resetUserData() {
+            loginUser = null;
+            currentUserPoints = 0;
+            totalPoints = 0;
+            isLoggedIn = false;
+        }
+
+        function checkLoginStatus() {
+            if (!isLoggedIn || !loginUser) {
+                console.log('로그아웃 상태입니다.');
+                return false;
+            }
+            return true;
+        }
+
+        /* ===== PAGE INITIALIZATION ===== */
+        function initializePage() {
+            console.log('페이지 초기화 시작 - 로그인 상태:', isLoggedIn);
+            
+            updateSummary();
+            renderCard();
+            initializeCalendar();
+
+            if (isLoggedIn) {
+                loadTodayCompletedChallenges();
+                loadPointHistory();
+                loadBadgeDefinitions();
+            } else {
+                isDataLoaded = true;
+                renderDefaultBadges();
+            }
+            
+            console.log('페이지 초기화 완료');
+        }
+
+        /* ===== BADGE FUNCTIONS ===== */
+        function loadBadgeDefinitions() {
+            console.log('뱃지 정의 로드 시작');
+            $.ajax({
+                url: '/badge/getBadgeDefinitions',
+                method: 'POST',
+                success: function (response) {
+                    console.log('뱃지 정의 응답:', response);
+                    badgeDefinitions = response.success ? (response.badges || []) : [];
+                    loadUserBadges();
+                },
+                error: function (xhr, status, error) {
+                    console.error('뱃지 정의 조회 실패:', error);
+                    badgeDefinitions = [];
+                    loadUserBadges();
+                }
+            });
+        }
+
+        function loadUserBadges() {
+            console.log('사용자 뱃지 로드 시작');
+            if (!checkLoginStatus()) {
+                userBadges = [];
+                badgeProgress = {};
+                renderBadges();
+                return;
+            }
+
+            $.ajax({
+                url: '/challenge/getUserBadges',
+                method: 'POST',
+                success: function (response) {
+                    console.log('사용자 뱃지 응답:', response);
+                    if (response.success) {
+                        userBadges = response.badges || [];
+                        loadBadgeProgress();
+                    } else {
+                        userBadges = [];
+                        badgeProgress = {};
+                        renderBadges();
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('사용자 뱃지 조회 실패:', error);
+                    userBadges = [];
+                    badgeProgress = {};
+                    renderBadges();
+                }
+            });
+        }
+
+        function loadBadgeProgress() {
+            console.log('뱃지 진행도 로드 시작');
+            if (!checkLoginStatus()) {
+                badgeProgress = {};
+                renderBadges();
+                return;
+            }
+
+            $.ajax({
+                url: '/challenge/getCategoryProgress',
+                method: 'POST',
+                success: function (response) {
+                    console.log('뱃지 진행도 응답:', response);
+                    badgeProgress = response.success ? (response.progress || {}) : {};
+                    checkForNewBadges();
+                    renderBadges();
+                },
+                error: function (xhr, status, error) {
+                    console.error('뱃지 진행도 조회 실패:', error);
+                    badgeProgress = {};
+                    renderBadges();
+                }
+            });
+        }
+
+        function renderBadges() {
+            console.log('뱃지 렌더링 시작');
+            const badgeList = document.getElementById('badge-list');
+            if (!badgeList) {
+                console.error('badge-list 요소를 찾을 수 없습니다');
+                return;
+            }
+
+            badgeList.innerHTML = '';
+
+            const defaultBadges = [
+                {badgeId: 'water_badge01', badgeName: '물 절약 초심자', category: '물'},
+                {badgeId: 'energy_badge01', badgeName: '에너지 절약 초심자', category: '전기'},
+                {badgeId: 'waste_badge01', badgeName: '자원 절약 초심자', category: '자원'}
+            ];
+
+            const badges = badgeDefinitions.length > 0 ? badgeDefinitions : defaultBadges;
+            console.log('렌더링할 뱃지들:', badges);
+
+            badges.forEach(badge => {
+                const badgeItem = createBadgeItem(badge);
+                badgeList.appendChild(badgeItem);
+            });
+
+            updateBadgeAlert();
+            console.log('뱃지 렌더링 완료');
+        }
+
+        function createBadgeItem(badge) {
+            const badgeItem = document.createElement('div');
+            badgeItem.className = 'badge-item';
+
+            const isUnlocked = userBadges.some(userBadge => userBadge.BADGEID === badge.badgeId);
+            const currentProgress = badgeProgress[badge.category] || 0;
+
+            console.log(`뱃지 ${badge.badgeId}: 보유=${isUnlocked}, 진행도=${currentProgress}`);
+
+            badgeItem.classList.add(isUnlocked ? 'unlocked' : 'locked');
+
+            // 뱃지 이미지
+            const img = document.createElement('img');
+            if (isUnlocked) {
+                img.src = `/badge/image/${badge.badgeId}`;
+            } else {
+                img.src = getDefaultBadgeImage(badge.category);
+                img.style.filter = 'grayscale(100%) opacity(0.3)';
+            }
+
+            // 뱃지 이름
+            const name = document.createElement('div');
+            name.className = 'badge-name';
+            name.textContent = badge.badgeName;
+
+            // 진행도
+            const progress = document.createElement('div');
+            progress.className = 'badge-progress';
+            progress.textContent = isUnlocked ? '완료!' : `${currentProgress}/5`;
+
+            badgeItem.appendChild(img);
+            badgeItem.appendChild(name);
+            badgeItem.appendChild(progress);
+
+            // 새 뱃지 표시
+            if (newlyEarnedBadges.includes(badge.badgeId)) {
+                const newIndicator = document.createElement('div');
+                newIndicator.className = 'new-badge-indicator';
+                newIndicator.textContent = 'N';
+                badgeItem.appendChild(newIndicator);
+            }
+
+            // 클릭 이벤트
+            badgeItem.onclick = () => showBadgeDetails(badge, isUnlocked, currentProgress);
+
+            return badgeItem;
+        }
+
+        function renderDefaultBadges() {
+            console.log('기본 뱃지 렌더링');
+            badgeDefinitions = [];
+            userBadges = [];
+            badgeProgress = {};
+            renderBadges();
+        }
+
+        function getDefaultBadgeImage(category) {
+            const defaultImages = {
+                '물': '/icons/물절약.png',
+                '전기': '/icons/전기절약.png',
+                '자원': '/icons/자원절약.png'
+            };
+            return defaultImages[category] || '/icons/default_badge.png';
+        }
+
+        function showBadgeDetails(badge, isUnlocked, currentProgress) {
+            if (isUnlocked) {
+                showSuccessToast(`${badge.badgeName} 뱃지를 보유하고 있습니다!`, '뱃지 보유 🏆');
+            } else {
+                showInfoToast(`5개 완료 시 획득 (현재: ${currentProgress}/5)`, badge.badgeName);
+            }
+        }
+
+        function updateBadgeAlert() {
+            const badgeAlert = document.getElementById('badge-alert');
+            const newBadgeName = document.getElementById('new-badge-name');
+
+            if (!badgeAlert) return;
+
+            if (newlyEarnedBadges.length > 0) {
+
+                badgeAlert.classList.remove('hidden');
+
+                setTimeout(() => {
+                    badgeAlert.classList.add('hidden');
+                }, 5000);
+            } else {
+                badgeAlert.classList.add('hidden');
+            }
+        }
+
+        function checkForNewBadges() {
+            const today = new Date();
+            const todayString = today.toDateString();
+
+            newlyEarnedBadges = userBadges
+                .filter(badge => {
+                    if (!badge.awardedDate) return false;
+                    const awardedDate = new Date(badge.awardedDate);
+                    return awardedDate.toDateString() === todayString;
+                })
+                .map(badge => badge.badgeId);
+
+            console.log('오늘 획득한 새 뱃지:', newlyEarnedBadges);
+        }
+
+        /* ===== CHALLENGE FUNCTIONS ===== */
+        function loadTodayCompletedChallenges() {
+            if (!checkLoginStatus()) {
+                isDataLoaded = true;
+                renderCard();
+                return;
+            }
+
+            $.ajax({
+                url: '/challenge/getTodayCompleted',
+                method: 'POST',
+                contentType: 'application/json',
+                success: function (response) {
+                    console.log('완료된 챌린지 서버 응답:', response);
+                    if (response.success) {
+                        todayCompletedChallenges = response.completedChallenges || [];
+                        console.log('오늘 완료한 챌린지:', todayCompletedChallenges);
+                    } else {
+                        console.log('완료된 챌린지 조회 실패:', response.message);
+                        todayCompletedChallenges = [];
+                    }
+                    isDataLoaded = true;
+                    renderCard();
+					checkTodayAchievement();
+                },
+                error: function (xhr, status, error) {
+                    console.error('완료된 챌린지 조회 실패:', error);
+                    todayCompletedChallenges = [];
+                    isDataLoaded = true;
+                    renderCard();
+                }
+            });
+        }
+
+        function savePointsToServer(challengeName) {
+            if (!checkLoginStatus()) {
+                showWarningToast('로그인 후 이용해주세요!', '로그인 필요');
+                setTimeout(() => {
+                    window.location.href = '/sign';
+                }, 2000);
+                return;
+            }
+
+            console.log('포인트 저장 시도:', challengeName);
+
+            if (!challengeName || challengeName.trim() === '') {
+                console.error('챌린지명이 비어있습니다.');
+                return;
+            }
+
+            $.ajax({
+                url: '/challenge/earnPoints',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    challengeName: challengeName
+                }),
+                success: function (response) {
+                    console.log('포인트 저장 응답:', response);
+                    if (response.success) {
+                        totalPoints = response.totalPoints;
+                        updateSummary();
+
+                        if (!todayCompletedChallenges.includes(challengeName)) {
+                            todayCompletedChallenges.push(challengeName);
+                        }
+
+                        loadPointHistory();
+                        loadUserBadges();
+
+                        console.log('포인트 적립 완료:', challengeName);
+                        renderCard();
+						
+						checkTodayAchievement();
+
+                        showSuccessToast('100포인트가 적립되었습니다!', '챌린지 완료 🎉');
+
+                        if (response.newBadge && response.newBadge.newBadgeEarned) {
+                            setTimeout(() => {
+                                showSuccessToast(`${response.newBadge.badgeName} 뱃지를 획득했습니다!`, '뱃지 획득 🏆');
+                            }, 1500);
+                        }
+                    } else {
+                        if (response.alreadyCompleted) {
+                            showInfoToast('오늘 이미 완료한 챌린지입니다', '완료됨');
+                        } else {
+                            console.error('포인트 적립 실패:', response.message);
+                            showWarningToast('포인트 적립에 실패했습니다', '오류 발생');
+                        }
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('포인트 저장 실패:', error);
+                    if (xhr.status === 401 || xhr.status === 403) {
+                        showWarningToast('로그인 후 이용해주세요!', '로그인 필요');
+                        setTimeout(() => {
+                            window.location.href = '/sign';
+                        }, 2000);
+                    } else {
+                        showWarningToast('네트워크 오류가 발생했습니다', '연결 실패');
+                    }
+                }
+            });
+        }
+
+        function updateSummary() {
+            const summary = document.getElementById('summary');
+            if (isLoggedIn) {
+                summary.textContent = `${totalPoints}포인트`;
+            } else {
+                summary.textContent = '로그인이 필요합니다';
+            }
+        }
+
+        function isChallengeCompleted(challengeName) {
+            return isLoggedIn && todayCompletedChallenges.includes(challengeName);
+        }
+        
+        
+
+        function renderCard() {
+            console.log('renderCard 호출됨, 카테고리:', currentCategory);
+            console.log('로그인 상태:', isLoggedIn);
+            console.log('완료된 챌린지들:', todayCompletedChallenges);
+
+            const container = document.getElementById('actionCard');
+            if (!container) {
+                console.error('actionCard 컨테이너를 찾을 수 없습니다');
+                return;
+            }
+
+            container.innerHTML = '';
+
+            challengeData[currentCategory].forEach((item) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'item';
+
+                const label = document.createElement('div');
+                label.textContent = item;
+
+                const btn = document.createElement('div');
+                btn.className = 'action-button';
+                const img = document.createElement('img');
+                
+                if (item === '이메일 삭제 및 정리') {
+                    const tooltip = document.createElement('div');
+                    tooltip.className = 'tooltip-message';
+                    tooltip.textContent = '이메일 정리 전/후 사진을 첨부해주세요.';
+                    btn.appendChild(tooltip); // action-button 안에 설명 삽입
+                }
+
+                if (!isLoggedIn) {
+                    img.src = actionIcons.action;
+                    img.alt = 'login-required';
+                    img.style.opacity = '0.5';
+                    img.onclick = () => {
+                        showWarningToast('로그인 후 이용해주세요!', '로그인 필요');
+                        setTimeout(() => {
+                            window.location.href = '/sign';
+                        }, 2000);
+                    };
+                } else {
+                    const challengeName = `${currentCategory} - ${item}`;
+                    const isCompleted = isChallengeCompleted(challengeName);
+
+                    img.src = isCompleted ? actionIcons.success : actionIcons.action;
+                    img.alt = isCompleted ? 'success' : 'action';
+
+                    img.onclick = () => {
+                        console.log(`${challengeName} 클릭됨`);
+
+                        if (!isCompleted) {
+                        	 // ✅ "자원 - 이메일 삭제 및 정리"만 OCR 업로드 진행
+                        	 if (challengeName === "자원 - 이메일 삭제 및 정리") {
+					            const fileInput = document.createElement("input");
+					            fileInput.type = "file";
+					            fileInput.accept = "image/*";
+					            fileInput.multiple = true;  // ✅ 여러 파일 선택 허용
+					
+					            fileInput.onchange = async function () {
+					            	const files = fileInput.files;
+					                if (files.length !== 2) {
+					                    showWarningToast("이미지 2장을 선택해주세요!", "파일 부족");
+					                    return;
+					                }
+					                
+					                const formData = new FormData();
+					                for (let i = 0; i < 2; i++) {
+					                    formData.append("files", files[i]);  // ✅ 키 이름은 Flask에서도 "files"로 받아야 함
+					                }
+					
+					                const response = await fetch("http://192.168.0.35:5000/ocr/challenge", {
+					                    method: "POST",
+					                    body: formData
+					                });
+					
+					                const data = await response.json();
+					                
+					                if (data.success) {
+					                    // 이메일 정리 성공 시 포인트 적립
+					                    const cleaned = data.cleaned_count;
+					                    showOcrModal(cleaned);
+					                    /* showSuccessToast(`메일을 ${cleaned}개 정리하셨어요! 👏`, "성공"); */
+					                    /* savePointsToServer(challengeName); */
+					                } else {
+					                	showWarningToast("메일 정리 인증 실패 😢 다시 시도해주세요.", "실패");
+					                }
+					            };
+					            fileInput.click();
+					          } else {
+							// 나머지 챌린지
+                            savePointsToServer(challengeName);
+					         }
+                        } else {
+                            console.log('오늘 이미 완료한 챌린지입니다.');
+                            showInfoToast('오늘 이미 완료한 챌린지입니다', '완료됨');
+                        }
+                    };
+                }
+
+                btn.appendChild(img);
+                itemDiv.appendChild(label);
+                itemDiv.appendChild(btn);
+                container.appendChild(itemDiv);
+            });
+
+            console.log('카드 렌더링 완료');
+        }
+        
+        /* 모달 제어 함수 + Toast 연결 */
+         function showOcrModal(cleanedCount) {
+        	  document.getElementById("ocrMessage").textContent = `메일을 ${cleanedCount}개 정리하셨어요! 👏`;
+        	  document.getElementById("ocrModal").style.display = "flex";
+        	}
+         function closeOcrModal() {
+        	    document.getElementById("ocrModal").style.display = "none";
+        	}
+
+       	function confirmOcrSuccess() {
+     	  closeOcrModal(); // 모달 닫고
+	      //showSuccessToast('100포인트가 적립되었습니다!', '챌린지 완료 🎉'); // 포인트 알림
+	      savePointsToServer("자원 - 이메일 삭제 및 정리"); // ✅ 실제 포인트 저장
+       	}
+
+        function changeCategory(cat) {
+            currentCategory = cat;
+            renderCard();
+        }
+
+        /* ===== CALENDAR FUNCTIONS ===== */
+
+		function checkTodayAchievement() {
+		    console.log('오늘 달성 상태 확인:', todayCompletedChallenges.length);
+		    
+		    // 8개 이상 완료했는지 확인
+		    if (todayCompletedChallenges.length >= 8) {
+		        todayAchievementStatus = true;
+		        updateCalendarHighlight();
+		        
+		        // 처음 8개 달성 시 축하 메시지 (1.5초 후)
+		        if (todayCompletedChallenges.length === 8) {
+		            setTimeout(() => {
+		                showSuccessToast('오늘 8개 챌린지를 모두 완료했습니다!', '일일 목표 달성 🎉');
+		            }, 1500);
+		        }
+		    } else {
+		        todayAchievementStatus = false;
+		        updateCalendarHighlight();
+		    }
+		}
+
+		function updateCalendarHighlight() {
+		    const today = new Date();
+		    const todayDate = today.getDate();
+		    
+		    // 현재 표시된 달력이 이번 달인지 확인
+		    if (currentCalendarYear === today.getFullYear() && 
+		        currentCalendarMonth === today.getMonth()) {
+		        
+		        const calendarCells = document.querySelectorAll('#calendar-body td span');
+		        calendarCells.forEach(span => {
+		            if (parseInt(span.textContent) === todayDate) {
+		                if (todayAchievementStatus) {
+		                    span.className = 'highlight';
+		                } else {
+		                    span.className = '';
+		                }
+		            }
+		        });
+		    }
+		}
+
+        function initializeCalendar() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth();
+            const monthNames = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
+
+            document.getElementById('calendar-title').textContent = `${month + 1}월 챌린지 달성`;
+            document.getElementById('month-name').textContent = monthNames[month];
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const lastDate = new Date(year, month + 1, 0).getDate();
+
+            const tbody = document.getElementById('calendar-body');
+            tbody.innerHTML = '';
+            let row = document.createElement('tr');
+
+            // 빈 셀 추가
+            for (let i = 0; i < firstDay; i++) {
+                row.appendChild(document.createElement('td'));
+            }
+
+            // 날짜 셀 추가
+            for (let date = 1; date <= lastDate; date++) {
+                const cell = document.createElement('td');
+                const span = document.createElement('span');
+                span.textContent = date;
+
+                // 하드코딩된 하이라이트 날짜 (예시)
+                if (isLoggedIn && [].includes(date)) {
+                    span.className = 'highlight';
+                }
+
+                cell.appendChild(span);
+                row.appendChild(cell);
+
+                if ((firstDay + date) % 7 === 0) {
+                    tbody.appendChild(row);
+                    row = document.createElement('tr');
+                }
+            }
+
+            if (row.children.length > 0) tbody.appendChild(row);
+        }
+
+        /* ===== POINT HISTORY FUNCTIONS ===== */
+        function loadPointHistory() {
+            if (!checkLoginStatus()) {
+                return;
+            }
+
+            $.ajax({
+                url: '/challenge/getPointHistory',
+                method: 'POST',
+                success: function (response) {
+                    console.log('포인트 내역 응답:', response);
+                    if (response.success && response.pointHistory) {
+                        displayPointHistory(response.pointHistory);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('포인트 내역 조회 실패:', error);
+                }
+            });
+        }
+
+        function displayPointHistory(historyList) {
+            const pointLogBody = document.getElementById('point-log-body');
+            if (!pointLogBody) return;
+
+            pointLogBody.innerHTML = '';
+
+            if (!historyList || historyList.length === 0) {
+                pointLogBody.innerHTML = `
+                    <div style="text-align: center; color: #888; padding: 20px;">
+                        아직 포인트 적립 내역이 없습니다
+                    </div>
+                `;
+                return;
+            }
+
+            historyList.forEach(history => {
+                const logEntry = createPointHistoryEntry(history);
+                pointLogBody.appendChild(logEntry);
+            });
+        }
+
+		function createPointHistoryEntry(history) {
+		    const logEntry = document.createElement('div');
+		    logEntry.classList.add('item');
+		    logEntry.style.borderBottom = '1px solid #eee';
+		    logEntry.style.padding = '15px 0';
+
+		    // 날짜 처리
+		    let timeString = '날짜 정보 없음';
+		    try {
+		        if (history.AWARDEDDATE) {
+		            const date = new Date(history.AWARDEDDATE);
+		            if (!isNaN(date.getTime())) {
+		                timeString = date.toLocaleString('ko-KR', {
+		                    year: 'numeric',
+		                    month: '2-digit',
+		                    day: '2-digit',
+		                    hour: '2-digit',
+		                    minute: '2-digit'
+		                });
+		            }
+		        }
+		    } catch (e) {
+		        console.error('Date parsing error:', e);
+		        timeString = '날짜 오류';
+		    }
+
+		    // 카테고리별 이모지
+		    const categoryEmojis = {
+		        '물': '💧',
+		        '전기': '⚡',
+		        '자원': '♻️'
+		    };
+
+		    // 챌린지명에서 카테고리와 제목 분리
+		    let category = '';
+		    let challengeTitle = history.REASON || '챌린지 완료';
+		    
+		    if (history.REASON && history.REASON.includes(' - ')) {
+		        const parts = history.REASON.split(' - ');
+		        category = parts[0];
+		        challengeTitle = parts[1];
+		    }
+
+		    const emoji = categoryEmojis[category] || '🏆';
+		    const points = history.POINTHISTORY || 100;
+
+		    // HTML 생성
+		    logEntry.innerHTML = `
+		        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+		            <div style="flex: 1;">
+		                <div style="font-size: 16px; font-weight: bold; margin-bottom: 5px; color: #333;">
+		                    ${emoji} <span style="color: #9C6EF4;">+${points}점</span>
+		                </div>
+		                <div style="font-size: 14px; color: #666;">
+		                    ${challengeTitle}
+		                </div>
+		            </div>
+		            <div style="font-size: 12px; color: #888; text-align: right; white-space: nowrap; margin-left: 10px;">
+		                ${timeString}
+		            </div>
+		        </div>
+		    `;
+
+		    return logEntry;
+		}
+		/* ===== PAGE LOAD ===== */
+        window.onload = () => {
+            console.log('페이지 로드 - 세션 정보 확인 시작');
+            checkSessionInfo();
+        };
+    </script>
+
+</body>
+
+</html>

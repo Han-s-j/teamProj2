@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>구독 설정 | A.P.T</title>
+
+<link rel="stylesheet" th:href="@{/css/font.css}" />
+
+<!-- Favicon -->
+<link rel="icon" href="/icons/favicon.png" type="image/png">
+
+<style>
+body {
+	margin: 0;
+	padding: 0;
+	font-family: 'Pretendard', sans-serif;
+	background-color: #fdfdfd;
+	overflow: hidden;
+}
+
+.container {
+	width: 100%;
+	margin: 0 0;
+	background-color: #fff;
+	padding: 40px 24px;
+	box-sizing: border-box;
+	text-align: center;
+	min-height: 100vh;
+}
+
+.title-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 32px;
+	display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 100px;
+}
+
+.title-row h2 {
+	font-size: 30px;
+	font-weight: 700;
+	margin: 0;
+	color: #292929;
+}
+
+.icon {
+	width: 80px;
+	height: 80px;
+}
+
+.btn {
+	width: 300px;
+	height: 100px;
+	padding: 12px 0;
+	margin: 10px auto;
+	background-color: white;
+	border: none;
+	border-radius: 12px;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+	font-size: 22px;
+	font-weight: 600;
+	color: #292929;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.btn:hover {
+	transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.12);
+    color: #61AFFE;
+}
+
+.footer-text {
+	color: #919191;
+	font-size: 20px;
+	margin-top: 32px;
+	letter-spacing: 0.8px;
+}
+
+.apt-logo {
+	color: #3182f6;
+	font-weight: 700;
+	text-align: left;
+	margin-bottom: 24px;
+	font-size: 22px;
+}
+</style>
+</head>
+<body>
+	<div class="container">
+		<div class="apt-logo">A.P.T</div>
+		<div class="title-row">
+			<h2>A.P.T핑 구독 설정</h2>
+			<img class="icon" src="/icons/ping_subsc.png" alt="알림 아이콘" />
+		</div>
+		<button class="btn">구독하기</button>
+		<br>
+		<button class="btn">구독 취소하기</button>
+		<p class="footer-text">
+			구독 설정이 완료되어야 알림을 받을 수 있습니다.<br> 언제든 취소할 수 있어요!
+		</p>
+	</div>
+
+	<script>
+		// 이미 표시된 알림들을 추적하는 Set
+		let shownNotifications = new Set();
+		// 마지막으로 확인한 알림 개수
+		let lastNotificationCount = 0;
+		// 페이지 로드 시점 기록
+		let pageLoadTime = Date.now();
+
+		// 페이지 로드 시 실행
+		document.addEventListener('DOMContentLoaded', function() {
+		    console.log('🔔 구독 설정 페이지 로드됨');
+		    
+		    // 구독 상태 확인
+		    checkSubscriptionStatus();
+		    
+		    // 초기 알림 확인 (브라우저 알림 표시 안 함)
+		    checkNewNotifications(false); // false = 브라우저 알림 표시 안 함
+		    
+		    // 버튼에 이벤트 연결
+		    const buttons = document.querySelectorAll('.btn');
+		    if (buttons.length >= 2) {
+		        buttons[0].addEventListener('click', subscribeToPush);    // 구독하기
+		        buttons[1].addEventListener('click', unsubscribeFromPush); // 구독 취소하기
+		    }
+		    
+		    // 30초 후부터 주기적으로 새 알림 확인 시작
+		    setTimeout(() => {
+		        console.log('🔄 주기적 알림 확인 시작');
+		        setInterval(() => checkNewNotifications(true), 5000); // true = 브라우저 알림 표시
+		    }, 10000);
+		});
+
+		/**
+		 * 새로운 알림 확인 함수 (빈 알림 방지 로직 추가)
+		 */
+		 async function checkNewNotifications(showBrowserNotification = true) {
+		     try {
+		         console.log('🔍 새로운 알림 확인 중... (브라우저 알림:', showBrowserNotification, ')');
+		         
+		         const response = await fetch('/api/notifications/recent');
+		         if (response.ok) {
+		             const data = await response.json();
+		             
+		             if (data.success) {
+		                 console.log('📊 알림 확인 결과:', data);
+		                 console.log('📋 받은 알림 데이터 구조 확인:', data.notifications.length > 0 ? data.notifications[0] : '알림 없음');
+		                 
+		                 updateNotificationBadge(data.unreadCount);
+		                 
+		                 if (showBrowserNotification && data.notifications && data.notifications.length > 0) {
+		                     
+		                     const timeSinceLoad = Date.now() - pageLoadTime;
+		                     if (timeSinceLoad < 10000) {
+		                         console.log('⏰ 페이지 로드 후 10초 미만으로, 브라우저 알림 표시를 건너뜁니다.');
+		                         return data;
+		                     }
+		                     
+		                     // 🔧 수정된 부분: 올바른 필드명 사용
+		                     const newNotifications = data.notifications.filter(notification => {
+		                         // Java에서 보내는 실제 필드명들 확인
+		                         const notificationId = notification.notification_id || 
+		                                              notification.NOTIFICATION_ID ||
+		                                              notification.HISTORY_ID ||
+		                                              notification.history_id ||
+		                                              `${notification.SENDER_ID}_${Date.now()}`;
+		                         
+		                         console.log('🔍 알림 ID 확인:', notificationId, '이미 표시됨:', shownNotifications.has(notificationId));
+		                         
+		                         return notificationId && !shownNotifications.has(notificationId);
+		                     });
+		                     
+		                     console.log(`📢 새로운 알림: ${newNotifications.length}개 / 전체: ${data.notifications.length}개`);
+		                     console.log('📋 새 알림 상세:', newNotifications);
+		                     
+		                     // 🔧 수정된 부분: 각 알림 처리
+		                     newNotifications.forEach(notification => {
+		                         const message = notification.message || 
+		                                       notification.NOTI_CONTENT || 
+		                                       notification.MESSAGE ||
+		                                       '새로운 알림이 도착했습니다.';
+		                         
+		                         console.log('📝 처리할 메시지:', message);
+		                         
+		                         if (message && message.trim()) {
+		                             console.log('🔔 브라우저 알림 표시 시도:', message);
+		                             showNotificationPopup(notification);
+		                             
+		                             // 표시된 알림을 Set에 추가
+		                             const notificationId = notification.notification_id || 
+		                                                  notification.NOTIFICATION_ID ||
+		                                                  notification.HISTORY_ID ||
+		                                                  notification.history_id ||
+		                                                  `${notification.SENDER_ID}_${Date.now()}`;
+		                             
+		                             shownNotifications.add(notificationId);
+		                             console.log('✅ 알림 ID 저장됨:', notificationId);
+		                         } else {
+		                             console.log('⚠️ 빈 메시지 알림 무시:', notification);
+		                         }
+		                     });
+		                 }
+		                 
+		                 return data;
+		             } else {
+		                 console.warn('⚠️ 알림 확인 실패:', data.message);
+		             }
+		         } else {
+		             console.error('❌ 알림 확인 API 오류:', response.status);
+		         }
+		     } catch (error) {
+		         console.log('알림 확인 중 오류 (무시):', error);
+		     }
+		     
+		     return { notifications: [], unreadCount: 0 };
+		 }
+		/**
+		 * 알림 배지 업데이트 함수
+		 */
+		function updateNotificationBadge(unreadCount) {
+		    // 알림 배지 요소가 있다면 업데이트
+		    const badge = document.querySelector('.notification-badge');
+		    if (badge) {
+		        if (unreadCount > 0) {
+		            badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+		            badge.style.display = 'block';
+		        } else {
+		            badge.style.display = 'none';
+		        }
+		    }
+		    
+		    // 페이지 제목에 알림 개수 표시 (선택사항)
+		    if (unreadCount > 0) {
+		        document.title = `(${unreadCount}) 구독 설정 | A.P.T`;
+		    } else {
+		        document.title = '구독 설정 | A.P.T';
+		    }
+		    
+		    console.log(`🔔 알림 배지 업데이트: ${unreadCount}개`);
+		}
+
+		// 브라우저 알림 표시 (개선됨 - 빈 알림 방지)
+		function showNotificationPopup(notificationData) {
+		    console.log('🚀 showNotificationPopup 호출됨:', notificationData);
+		    
+		    // 🔧 알림 권한 다시 확인
+		    if (!('Notification' in window)) {
+		        console.log('❌ 브라우저가 Notification API를 지원하지 않음');
+		        return;
+		    }
+		    
+		    if (Notification.permission !== 'granted') {
+		        console.log('❌ 알림 권한이 없음. 현재 권한:', Notification.permission);
+		        
+		        // 권한 재요청
+		        Notification.requestPermission().then(permission => {
+		            console.log('🔔 권한 재요청 결과:', permission);
+		            if (permission === 'granted') {
+		                showNotificationPopup(notificationData); // 재귀 호출
+		            }
+		        });
+		        return;
+		    }
+		    
+		    try {
+		        const message = notificationData.message || 
+		                       notificationData.NOTI_CONTENT || 
+		                       notificationData.MESSAGE ||
+		                       '새로운 알림이 도착했습니다.';
+		        
+		        const senderId = notificationData.SENDER_ID || 
+		                        notificationData.sender_id || 
+		                        '알림';
+		        
+		        // 메시지가 완전히 비어있거나 공백만 있으면 표시 안 함
+		        if (!message || !message.trim()) {
+		            console.log('📭 빈 메시지 알림은 표시하지 않음');
+		            return;
+		        }
+		        
+		        const notificationId = notificationData.notification_id || 
+		                             notificationData.NOTIFICATION_ID ||
+		                             notificationData.HISTORY_ID ||
+		                             notificationData.history_id ||
+		                             Date.now();
+		        
+		        console.log('🔔 브라우저 알림 표시 시작:', {
+		            id: notificationId,
+		            message: message,
+		            sender: senderId
+		        });
+		        
+		        const notification = new Notification('🏠 A.P.T 커뮤니티 알림', {
+		            body: `${senderId}님: ${message}`,
+		            icon: '/icons/favicon.png',
+		            badge: '/icons/favicon.png',
+		            tag: 'apt-notification-' + notificationId,
+		            requireInteraction: false,
+		            silent: false,
+		            timestamp: Date.now()
+		        });
+		        
+		        console.log('✅ 브라우저 알림 생성 성공!');
+		        
+		        notification.onclick = function() {
+		            console.log('🖱️ 알림 클릭됨');
+		            window.focus();
+		            notification.close();
+		        };
+		        
+		        notification.onshow = function() {
+		            console.log('👁️ 알림이 화면에 표시됨');
+		        };
+		        
+		        notification.onerror = function(error) {
+		            console.error('❌ 알림 표시 오류:', error);
+		        };
+		        
+		        // 8초 후 자동 닫기
+		        setTimeout(() => {
+		            notification.close();
+		            console.log('⏰ 알림 자동 닫기');
+		        }, 8000);
+		        
+		    } catch (error) {
+		        console.error('❌ 브라우저 알림 표시 실패:', error);
+		    }
+		}
+
+		// 구독 상태 확인
+		async function checkSubscriptionStatus() {
+		    try {
+		        console.log('🔍 구독 상태 확인 중...');
+		        
+		        const response = await fetch('/api/notifications/subscription/status');
+		        const result = await response.json();
+		        
+		        console.log('📊 구독 상태 응답:', result);
+		        
+		        if (response.ok && result.success) {
+		            updateButtonStyles(result.isSubscribed);
+		        } else {
+		            console.error('구독 상태 확인 실패:', result.message);
+		            updateFooterText('구독 상태 확인 중 오류가 발생했습니다.');
+		        }
+
+		    } catch (error) {
+		        console.error('구독 상태 확인 오류:', error);
+		        updateFooterText('구독 상태 확인 중 오류가 발생했습니다.');
+		    }
+		}
+
+		// 버튼 상태 업데이트 (텍스트만 변경, 스타일 건드리지 않음)
+		function updateButtonStyles(isSubscribed) {
+		    const subscribeBtn = document.querySelectorAll('.btn')[0];
+		    const unsubscribeBtn = document.querySelectorAll('.btn')[1];
+		    
+		    console.log('🎨 UI 업데이트 - 구독 상태:', isSubscribed);
+		    
+		    if (isSubscribed) {
+		        // 구독 중일 때 - 텍스트만 변경
+		        subscribeBtn.textContent = '✅ 구독 중';
+		        unsubscribeBtn.textContent = '구독 취소하기';
+		        
+		        updateFooterText('🔔 알림 구독 중입니다!<br>실시간으로 동네 소식을 받아보세요.');
+		    } else {
+		        // 미구독일 때 - 텍스트만 변경
+		        subscribeBtn.textContent = '구독하기';
+		        unsubscribeBtn.textContent = '구독 취소하기';
+		        
+		        updateFooterText('구독 설정이 완료되어야 알림을 받을 수 있습니다.<br>언제든 취소할 수 있어요!');
+		    }
+		}
+
+		// 푸터 텍스트 업데이트
+		function updateFooterText(text) {
+		    const footerText = document.querySelector('.footer-text');
+		    if (footerText) {
+		        footerText.innerHTML = text;
+		    }
+		}
+		// ✅ Web Push 구독 함수
+		async function subscribeToPush() {
+		    console.log('🔔 Web Push 구독 시작...');
+
+		    try {
+		        // 1. 브라우저 지원 여부
+		        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+		            alert('❌ 이 브라우저는 푸시 알림을 지원하지 않습니다.');
+		            return;
+		        }
+
+		        // 2. 알림 권한 요청
+		        const permission = await Notification.requestPermission();
+		        console.log('🔑 알림 권한 상태:', permission);
+		        if (permission !== 'granted') {
+		            alert('❌ 알림 권한이 필요합니다.\n\n브라우저 설정에서 알림을 허용해주세요.');
+		            return;
+		        }
+
+		        // 3. Service Worker 등록
+		        let registration;
+		        try {
+		            registration = await navigator.serviceWorker.register('/sw.js');
+		            console.log('✅ Service Worker 등록 성공:', registration);
+		            await navigator.serviceWorker.ready;
+		        } catch (error) {
+		            console.error('❌ Service Worker 등록 실패:', error);
+		            alert('❌ Service Worker 등록에 실패했습니다.');
+		            return;
+		        }
+
+		        // 4. VAPID Key 변환 확인
+		        const vapidPublicKey = 'BMxQ-_IgmKJ6Qwj5Fw6p3VSeqlNsCJ5H8RQZ8l2n6zLh_XYQ8sZPp7Yk7q_nW8kJGzN4x3c_ZJ3z2p7mQ8k5L4o';
+		        const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
+		        console.log('🔑 VAPID Key 변환 완료:', applicationServerKey);
+
+		        // 5. 푸시 구독
+		        let subscription;
+		        try {
+		            subscription = await registration.pushManager.subscribe({
+		                userVisibleOnly: true,
+		                applicationServerKey: applicationServerKey
+		            });
+		            console.log('✅ 푸시 구독 생성 성공:', subscription);
+		        } catch (error) {
+		            console.error('❌ 푸시 구독 생성 실패:', error);
+		            alert('❌ 푸시 구독 생성에 실패했습니다.\n' + error.message);
+		            return;
+		        }
+
+		        // 6. 서버로 구독 정보 전송
+		        const subscriptionData = {
+		            notiType: "커뮤니티",
+		            guideTime: "실시간",
+		            browserSupport: true,
+		            permission: permission,
+		            subscription: subscription,
+		            endpoint: subscription.endpoint,
+		            keys: {
+		                p256dh: arrayBufferToBase64(subscription.getKey('p256dh')),
+		                auth: arrayBufferToBase64(subscription.getKey('auth'))
+		            }
+		        };
+
+		        console.log('📤 서버에 보낼 구독 데이터:', subscriptionData);
+
+		        const response = await fetch('/api/notifications/subscribe', {
+		            method: 'POST',
+		            headers: { 'Content-Type': 'application/json' },
+		            body: JSON.stringify(subscriptionData)
+		        });
+
+		        const result = await response.json();
+		        console.log('📥 서버 응답:', result);
+
+		        if (response.ok && result.success) {
+		            console.log('✅ 구독 서버 등록 성공:', result);
+		            alert('🎉 푸시 알림 구독이 완료되었습니다!');
+
+		            updateButtonStyles(true);
+		            checkSubscriptionStatus();
+		            shownNotifications.clear();
+		            pageLoadTime = Date.now();
+		            setTimeout(() => checkNewNotifications(false), 1000);
+
+		            if (registration.showNotification) {
+		                registration.showNotification('A.P.T 알림', {
+		                    body: '구독이 완료되었습니다! 이제 동네 소식을 받아보세요.',
+		                    icon: '/icons/favicon.png',
+		                    tag: 'subscription-success'
+		                });
+		            }
+
+		        } else {
+		            throw new Error(result.message || '서버 구독 등록 실패');
+		        }
+
+		    } catch (error) {
+		        console.error('❌ 최종 구독 프로세스 중 오류:', error);
+		        alert('❌ 구독 중 오류가 발생했습니다: ' + error.message);
+		    }
+		}
+		
+		// PWA 구독 취소 함수
+		async function unsubscribeFromPush() {
+		    try {
+		        console.log('🚫 구독 취소 요청 시작...');
+
+		        const response = await fetch('/api/notifications/unsubscribe', {
+		            method: 'POST',
+		            headers: {
+		                'Content-Type': 'application/json',
+		            }
+		        });
+
+		        const result = await response.json();
+		        console.log('📥 구독 취소 응답:', result);
+
+		        if (response.ok && result.success) {
+		            alert('✅ 구독이 취소되었습니다.\n\n더 이상 알림을 받지 않습니다.');
+		            updateButtonStyles(false);
+		            checkSubscriptionStatus();
+		            
+		            // 표시된 알림 기록 초기화
+		            shownNotifications.clear();
+		            
+		        } else {
+		            throw new Error(result.message || '서버 구독 취소 요청 실패');
+		        }
+		        
+		    } catch (error) {
+		        console.error('구독 취소 오류:', error);
+		        alert('❌ 구독 취소 중 오류가 발생했습니다.\n\n' + error.message);
+		    }
+		}
+
+		// VAPID 공개 키를 Uint8Array로 변환하는 함수
+		function urlBase64ToUint8Array(base64String) {
+		    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+		    const base64 = (base64String + padding)
+		        .replace(/\-/g, '+')
+		        .replace(/_/g, '/');
+		    
+		    const rawData = window.atob(base64);
+		    const outputArray = new Uint8Array(rawData.length);
+		    
+		    for (let i = 0; i < rawData.length; ++i) {
+		        outputArray[i] = rawData.charCodeAt(i);
+		    }
+		    return outputArray;
+		}
+
+		// ArrayBuffer를 Base64로 변환하는 함수
+		function arrayBufferToBase64(buffer) {
+		    const bytes = new Uint8Array(buffer);
+		    let binary = '';
+		    for (let i = 0; i < bytes.byteLength; i++) {
+		        binary += String.fromCharCode(bytes[i]);
+		    }
+		    return window.btoa(binary);
+		}
+
+		/**
+		 * 알림 시간 포맷팅 함수
+		 */
+		function formatNotificationTime(timeString) {
+		    try {
+		        const date = new Date(timeString);
+		        const now = new Date();
+		        const diffMs = now - date;
+		        const diffMins = Math.floor(diffMs / 60000);
+		        const diffHours = Math.floor(diffMins / 60);
+		        const diffDays = Math.floor(diffHours / 24);
+		        
+		        if (diffMins < 1) return '방금 전';
+		        if (diffMins < 60) return `${diffMins}분 전`;
+		        if (diffHours < 24) return `${diffHours}시간 전`;
+		        if (diffDays < 7) return `${diffDays}일 전`;
+		        
+		        return date.toLocaleDateString('ko-KR');
+		    } catch (error) {
+		        return '시간 정보 없음';
+		    }
+		}
+	</script>
+</body>
+</html>

@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>알림 보내기 | A.P.T</title>
+<!-- dd -->
+<link rel="stylesheet" th:href="@{/css/font.css}" />
+<link rel="stylesheet" th:href="@{/css/sidebar.css}">
+<!-- Favicon -->
+<link rel="icon" href="/icons/favicon.png" type="image/png">
+
+<style>
+body {
+	background-color: #fdfdfd;
+	display: flex; /* Flexbox 컨테이너로 설정 */
+	flex-direction: column; /* 자식 요소들을 세로로 정렬 */
+	min-height: 100vh; /* 뷰포트 높이의 최소 100%를 차지 */
+	margin: 0;
+}
+
+.container {
+	padding: 40px;
+	width: 90%;
+	max-width: 900px;
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1; /* 남은 공간을 모두 차지하여 푸터를 아래로 밀어냄 */
+	margin: 40px auto 0 auto; /* 상단 마진을 40px로 설정, 하단은 0, 좌우 자동 */
+}
+
+header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 30px;
+}
+
+header h1 {
+	font-size: 28px;
+	font-weight: 700;
+	color: #292929;
+	margin: 0;
+}
+
+.logo {
+	width: 80px;
+	height: auto;
+}
+
+.content-wrapper {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 30px;
+}
+
+.card {
+	background-color: #fff;
+	border: 1px solid #e0e0e0;
+	border-radius: 8px;
+	padding: 25px;
+	flex: 1;
+	min-width: 300px;
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+}
+
+/* 범위지정 카드에 대한 스타일 */
+.card.scope-card {
+	height: 435px; /* 고정 높이 유지 */
+	overflow-y: auto; /* 스크롤바 항상 보이도록 설정 (자동으로 숨겨지게) */
+	padding-bottom: 25px;
+}
+
+.card-header-wrapper { /* 헤더와 + 버튼을 묶을 새로운 div */
+	display: flex;
+	justify-content: space-between; /* 양 끝 정렬 */
+	align-items: center;
+	margin-bottom: 20px;
+}
+
+.card-header {
+	font-size: 18px;
+	font-weight: bold;
+	color: #292929;
+	margin: 0; /* flex item이므로 margin-bottom 제거 */
+}
+
+/* 텍스트 영역 스타일 */
+textarea {
+	width: 100%;
+	padding: 10px;
+	color: #292929;
+	border: 1px solid #ddd;
+	border-radius: 5px;
+	font-size: 16px;
+	box-sizing: border-box;
+	/* transition 속성을 여기에 추가하여 포커스 시 부드러운 전환 효과를 줍니다. */
+	transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+/* #messageContent에 대한 스타일 (textarea의 기본 스타일을 덮어씀) */
+#messageContent {
+	margin-top: 10px;
+	resize: none; /* 사용자 크기 조절 기능 비활성화 */
+	height: 250px !important; /* 원하는 초기 높이 (강제 적용) */
+	max-height: none !important; /* 최대 높이 제한 해제 (강제 적용) */
+	font-family: 'Pretendard', sans-serif;
+}
+
+textarea:focus {
+	outline: none; /* 기본 외곽선 제거 */
+	border-color: #61AFFE; /* 포커스될 때 테두리 색상 변경 */
+}
+
+/* select와 화살표를 감싸는 div (새로 추가) */
+.select-container {
+	position: relative; /* ::after 가상 요소의 기준점 */
+	display: flex; /* select 요소가 이 컨테이너 안에서 flex 아이템이 됨 */
+	flex-grow: 1; /* 부모 scope-item 내에서 공간 차지 */
+	align-items: center; /* select와 화살표 세로 중앙 정렬 */
+}
+
+.scope-item {
+	display: flex;
+	align-items: center;
+	margin-bottom: 15px;
+}
+
+.scope-item:last-child {
+	margin-bottom: 0;
+}
+
+.scope-item select {
+	flex-grow: 1;
+	color: #292929;
+	padding: 10px;
+	padding-right: 35px; /* 화살표 공간 확보 */
+	border: 1px solid #ddd;
+	border-radius: 5px;
+	font-size: 16px;
+	box-sizing: border-box;
+	height: 40px;
+	margin-right: 10px; /* select와 - 버튼 사이 간격 */
+	/* 브라우저 기본 스타일 제거 (핵심) */
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	appearance: none;
+	background-color: #fff; /* 배경색을 명시적으로 지정 */
+	/* 포커스 시 부드러운 전환 효과 */
+	transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+/* 커스텀 화살표 스타일 */
+.select-container::after {
+	content: '🔽'; /* CSS로 그릴 화살표 문자 (더 예쁜 유니코드나 SVG 사용 가능) */
+	position: absolute;
+	top: 50%;
+	right: 15px; /* select 박스 우측에서 15px 떨어지게 */
+	transform: translateY(-50%); /* 세로 중앙 정렬 */
+	pointer-events: none; /* 화살표 클릭 시 select가 활성화되도록 */
+	color: #888; /* 화살표 색상 */
+	font-size: 14px; /* 화살표 크기 */
+}
+
+/* select 박스가 포커스될 때의 스타일 */
+.scope-item select:focus {
+	outline: none; /* 기본 외곽선 제거 */
+	border-color: #61AFFE; /* 포커스될 때 테두리 색상 변경 */
+}
+
+/* 버튼 스타일 (아이콘 이미지를 위한 조정) */
+.action-button {
+	border: none;
+	background: none;
+	padding: 0;
+	cursor: pointer;
+	width: 38px;
+	height: 38px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-shrink: 0;
+	border-radius: 50%;
+}
+
+.action-button img {
+	width: 24px;
+	height: 24px;
+	/* 아이콘 색상이 흰색이면 아래 필터 제거 또는 조정 */
+	/* filter: invert(100%); */
+}
+
+.char-count {
+	text-align: right;
+	font-size: 12px;
+	color: #888;
+	margin-top: 5px;
+}
+
+.submit-button {
+	background-color: #fff;
+	color: #61AFFE;
+	padding: 12px 25px;
+	border: 1px solid #61AFFE;
+	border-radius: 20px;
+	font-size: 18px;
+	cursor: pointer;
+	align-self: flex-end;
+	margin-top: 30px;
+	transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+	/* 호버 시 색상 전환 */
+}
+
+.submit-button:hover {
+	background-color: #61AFFE;
+	color: #fff;
+}
+
+.footer-info {
+	margin-top: 30px;
+	font-size: 16px;
+	color: #919191;
+	line-height: 1.6;
+	text-align: center;
+}
+
+.footer-info p {
+	margin: 5px 0;
+}
+
+/* 미디어 쿼리: 작은 화면에서는 세로로 쌓이도록 */
+@media ( max-width : 768px) {
+	.content-wrapper {
+		flex-direction: column;
+	}
+	.card {
+		min-width: unset;
+		width: 100%;
+	}
+	.card.scope-card {
+		height: auto; /* 모바일에서는 높이 제한 해제 */
+		overflow-y: visible; /* 모바일에서는 스크롤바 숨김 또는 유동적으로 */
+	}
+}
+
+/* 푸터 스타일 */
+footer {
+	background-color: #f2f2f2;
+	padding: 15px 0;
+	text-align: center;
+	font-size: 14px;
+	color: #666;
+	width: 100%; /* 너비를 100%로 설정 */
+	flex-shrink: 0; /* 푸터가 줄어들지 않도록 설정 */
+	margin-top: auto; /* 핵심: 남은 공간을 모두 차지한 뒤 푸터를 바닥으로 밀어냄 */
+}
+
+/* 모달 스타일 */
+/* 모달 오버레이 스타일 */
+.modal-overlay {
+	display: none; /* 기본적으로 숨김 */
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(0, 0, 0, 0.6); /* 반투명 검은색 배경 */
+	justify-content: center;
+	align-items: center;
+	z-index: 1000; /* 다른 요소 위에 표시 */
+}
+
+/* 모달 내용 스타일 */
+.modal-content {
+	background-color: #fff;
+	padding: 30px;
+	border-radius: 10px;
+	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+	text-align: center;
+	max-width: 400px; /* 모달 최대 너비 */
+	width: 90%; /* 반응형 */
+	animation: fadeInScale 0.3s ease-out; /* 등장 애니메이션 */
+}
+
+.modal-content h2 {
+	font-size: 24px;
+	color: #333;
+	margin-bottom: 15px;
+}
+
+.modal-content p {
+	font-size: 16px;
+	color: #555;
+	margin-bottom: 25px;
+	line-height: 1.5;
+}
+
+.modal-buttons {
+	display: flex;
+	justify-content: center;
+	gap: 15px; /* 버튼 사이 간격 */
+}
+
+.modal-button {
+	padding: 10px 25px;
+	border: none;
+	border-radius: 5px;
+	font-size: 16px;
+	cursor: pointer;
+	transition: background-color 0.2s, color 0.2s;
+}
+
+.modal-button.confirm {
+	background-color: #61AFFE;
+	color: white;
+}
+
+.modal-button.confirm:hover {
+	background-color: #4A90E2;
+}
+
+.modal-button.cancel {
+	background-color: #e0e0e0;
+	color: #555;
+}
+
+.modal-button.cancel:hover {
+	background-color: #d0d0d0;
+}
+/* 모달 등장 애니메이션 */
+@keyframes fadeInScale {
+    from { 
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+</style>
+</head>
+<body>
+	<div th:replace="common/sidebar :: sidebar"></div>
+
+	<div class="container">
+		<header>
+
+			    <div>
+			        <h1>알림 보내기</h1>
+			        <!-- 포인트 정보 추가 -->
+			        <div style="font-size: 16px; color: #666; margin-top: 5px; font-weight: 500;">
+			            현재 포인트: <span id="currentPoints" style="color: #61AFFE; font-weight: 700;">로딩중...</span>P
+			            <span style="color: #999; margin-left: 10px;">| 발송 비용: 300P</span>
+			        </div>
+			    </div>
+			    <img src="/icons/ping_send.png" alt="로고" class="logo">
+
+		</header>
+
+		<div class="content-wrapper">
+			<div class="card scope-card">
+				<div class="card-header-wrapper">
+					<div class="card-header">범위지정</div>
+					<button type="button" class="add-button action-button"
+						onclick="addSelectBox()">
+						<img src="/icons/add.png" alt="추가">
+					</button>
+				</div>
+				<div id="scopeSelects">
+					<div class="scope-item">
+						<div class="select-container">
+							<select>
+								<option value="">범위 선택</option>
+								<option value="area1">우리 동네</option>
+								<option value="area2">옆 동네</option>
+								<option value="area3">다른 동네</option>
+							</select>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="card">
+				<div class="card-header">내용</div>
+				<textarea id="messageContent" maxlength="200"
+					placeholder="여기에 내용을 입력하세요."></textarea>
+				<div class="char-count">
+					<span id="currentLength">0</span> / 200자
+				</div>
+				<button type="button" class="submit-button" id="submitButton">전송하기</button>
+			</div>
+		</div>
+
+		<div class="footer-info">
+			<p>우리 동네까지만 전송할 수 있어요</p>
+			<p>구독한 사용자에게 알림을 보낼 수 있어요</p>
+			<p>악용 방지를 위해 모니터링 되고 있어요</p>
+			<p>개인정보와 같은 내용은 보내지 마세요</p>
+		</div>
+	</div>
+
+	<footer>
+		<div>
+			<p style="margin: 0;">© 2025 A.P.T. All rights reserved.</p>
+			<p style="margin: 5px 0 0;">
+				Made with <span class="computer-icon">💻</span> by 팀 EF
+			</p>
+		</div>
+	</footer>
+
+	<!-- 모달 -->
+	<div id="confirmModal" class="modal-overlay">
+		<div class="modal-content">
+			<h2>알림 전송 확인</h2>
+			<p>작성하신 알림을 전송하시겠습니까?</p>
+			<div class="modal-buttons">
+				<button id="confirmSend" class="modal-button confirm">확인</button>
+				<button id="cancelSend" class="modal-button cancel">취소</button>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		// 기존 스크립트 맨 위에 추가
+		// 페이지 로드 시 포인트 확인
+		document.addEventListener('DOMContentLoaded', function() {
+		    console.log('💰 포인트 조회 시작...');
+		    checkUserPoints();
+			
+			console.log('🏠 아파트 정보 로드 시작...');
+			loadUserApartments();
+		});
+
+		// 포인트 확인 함수
+		async function checkUserPoints() {
+		    try {
+		        const response = await fetch('/api/notifications/user/points');
+		        if (response.ok) {
+		            const data = await response.json();
+		            console.log('포인트 조회 성공:', data);
+		            updatePointsUI(data.points);
+		        } else {
+		            console.error('포인트 조회 실패:', response.status);
+		            document.getElementById('currentPoints').textContent = '오류';
+		        }
+		    } catch (error) {
+		        console.error('포인트 확인 오류:', error);
+		        document.getElementById('currentPoints').textContent = '오류';
+		    }
+		}
+		// 사용자 아파트 정보 로드 함수
+		// 사용자 아파트 정보 로드 함수
+		async function loadUserApartments() {
+		    try {
+		        console.log('🏠 사용자 아파트 정보 로드 중...');
+		        const response = await fetch('/api/apartments/user');
+		        
+		        if (response.ok) {
+		            const data = await response.json();
+		            console.log('아파트 정보:', data);
+		            updateScopeOptions(data.apartments);
+		            
+		            // 아파트 코드를 전역 변수로 저장
+		            window.userKaptCode = data.userApartment.kaptCode;
+		        } else {
+		            console.error('아파트 정보 로드 실패:', response.status);
+		        }
+		    } catch (error) {
+		        console.error('아파트 정보 로드 오류:', error);
+		    }
+		}
+
+		// 셀렉트 박스 옵션 업데이트 함수
+		function updateScopeOptions(apartments) {
+		    const selectElements = document.querySelectorAll('#scopeSelects select');
+		    
+		    selectElements.forEach(select => {
+		        // 기존 옵션 제거 (첫 번째 "범위 선택" 옵션은 유지)
+		        while (select.children.length > 1) {
+		            select.removeChild(select.lastChild);
+		        }
+		        
+		        // 새로운 옵션 추가
+		        apartments.forEach(apt => {
+		            const option = document.createElement('option');
+		            option.value = apt.value;
+		            option.textContent = apt.label;
+		            option.dataset.kaptCode = apt.kaptCode;
+		            option.dataset.type = apt.type; // entire, building, area
+		            select.appendChild(option);
+		        });
+		    });
+		}
+
+		// 새로운 select 박스와 제거 버튼을 추가하는 함수 (수정됨)
+		async function addSelectBox() {
+		    const newScopeItem = document.createElement('div');
+		    newScopeItem.classList.add('scope-item');
+		    newScopeItem.innerHTML = `
+		        <div class="select-container">
+		            <select onchange="handleScopeChange(this)">
+		                <option value="">범위 선택</option>
+		            </select>
+		        </div>
+		        <button type="button" class="remove-button action-button">
+		            <img src="/icons/minus.png" alt="삭제">
+		        </button>
+		    `;
+		    scopeSelectsContainer.appendChild(newScopeItem);
+
+		    // 새로 추가된 셀렉트 박스에 옵션 적용
+		    const newSelect = newScopeItem.querySelector('select');
+		    const existingSelect = document.querySelector('#scopeSelects select');
+		    
+		    // 기존 셀렉트 박스의 옵션을 복사
+		    for (let i = 1; i < existingSelect.options.length; i++) {
+		        const option = existingSelect.options[i];
+		        const newOption = document.createElement('option');
+		        newOption.value = option.value;
+		        newOption.textContent = option.textContent;
+		        newOption.dataset.kaptCode = option.dataset.kaptCode;
+		        newOption.dataset.type = option.dataset.type;
+		        newSelect.appendChild(newOption);
+		    }
+
+		    // 스크롤바가 가장 아래로 이동
+		    const scopeCard = document.querySelector('.card.scope-card');
+		    scopeCard.scrollTop = scopeCard.scrollHeight;
+		}
+
+		// 범위 선택 변경 시 처리 함수 (새로 추가)
+		async function handleScopeChange(selectElement) {
+		    const selectedOption = selectElement.options[selectElement.selectedIndex];
+		    const scopeType = selectedOption.dataset.type;
+		    
+		    if (scopeType === 'building') {
+		        // "특정 동 선택"을 선택한 경우 동 목록 추가
+		        await addBuildingSelects(selectElement, selectedOption.dataset.kaptCode);
+		    } else {
+		        // 다른 옵션 선택 시 동 셀렉트 박스 제거
+		        removeBuildingSelects(selectElement);
+		    }
+		}
+
+		// 동 선택 셀렉트 박스 추가 함수 (새로 추가)
+		async function addBuildingSelects(parentSelect, kaptCode) {
+		    try {
+		        // 기존 동 셀렉트 박스 제거
+		        removeBuildingSelects(parentSelect);
+		        
+		        // 동 목록 조회
+		        const response = await fetch(`/api/apartments/${kaptCode}/buildings`);
+		        if (!response.ok) {
+		            console.error('동 목록 조회 실패');
+		            return;
+		        }
+		        
+		        const data = await response.json();
+		        const buildings = data.buildings;
+		        
+		        if (buildings.length === 0) {
+		            console.warn('동 정보가 없습니다.');
+		            return;
+		        }
+		        
+		        // 동 선택 컨테이너 생성
+		        const scopeItem = parentSelect.closest('.scope-item');
+		        const buildingContainer = document.createElement('div');
+		        buildingContainer.className = 'building-selects';
+		        buildingContainer.style.marginTop = '10px';
+		        buildingContainer.style.paddingLeft = '20px';
+		        buildingContainer.style.borderLeft = '2px solid #e0e0e0';
+		        
+		        // 제목 추가
+		        const title = document.createElement('div');
+		        title.textContent = '📍 보낼 동 선택:';
+		        title.style.fontSize = '14px';
+		        title.style.color = '#666';
+		        title.style.marginBottom = '8px';
+		        buildingContainer.appendChild(title);
+		        
+		        // 각 동에 대한 체크박스 생성
+		        buildings.forEach(building => {
+		            const checkboxItem = document.createElement('label');
+					checkboxItem.style.display = 'block';  // flex를 block으로 변경
+					checkboxItem.style.alignItems = 'center';
+		            checkboxItem.style.marginBottom = '5px';
+		            checkboxItem.style.cursor = 'pointer';
+		            
+		            checkboxItem.innerHTML = `
+		                <input type="checkbox" value="${building.BUILDING_CODE}" 
+		                       style="margin-right: 8px;" class="building-checkbox">
+		                <span style="font-size: 14px;">${building.BUILDING_NAME}</span>
+		            `;
+		            
+		            buildingContainer.appendChild(checkboxItem);
+		        });
+		        
+		        scopeItem.appendChild(buildingContainer);
+		        
+		    } catch (error) {
+		        console.error('동 목록 로드 오류:', error);
+		        alert('동 정보를 불러오는 중 오류가 발생했습니다.');
+		    }
+		}
+
+		// 동 선택 셀렉트 박스 제거 함수 (새로 추가)
+		function removeBuildingSelects(parentSelect) {
+		    const scopeItem = parentSelect.closest('.scope-item');
+		    const existingBuildingContainer = scopeItem.querySelector('.building-selects');
+		    if (existingBuildingContainer) {
+		        existingBuildingContainer.remove();
+		    }
+		}
+
+		// 선택된 범위 가져오기 함수 (수정됨)
+		function getSelectedScopes() {
+		    const scopes = [];
+		    const scopeItems = document.querySelectorAll('#scopeSelects .scope-item');
+		    
+		    scopeItems.forEach(item => {
+		        const select = item.querySelector('select');
+		        if (select.value) {
+		            const selectedOption = select.options[select.selectedIndex];
+		            const scopeType = selectedOption.dataset.type;
+		            
+		            if (scopeType === 'building') {
+		                // 특정 동 선택인 경우
+		                const checkedBuildings = item.querySelectorAll('.building-checkbox:checked');
+		                if (checkedBuildings.length > 0) {
+		                    const buildings = Array.from(checkedBuildings).map(cb => cb.value);
+		                    scopes.push({
+		                        type: 'specific_buildings',
+		                        kaptCode: selectedOption.dataset.kaptCode,
+		                        buildings: buildings,
+		                        label: `${selectedOption.textContent} (${buildings.join(', ')})`
+		                    });
+		                }
+		            } else {
+		                // 일반 범위 선택
+		                scopes.push({
+		                    type: select.value,
+		                    kaptCode: selectedOption.dataset.kaptCode,
+		                    label: selectedOption.textContent
+		                });
+		            }
+		        }
+		    });
+		    
+		    return scopes;
+		}
+
+		// 페이지 로드 시 첫 번째 셀렉트 박스에도 이벤트 추가
+		document.addEventListener('DOMContentLoaded', function() {
+		    console.log('💰 포인트 조회 시작...');
+		    checkUserPoints();
+		    
+		    console.log('🏠 아파트 정보 로드 시작...');
+		    loadUserApartments();
+		    
+		    // 첫 번째 셀렉트 박스에 이벤트 연결
+		    setTimeout(() => {
+		        const firstSelect = document.querySelector('#scopeSelects select');
+		        if (firstSelect) {
+		            firstSelect.setAttribute('onchange', 'handleScopeChange(this)');
+		        }
+		    }, 1000);
+		});
+		// 포인트 UI 업데이트 함수
+		function updatePointsUI(points) {
+		    const pointsSpan = document.getElementById('currentPoints');
+		    const submitButton = document.getElementById('submitButton');
+		    
+		    pointsSpan.textContent = points.toLocaleString(); // 천 단위 콤마
+		    
+		    if (points >= 300) {
+		        submitButton.disabled = false;
+		        submitButton.style.opacity = '1';
+		        submitButton.textContent = '전송하기';
+		        submitButton.style.background = '#fff';
+		        submitButton.style.color = '#61AFFE';
+		        submitButton.style.cursor = 'pointer';
+		    } else {
+		        submitButton.disabled = true;
+		        submitButton.style.opacity = '0.5';
+		        submitButton.textContent = `포인트 부족 (${300 - points}P 필요)`;
+		        submitButton.style.background = '#f0f0f0';
+		        submitButton.style.color = '#999';
+		        submitButton.style.cursor = 'not-allowed';
+		    }
+		}
+
+		// 선택된 범위 가져오기 함수
+		function getSelectedScopes() {
+			    const scopes = [];
+			    const selects = document.querySelectorAll('#scopeSelects select');
+			    
+			    selects.forEach(select => {
+			        if (select.value) {
+			            const selectedOption = select.options[select.selectedIndex];
+			            scopes.push({
+			                type: select.value,
+			                kaptCode: selectedOption.dataset.kaptCode,
+			                label: selectedOption.textContent
+			            });
+			        }
+			    });
+			    
+			    return scopes;
+			}
+
+		// 기존 handleSubmit 함수를 수정 (포인트 체크 추가)
+		function handleSubmit(event) {
+		    event.preventDefault();
+
+		    const message = document.getElementById('messageContent').value;
+		    const currentPointsText = document.getElementById('currentPoints').textContent;
+		    const currentPoints = parseInt(currentPointsText.replace(/,/g, '')) || 0;
+
+		    console.log('📤 전송 요청 - 현재 포인트:', currentPoints);
+
+		    // 포인트 재확인
+		    if (currentPoints < 300) {
+		        alert(`💰 포인트가 부족합니다.\n\n현재 포인트: ${currentPoints.toLocaleString()}P\n필요 포인트: 300P`);
+		        return;
+		    }
+
+		    // 메시지 입력 확인
+		    if (!message.trim()) {
+		        alert('📝 메시지를 입력해주세요.');
+		        return;
+		    }
+
+		    // 금칙어 필터링 체크
+		    if (!filterBannedWords(message)) {
+		        alert("🚫 금칙어가 포함된 메시지는 보낼 수 없습니다.");
+		        return;
+		    }
+
+		    // 범위 선택 확인
+		    const selectedScopes = getSelectedScopes();
+		    if (selectedScopes.length === 0) {
+		        alert('📍 알림을 받을 범위를 선택해주세요.');
+		        return;
+		    }
+
+		    console.log('✅ 모든 검증 통과 - 모달 표시');
+		    // 모달 표시
+		    document.getElementById('confirmModal').style.display = 'flex';
+		}
+
+		// 기존 모달 "확인" 버튼 이벤트를 수정 (PWA 알림 발송 추가)
+		document.getElementById('confirmSend').addEventListener('click', async function() {
+		    const message = document.getElementById('messageContent').value;
+		    const targetScopes = getSelectedScopes();
+
+		    console.log('🚀 PWA 알림 발송 시작...');
+
+		    try {
+		        // 서버에 PWA 알림 발송 요청
+		        const response = await fetch('/api/notifications/send', {
+		            method: 'POST',
+		            headers: {
+		                'Content-Type': 'application/json',
+		            },
+					// 모달 "확인" 버튼 이벤트에서 body 부분 수정
+						body: JSON.stringify({
+					    message: message,
+					    targetScopes: targetScopes.map(scope => scope.type), 
+					    targetScopeDetails: targetScopes, // 상세 정보도 함께 전달
+					    pointCost: 300
+					})
+		        });
+
+		        const result = await response.json();
+		        console.log('서버 응답:', result);
+
+		        if (response.ok && result.success) {
+		            // 성공 시
+		            alert(`🎉 알림이 전송되었습니다!\n\n📱 ${result.recipientCount}명에게 발송됨\n💰 300P가 차감되었습니다.`);
+		            
+		            // 포인트 업데이트
+		            console.log('💰 포인트 업데이트 중...');
+		            await checkUserPoints();
+		            
+		            // 폼 리셋
+		            document.getElementById('messageContent').value = '';
+		            document.getElementById('currentLength').textContent = '0';
+		            
+		        } else {
+		            // 실패 시
+		            alert(`❌ ${result.message || '알림 전송에 실패했습니다.'}`);
+		        }
+
+		    } catch (error) {
+		        console.error('전송 오류:', error);
+		        alert('🌐 네트워크 오류가 발생했습니다.\n잠시 후 다시 시도해주세요.');
+		    }
+
+		    // 모달 닫기
+		    document.getElementById('confirmModal').style.display = 'none';
+		});
+
+		// 기존 함수들은 그대로 유지 (addSelectBox, filterBannedWords 등)
+        const scopeSelectsContainer = document.getElementById('scopeSelects');
+
+        // 새로운 select 박스와 제거 버튼을 추가하는 함수
+		// 새로운 select 박스와 제거 버튼을 추가하는 함수
+		function addSelectBox() {
+		    const newScopeItem = document.createElement('div');
+		    newScopeItem.classList.add('scope-item');
+		    newScopeItem.innerHTML = `
+		        <div class="select-container">
+		            <select>
+		                <option value="">범위 선택</option>
+		            </select>
+		        </div>
+		        <button type="button" class="remove-button action-button">
+		            <img src="/icons/minus.png" alt="삭제">
+		        </button>
+		    `;
+		    scopeSelectsContainer.appendChild(newScopeItem);
+
+		    // 새로 추가된 셀렉트 박스에 옵션 적용
+		    const newSelect = newScopeItem.querySelector('select');
+		    const existingSelect = document.querySelector('#scopeSelects select');
+		    
+		    // 기존 셀렉트 박스의 옵션을 복사
+		    for (let i = 1; i < existingSelect.options.length; i++) {
+		        const option = existingSelect.options[i];
+		        const newOption = document.createElement('option');
+		        newOption.value = option.value;
+		        newOption.textContent = option.textContent;
+		        newOption.dataset.kaptCode = option.dataset.kaptCode;
+		        newSelect.appendChild(newOption);
+		    }
+
+		    // 새로운 항목 추가 후 스크롤바가 가장 아래로 이동
+		    const scopeCard = document.querySelector('.card.scope-card');
+		    scopeCard.scrollTop = scopeCard.scrollHeight;
+		}
+
+        // 동적으로 생성된 빼기 버튼 클릭 이벤트를 처리
+        scopeSelectsContainer.addEventListener('click', function(event) {
+            if (event.target.closest('.remove-button')) {
+                const scopeItemToRemove = event.target.closest('.scope-item');
+                // 최소 1개는 남겨두도록 조건 추가
+                if (scopeItemToRemove && scopeSelectsContainer.children.length > 1) {
+                    scopeSelectsContainer.removeChild(scopeItemToRemove);
+                }
+            }
+        });
+
+        // 글자 수 카운트 기능
+        const messageContent = document.getElementById('messageContent');
+        const currentLength = document.getElementById('currentLength');
+
+        messageContent.addEventListener('input', function() {
+            currentLength.textContent = this.value.length;
+        });
+        
+        // ---- 모달 관련 스크립트 ----
+        // 모달 관련 요소 가져오기
+        const submitButton = document.querySelector('.submit-button');
+        const confirmModal = document.getElementById('confirmModal');
+        const confirmSendButton = document.getElementById('confirmSend');
+        const cancelSendButton = document.getElementById('cancelSend');
+
+     	// 금칙어 목록
+        const bannedWords = ["욕설1", "욕설2", "욕설3"];
+
+        // 메시지에서 금칙어를 필터링하는 함수
+        function filterBannedWords(message) {
+            const regex = new RegExp(bannedWords.join("|"), "gi");
+            if (regex.test(message)) {
+                return false; // 금칙어가 포함되어 있으면 false
+            }
+            return true; // 금칙어가 없으면 true
+        }
+
+     	// 전송 버튼 클릭 시 호출되는 함수
+        document.getElementById('submitButton').addEventListener('click', handleSubmit);
+
+        // 전송 버튼 클릭 시 호출되는 함수
+        function handleSubmit(event) {
+            event.preventDefault();  // 기본 폼 제출을 방지
+
+            const message = document.getElementById('messageContent').value;
+
+            // 금칙어 필터링 체크
+            if (!filterBannedWords(message)) {
+                alert("금칙어가 포함된 메시지는 보낼 수 없습니다.");
+                return; // 금칙어가 포함되었으면 전송하지 않음
+            }
+
+            // 금칙어가 없으면 모달 창 표시
+            document.getElementById('confirmModal').style.display = 'flex'; // 모달 표시
+        }
+
+        // 모달 "확인" 버튼 클릭 시
+        document.getElementById('confirmSend').addEventListener('click', function() {
+            const message = document.getElementById('messageContent').value;
+
+            // 실제 전송 로직 (서버에 전송 등)
+            console.log("알림 전송됨:", message); // 실제 전송 대신 임시로 로그 출력
+
+            // 모달 닫기
+            document.getElementById('confirmModal').style.display = 'none';
+
+            // 전송 후 추가 동작 (예: 폼 리셋, 다른 페이지로 리디렉션 등)
+            alert('알림이 전송되었습니다!');
+        });
+
+        // 모달 "취소" 버튼 클릭 시
+        document.getElementById('cancelSend').addEventListener('click', function() {
+            document.getElementById('confirmModal').style.display = 'none'; // 모달 숨김
+        });
+
+        // 모달 오버레이 클릭 시 모달 닫기
+        document.getElementById('confirmModal').addEventListener('click', function(event) {
+            if (event.target === document.getElementById('confirmModal')) { // 오버레이 자체 클릭
+                document.getElementById('confirmModal').style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

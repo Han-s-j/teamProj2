@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>관리비 비교 | A.P.T</title>
+
+<!-- 사이드바 css -->
+<link rel="stylesheet" href="/css/sidebar.css">
+
+<!-- Pretendard(Font) -->
+<link rel="stylesheet" th:href="@{/css/font.css}" />
+
+<!-- Favicon -->
+<link rel="icon" href="/icons/favicon.png" type="image/png">
+
+<style>
+body {
+	margin: 0;
+	background-color: #FDFDFD;
+}
+
+/* 메인 레이아웃 */
+main {
+	margin-left: 100px;
+	padding: 40px 60px;
+}
+
+h1 {
+	font-size: 38px;
+	line-height: 1.5;
+	color: #292929;
+	margin-left: 350px;
+	margin-bottom: 30px;
+	padding-top: 80px;
+}
+
+.comparison-wrapper {
+	display: flex;
+	justify-content: center;
+	gap: 100px;
+}
+
+.apartment-section {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	width: 550px; /* 확장됨 */
+}
+
+.section-title {
+	width: 100%;
+	margin-bottom: 5px;
+}
+
+/* 기존 section-title 스타일은 그대로 유지 */
+.section-title {
+    width: 100%;
+    margin-bottom: 5px;
+    /* 이미지 대신 div를 사용하므로 이 아래에 새로운 스타일을 추가합니다. */
+}
+
+/* 새로운 아파트 카드 div의 기본 스타일 */
+.apt-card {
+    display: flex; /* 텍스트를 중앙 정렬하기 위해 flexbox 사용 */
+    justify-content: center; /* 가로 중앙 정렬 */
+    align-items: center; /* 세로 중앙 정렬 */
+    height: 60px; /* 배너의 높이 */
+    border-radius: 20px; /* 둥근 모서리 */
+    font-size: 32px; /* 글자 크기 */
+    font-weight: bold; /* 글자 두껍게 */
+    color: #FFFFFF; /* 글자색 (흰색) */
+    text-align: center; /* 텍스트 중앙 정렬 */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* 그림자 효과 (선택 사항) */
+}
+
+/* 우리 아파트 카드 전용 스타일 */
+.my-apt-card {
+    background-color: #FF9C98; /* 우리 아파트 이미지의 배경색과 유사하게 설정 */
+}
+
+/* 다른 아파트 카드 전용 스타일 */
+.other-apt-card {
+    background-color: #FFBD7C; /* 다른 아파트 이미지의 배경색과 유사하게 설정 */
+}
+
+.apartment-box {
+	width: 100%;
+	min-height: 160px;
+	border: 1px solid #ddd;
+	border-radius: 12px;
+	padding-right: 60px;
+	padding-top: 20px;
+	padding-left: 30px;
+	/* padding: 20px; */
+	background: #fff;
+	box-sizing: border-box;
+}
+
+.input-group {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+.input-row {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+	color: #292929;
+}
+
+.input-row label {
+	font-weight: 600;
+	min-width: 60px;
+}
+
+.input-row select {
+	padding: 10px;
+	font-size: 1rem;
+	border-radius: 6px;
+	border: 1px solid #ccc;
+	flex: 1;
+}
+
+.apt-list-header {
+	width: 100%;
+	margin-top: 30px;
+	margin-bottom: 10px;
+	display: flex;
+	align-items: center;
+}
+
+.apt-list-box {
+	width: 100%;
+	height: 500px;
+	border: 1px solid #ccc;
+	border-radius: 10px;
+	background-color: #fff;
+	overflow-y: auto;
+}
+
+.compare-button-wrap {
+	text-align: center;
+	margin-top: 60px;
+}
+
+.compare-button-wrap button {
+	background: none;
+	border: none; /* ← 외곽선 제거 */
+	padding: 0;
+	cursor: pointer;
+}
+
+.compare-button-wrap img {
+	width: 260px;
+	cursor: pointer;
+	display: block;
+	margin-bottom: 30px;
+}
+/* apt-list-box 내 개별 아파트 항목 스타일 */
+.apt-item {
+	padding: 15px 20px; /* 상하좌우 패딩 */
+	border-bottom: 1px solid #eee; /* 하단 경계선 */
+	cursor: pointer; /* 마우스 오버 시 커서 변경 */
+	transition: background-color 0.2s ease; /* 부드러운 배경색 전환 효과 */
+	display: flex; /* 내부 요소 정렬을 위해 flexbox 사용 */
+	justify-content: space-between; /* 내용과 선택 상태 아이콘을 양 끝으로 정렬 */
+	align-items: center; /* 세로 중앙 정렬 */
+	color: #444; /* 기본 글자색 */
+}
+
+.apt-item:last-child {
+	border-bottom: none; /* 마지막 항목의 하단 경계선 제거 */
+}
+
+.apt-item:hover {
+	background-color: #f9f9f9; /* 호버 시 배경색 변경 */
+}
+
+.apt-item strong {
+	font-size: 1.1em; /* 아파트 이름 글자 크기 키우기 */
+	color: #222; /* 아파트 이름 글자색 */
+}
+
+.apt-item span {
+	font-size: 0.9em; /* 주소 글자 크기 */
+	color: #777; /* 주소 글자색 */
+	margin-top: 5px; /* 주소와 아파트 이름 사이 간격 */
+	display: block; /* 주소를 새 줄에 표시 */
+}
+
+/* 선택된 아파트 항목의 선택 표시 아이콘 */
+.apt-item .selection-indicator {
+	width: 20px;
+	height: 20px;
+	border-radius: 50%; /* 원형 */
+	background-color: #f0f0f0; /* 기본 배경색 */
+	border: 1px solid #ccc; /* 테두리 */
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	font-size: 0.8em;
+	color: #fff;
+}
+
+.apt-item strong {
+	font-size: 18px;
+	font-weight: 500;
+	color: #292929;
+	display: block; /* 줄바꿈 */
+}
+
+.apt-item span {
+	font-size: 15px;
+	color: #919191;
+	margin-top: 5px;
+	display: block; /* 줄바꿈 */
+}
+
+/* 아파트 선택 시 선택됨 효과 */
+.apt-item.mySelected {
+	background-color: #F8D7DA;
+}
+
+.apt-item.mySelected strong {
+    font-weight: 700; /* 우리 아파트 선택 시 텍스트 굵게 */
+}
+
+.apt-item.otherSelected {
+	background-color: #FFF3CD;
+}
+
+.apt-item.otherSelected strong {
+    font-weight: 700; /* 다른 아파트 선택 시 텍스트 굵게 */
+}
+
+/* footer */
+footer {
+	background-color: #f2f2f2;
+	padding: 15px 0;
+	text-align: center;
+	font-size: 14px;
+	color: #666;
+	width: 100%;
+	flex-shrink: 0;
+}
+</style>
+</head>
+<body>
+	<!-- 사이드바 포함 -->
+	<div th:replace="common/sidebar :: sidebar"></div>
+	<!-- 사이드바 포함 -->
+
+	<h1>다른 아파트와 관리비 비교</h1>
+
+	<div class="comparison-wrapper">
+		<div class="apartment-section">
+			<div class="section-title apt-card my-apt-card">우리 아파트 선택</div>
+			<div class="apartment-box">
+				<div class="input-group">
+					<div class="input-row">
+						<!-- DB 조회해서 변해야 하는 부분 -->
+						<label>발생월</label>
+						<select id="year-select">
+							<option>연도</option>
+							<option th:each="year : ${yearList}" th:value="${year}" th:text="${year}"></option>
+						</select>
+						<select id="month-select"><option>월</option></select>
+					</div>
+					<div class="input-row">
+						<!-- DB 조회해서 변해야 하는 부분 -->
+						<label>주소</label>
+						<select><option disabled selected>대전광역시</option></select>
+						<select class="district-select">
+							<option>자치구</option>
+							<option th:each="dist : ${districtList}" th:value="${dist}" th:text="${dist}"></option>
+						</select>
+						<select class="dong-select">
+							<option>동</option>
+						</select>
+					</div>
+				</div>
+			</div>
+			<div class="apt-list-header">
+				<img src="/icons/apartments.png" alt="아파트 목록" />
+			</div>
+			<div class="apt-list-box" id="home-apts"></div>
+		</div>
+
+		<div class="apartment-section">
+			<div class="section-title apt-card other-apt-card">다른 아파트 선택</div>
+			<div class="apartment-box">
+				<div class="input-group">
+					<div class="input-row">
+						<!-- DB 조회해서 변해야 하는 부분 -->
+						<label>주소</label>
+						<select><option disabled selected>대전광역시</option></select>
+						<select class="district-select">
+							<option>자치구</option>
+							<option th:each="dist : ${districtList}" th:value="${dist}" th:text="${dist}"></option>
+						</select>
+						<select class="dong-select">
+							<option>동</option>
+						</select>
+					</div>
+				</div>
+			</div>
+			<div class="apt-list-header">
+				<img src="/icons/apartments.png" alt="아파트 목록" />
+			</div>
+			<div class="apt-list-box" id="other-apts"></div>
+		</div>
+	</div>
+
+	<!-- 비교 버튼 영역 -->
+	<div class="compare-button-wrap">
+		<button onclick="openComparePopup()">
+			<img src="/cards/비교버튼.png" alt="비교하기 버튼" />
+		</button>
+	</div>
+	
+	<!-- 비교를 위해 저장 -->
+	<input type="hidden" id="myKaptCode" />
+	<input type="hidden" id="otherKaptCode" />
+	
+	<!-- footer 시작 -->
+	<footer>
+		<div>
+			<p style="margin: 0;">© 2025 A.P.T. All rights reserved.</p>
+			<p style="margin: 5px 0 0;">
+				Made with <span class="computer-icon">💻</span> by 팀 EF
+			</p>
+		</div>
+	</footer>
+	<!-- footer 끝 -->
+	
+	<script>
+		// 연도 선택 시 → 월 목록 자동 불러오기
+		document.addEventListener("DOMContentLoaded", () => {
+		  const yearSelect = document.getElementById("year-select");
+		  const monthSelect = document.getElementById("month-select");
+	
+		  yearSelect.addEventListener("change", function () {
+		    const selectedYear = this.value;
+	
+		    if (!selectedYear || selectedYear === "연도") return;
+	
+		    fetch(`/getMonthList?year=${selectedYear}`)
+		      .then(response => response.json())
+		      .then(data => {
+		        // 기존 옵션 초기화
+		        monthSelect.innerHTML = "";
+	
+		        // 새 옵션 채우기
+		        data.forEach(month => {
+		          const opt = document.createElement("option");
+		          opt.value = month;
+		          opt.textContent = month;
+		          monthSelect.appendChild(opt);
+		        });
+		      })
+		      .catch(error => {
+		        console.error("월 목록 불러오기 실패:", error);
+		      });
+		  });
+		});
+		
+		// 자치구 선택 → 동 목록 불러오기
+		document.querySelectorAll(".district-select").forEach((select, idx) => {
+		  select.addEventListener("change", function () {
+		    const district = this.value;
+		    const parentRow = this.closest(".input-row");
+		    const dongSelect = parentRow ? parentRow.querySelector(".dong-select") : null;
+		
+		    if (!dongSelect || !district || district === "자치구") return;
+		
+		    // ✅ 아파트 출력용 정보
+		    const resultBoxId = idx === 0 ? "home-apts" : "other-apts";
+		    const hiddenInputId = idx === 0 ? "myKaptCode" : "otherKaptCode";
+		    const selectedClass = idx === 0 ? "mySelected" : "otherSelected";
+		
+		    fetch(`/getDongList?district=${district}`)
+		      .then(response => response.json())
+		      .then(data => {
+		        dongSelect.innerHTML = "<option disabled selected>동</option>"; // ✅ 여기!
+		        data.forEach(dong => {
+		          const opt = document.createElement("option");
+		          opt.value = dong;
+		          opt.textContent = dong;
+		          dongSelect.appendChild(opt);
+		        });
+		      })
+		      .catch(err => console.error("동 목록 조회 실패:", err));
+		  });
+		});
+		
+		// 동 선택 시 아파트 리스트 불러오기
+		document.querySelectorAll(".dong-select").forEach((select, idx) => {
+		  select.addEventListener("change", function () {
+		    const dong = this.value;
+		    if (!dong || dong === "동") return;
+		
+		    const resultBoxId = idx === 0 ? "home-apts" : "other-apts";
+		    const hiddenInputId = idx === 0 ? "myKaptCode" : "otherKaptCode";
+		    const selectedClass = idx === 0 ? "mySelected" : "otherSelected";
+		
+		    loadAptList(dong, resultBoxId, hiddenInputId, selectedClass);
+		  });
+		});
+		
+		// 아파트 리스트 불러오기
+		function loadAptList(dong, resultBoxId, hiddenInputId, selectedClass) {
+		  fetch(`/getAptList?dong=${dong}`)
+		    .then(res => res.json())
+		    .then(data => {
+		      const resultBox = document.getElementById(resultBoxId);
+		      resultBox.innerHTML = "";
+		
+		      data.forEach(apt => {
+		    	  const div = document.createElement("div");
+		    	  div.innerHTML = `
+		    	    <div>
+		    	      <strong>${apt.kaptName}</strong>
+		    	      <span>${apt.kaptAddress}</span>
+		    	    </div>
+		    	  `;
+		    	  div.classList.add("apt-item");
+
+		    	  div.onclick = function () {
+		    	    document.getElementById(hiddenInputId).value = apt.kaptCode;
+		    	    document.querySelectorAll(`#${resultBoxId} .apt-item`).forEach(el => el.classList.remove(selectedClass));
+		    	    this.classList.add(selectedClass);
+		    	  };
+
+		    	  resultBox.appendChild(div);
+		    	});
+		    });
+		}
+		
+		// 비교 버튼 클릭 시 팝업 열기
+		function openComparePopup() {
+		  const year = document.querySelectorAll("select")[0].value;
+		  const month = document.querySelectorAll("select")[1].value;
+		  const myKaptCode = document.getElementById("myKaptCode").value;
+		  const otherKaptCode = document.getElementById("otherKaptCode").value;
+		
+		  if (!myKaptCode || !otherKaptCode) {
+		    alert("우리집과 다른집을 모두 선택해주세요!");
+		    return;
+		  }
+		
+		  const compareType = "management";
+		  const url = `feeComparePopup?myKaptCode=${myKaptCode}&otherKaptCode=${otherKaptCode}&myYear=${year}&myMonth=${month}&compareType=${compareType}`;
+		  window.open(url, "comparePopup", "width=1000,height=750,resizable=yes,scrollbars=yes");
+		}
+	</script>
+</body>
+</html>

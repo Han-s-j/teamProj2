@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>비교 결과 | A.P.T</title>
+
+<!-- Pretendard(Font) -->
+<link rel="stylesheet" th:href="@{/css/font.css}" />
+
+<!-- Favicon -->
+<link rel="icon" href="/icons/favicon.png" type="image/png">
+
+<script	src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+
+<style>
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+body {
+	background: #ffffff;
+	padding: 40px 20px;
+	min-height: 100vh;
+	color: #333;
+}
+
+.container {
+	max-width: 1000px;
+	margin: 0 auto;
+}
+
+.header {
+	text-align: center;
+	margin-bottom: 40px;
+}
+
+.header h2 {
+	font-size: 32px;
+	font-weight: 700;
+	color: #2c3e50;
+	margin-bottom: 10px;
+}
+
+.header p {
+	color: #7f8c8d;
+	font-size: 16px;
+}
+
+.control-panel {
+	text-align: center;
+	margin-bottom: 40px;
+	padding: 30px;
+	border: 1px solid #e1e8ed;
+	border-radius: 12px;
+	background: #fafbfc;
+}
+
+.control-title {
+	font-size: 18px;
+	font-weight: 600;
+	color: #2c3e50;
+	margin-bottom: 20px;
+}
+
+.button-group {
+	display: flex;
+	justify-content: center;
+	gap: 15px;
+	flex-wrap: wrap;
+}
+
+.control-button {
+	padding: 12px 24px;
+	border: 2px solid #FF9C98;
+	background: white;
+	color: #FF9C98;
+	border-radius: 8px;
+	cursor: pointer;
+	font-size: 16px;
+	font-weight: 500;
+	transition: all 0.3s ease;
+	min-width: 120px;
+}
+
+.control-button:hover {
+	background: #FF9C98;
+	color: white;
+	transform: translateY(-2px);
+	box-shadow: 0 4px 12px rgba(255, 156, 152, 0.3);
+}
+
+.control-button.active {
+	background: #FF9C98;
+	color: white;
+	box-shadow: 0 4px 12px rgba(255, 156, 152, 0.3);
+}
+
+.result-table {
+	margin: 0 auto 40px;
+	border-collapse: collapse;
+	width: 100%;
+	max-width: 1000px;
+	border: 1px solid #e1e8ed;
+	border-radius: 12px;
+	overflow: hidden;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.result-table th {
+	background: #f8f9fa;
+	color: #2c3e50;
+	padding: 20px 15px;
+	font-weight: 600;
+	font-size: 16px;
+	text-align: center;
+	border-bottom: 1px solid #e1e8ed;
+}
+
+.result-table td {
+	padding: 18px 15px;
+	text-align: center;
+	font-size: 15px;
+	color: #2c3e50;
+	background: white;
+}
+
+.result-table tbody tr:hover {
+	background: #f8f9fa;
+}
+
+#myCost {
+	color: #FF9C98;
+	font-weight: 600;
+}
+
+#otherCost {
+	color: #FFBD7C;
+	font-weight: 600;
+}
+
+.chart-container {
+	background: white;
+	border: 1px solid #e1e8ed;
+	border-radius: 12px;
+	padding: 30px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	margin-top: 20px;
+}
+
+canvas {
+	display: block;
+	margin: 0 auto;
+	max-width: 100%;
+	height: auto !important;
+}
+
+@media ( max-width : 768px) {
+	body {
+		padding: 20px 10px;
+	}
+	.control-panel {
+		padding: 20px;
+	}
+	.button-group {
+		flex-direction: column;
+		align-items: center;
+		gap: 10px;
+	}
+	.control-button {
+		min-width: 200px;
+	}
+	.result-table th, .result-table td {
+		padding: 12px 8px;
+		font-size: 14px;
+	}
+	.header h2 {
+		font-size: 28px;
+	}
+}
+</style>
+</head>
+<body>
+	<div class="container">
+		<div class="header">
+			<h2>요금 비교 분석</h2>
+			<p>월별 요금 비교 현황을 확인하세요</p>
+		</div>
+
+		<div class="control-panel">
+			<div class="control-title">비교 항목 선택</div>
+			<div class="button-group">
+				<button class="control-button active" onclick="selectType('management', this)">관리비</button>
+				<button class="control-button" onclick="selectType('electric', this)">전기요금</button>
+			</div>
+		</div>
+
+		<table class="result-table">
+			<thead>
+				<tr>
+					<th>연도</th>
+					<th>월</th>
+					<th>우리 집</th>
+					<th>다른 집</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td id="year">-</td>
+					<td id="month">-</td>
+					<td id="myCost">-</td>
+					<td id="otherCost">-</td>
+				</tr>
+			</tbody>
+		</table>
+
+		<div class="chart-container">
+			<canvas id="compareChart" width="700" height="400"></canvas>
+		</div>
+	</div>
+
+	<script>
+	let chart;
+	let currentType = 'management'; // 초기엔 관리비 표시
+	
+	// URL 파라미터 가져오기
+	function getParams() {
+	  const params = new URLSearchParams(window.location.search);
+	  return {
+	    myKaptCode: params.get("myKaptCode"),
+	    otherKaptCode: params.get("otherKaptCode"),
+	    year: params.get("myYear"),
+	    month: params.get("myMonth")
+	  };
+	}
+	
+	// 버튼 클릭 시 비교 항목 선택 처리
+	function selectType(type, buttonElement) {
+	  currentType = type;
+	
+	  document.querySelectorAll('.control-button').forEach(btn => btn.classList.remove('active'));
+	  buttonElement.classList.add('active');
+	
+	  const { myKaptCode, otherKaptCode, year, month } = getParams();
+	
+	  document.getElementById("myCost").innerText = "불러오는 중...";
+	  document.getElementById("otherCost").innerText = "불러오는 중...";
+	  
+	  if (type === "electric") {
+	    fetch(`/getElecFee?myKaptCode=${myKaptCode}&otherKaptCode=${otherKaptCode}&year=${year}&month=${month}`)
+	      .then(res => res.json())
+	      .then(data => {
+	        const my = data.my;
+	        const other = data.other;
+	
+	        const myTotal = my.privateElecFee + my.publicElecFee;
+	        const otherTotal = other.privateElecFee + other.publicElecFee;
+	
+	        updateChartDisplay(year, month, myTotal, otherTotal, "전기요금");
+	      });
+	  } else {
+	    fetch(`/getMgmtFee?myKaptCode=${myKaptCode}&otherKaptCode=${otherKaptCode}&year=${year}&month=${month}`)
+	      .then(res => res.json())
+	      .then(data => {
+	        const myTotal = data.myCost;
+	        const otherTotal = data.otherCost;
+	
+	        updateChartDisplay(year, month, myTotal, otherTotal, "관리비");
+	      });
+	  }
+	}
+	
+	// 차트 및 표 업데이트 함수
+	function updateChartDisplay(year, month, myCost, otherCost, label) {
+	  document.getElementById("year").innerText = year;
+	  document.getElementById("month").innerText = month;
+	  document.getElementById("myCost").innerText = myCost.toLocaleString() + " 원";
+	  document.getElementById("otherCost").innerText = otherCost.toLocaleString() + " 원";
+	
+	  if (chart) {
+	    chart.destroy();
+	  }
+	
+	  const ctx = document.getElementById("compareChart").getContext("2d");
+	
+	  chart = new Chart(ctx, {
+	    type: 'bar',
+	    data: {
+	      labels: [`${year}년 ${month}월`],
+	      datasets: [
+	        {
+	          label: `우리 집 ${label}`,
+	          data: [myCost],
+	          backgroundColor: '#FF9C98B3',
+	          borderColor: '#FF8A85',
+	          borderWidth: 1,
+	          borderRadius: 6,
+	          borderSkipped: false,
+	        },
+	        {
+	          label: `다른 집 ${label}`,
+	          data: [otherCost],
+	          backgroundColor: '#FFBD7CB3',
+	          borderColor: '#FFB366',
+	          borderWidth: 1,
+	          borderRadius: 6,
+	          borderSkipped: false,
+	        }
+	      ]
+	    },
+	    options: {
+	      responsive: true,
+	      maintainAspectRatio: false,
+	      plugins: {
+	        legend: {
+	          position: 'top',
+	          labels: {
+	            usePointStyle: true,
+	            padding: 20,
+	            font: {
+	              size: 14,
+	              weight: '600'
+	            }
+	          }
+	        },
+	        tooltip: {
+	          backgroundColor: 'rgba(0,0,0,0.8)',
+	          titleColor: 'white',
+	          bodyColor: 'white',
+	          borderColor: '#FF9C98',
+	          borderWidth: 1,
+	          cornerRadius: 8,
+	          displayColors: true,
+	          callbacks: {
+	            label: function(context) {
+	              return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + '원';
+	            }
+	          }
+	        }
+	      },
+	      scales: {
+	        y: {
+	          beginAtZero: true,
+	          grid: {
+	            color: 'rgba(0,0,0,0.1)',
+	            drawBorder: false
+	          },
+	          ticks: {
+	            callback: function(value) {
+	              return value.toLocaleString() + '원';
+	            },
+	            font: { size: 12 },
+	            color: '#666'
+	          }
+	        },
+	        x: {
+	          grid: { display: false },
+	          ticks: {
+	            font: { size: 12, weight: '600' },
+	            color: '#666'
+	          }
+	        }
+	      },
+	      animation: {
+	        duration: 800,
+	        easing: 'easeOutQuart'
+	      }
+	    }
+	  });
+	}
+	
+	// 페이지 로딩 시 관리비 먼저 표시
+	document.addEventListener('DOMContentLoaded', function() {
+	  const defaultButton = document.querySelector('.control-button:nth-child(1)'); // 관리비 버튼
+	  selectType('management', defaultButton);
+	});
+</script>
+</body>
+</html>

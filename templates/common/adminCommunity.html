@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>신고된 게시글 관리</title>
+    <style>
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: #f7f7f7;
+            padding: 40px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+            color: #333;
+        }
+
+        .search-container {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        #searchInput {
+            padding: 10px 16px;
+            width: 300px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            transition: all 0.2s ease-in-out;
+        }
+
+        #searchInput:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 6px rgba(0, 123, 255, 0.2);
+        }
+
+        table {
+            width: 95%;
+            margin: 0 auto;
+            border-collapse: collapse;
+            background-color: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        th, td {
+            padding: 14px;
+            border-bottom: 1px solid #ddd;
+            text-align: center;
+            font-size: 15px;
+        }
+
+        th {
+            background-color: #f1f1f1;
+            color: #444;
+            font-weight: bold;
+        }
+
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* 행 제거 애니메이션 */
+        tr {
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+        }
+
+        tr.removing {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-delete {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background-color: #c82333;
+        }
+
+        .btn-unreport {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .btn-unreport:hover {
+            background-color: #218838;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn:disabled:hover {
+            background-color: inherit;
+        }
+
+        .content-preview {
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-size: 16px;
+            color: #666;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+            color: #999;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: background-color 0.2s ease;
+        }
+
+        .back-btn:hover {
+            background-color: #5a6268;
+        }
+    </style>
+</head>
+<body>
+
+    <a href="/admin/main" class="back-btn">← 관리자 메인으로 돌아가기</a>
+
+    <h2>🚨 신고된 게시글 관리</h2>
+
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="제목 또는 작성자 검색">
+    </div>
+
+    <div id="loadingDiv" class="loading">
+        신고된 게시글을 불러오는 중...
+    </div>
+
+    <table id="communityTable" style="display: none;">
+        <thead>
+            <tr>
+                <th>게시글 번호</th>
+                <th>제목</th>
+                <th>작성자</th>
+                <th>내용 미리보기</th>
+                <th>작성일</th>
+                <th>수정일</th>
+                <th>관리</th>
+            </tr>
+        </thead>
+        <tbody id="communityTableBody">
+            <!-- 데이터가 여기에 동적으로 추가됩니다 -->
+        </tbody>
+    </table>
+
+    <div id="noDataDiv" class="no-data" style="display: none;">
+        신고된 게시글이 없습니다.
+    </div>
+
+    <script>
+        // 페이지 로드 시 신고된 게시글 목록 불러오기
+        document.addEventListener('DOMContentLoaded', function() {
+            loadReportedPosts();
+        });
+
+        // 신고된 게시글 목록 불러오기
+        function loadReportedPosts() {
+            console.log('API 호출 시작: /admin/community/reported');
+            
+            fetch('/admin/community/reported')
+                .then(response => {
+                    console.log('응답 상태:', response.status);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('받은 데이터:', data);
+                    document.getElementById('loadingDiv').style.display = 'none';
+                    
+                    if (data.success && data.posts && data.posts.length > 0) {
+                        displayPosts(data.posts);
+                        document.getElementById('communityTable').style.display = 'table';
+                    } else {
+                        document.getElementById('noDataDiv').style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('loadingDiv').innerHTML = '데이터를 불러오는 중 오류가 발생했습니다: ' + error.message;
+                });
+        }
+
+        // 게시글 목록 표시
+        function displayPosts(posts) {
+            const tbody = document.getElementById('communityTableBody');
+            tbody.innerHTML = '';
+
+            posts.forEach(post => {
+                const row = document.createElement('tr');
+                // 각 행에 data 속성 추가로 쉽게 찾을 수 있게 함
+                row.setAttribute('data-board-no', post.boardNo);
+                row.innerHTML = `
+                    <td>${post.boardNo}</td>
+                    <td class="content-preview">${post.boardTitle || '제목 없음'}</td>
+                    <td>${post.nickname || post.userId}</td>
+                    <td class="content-preview">${post.boardContent ? post.boardContent.substring(0, 50) + '...' : '내용 없음'}</td>
+                    <td>${formatDate(post.publishedDate)}</td>
+                    <td>${formatDate(post.editedDate)}</td>
+                    <td>
+                        <div class="btn-group">
+                            <button class="btn btn-delete" onclick="deletePost(${post.boardNo})">삭제</button>
+                            <button class="btn btn-unreport" onclick="unreportPost(${post.boardNo})">신고해제</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // 날짜 포맷팅
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('ko-KR');
+        }
+
+        // 게시글 삭제
+        function deletePost(boardNo) {
+            if (!confirm('정말로 이 게시글을 삭제하시겠습니까?')) {
+                return;
+            }
+
+            // 버튼 비활성화
+            const row = findRowByBoardNo(boardNo);
+            const buttons = row.querySelectorAll('.btn');
+            buttons.forEach(btn => {
+                btn.disabled = true;
+                btn.textContent = btn.classList.contains('btn-delete') ? '삭제중...' : '처리중...';
+            });
+
+            fetch('/admin/community/delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `boardNo=${boardNo}`
+            })
+            .then(response => {
+                console.log('삭제 응답 상태:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('삭제 응답 데이터:', data);
+                
+                if (data.success === true) {
+                    alert(data.message || '게시글이 삭제되었습니다.');
+                    // 성공시에만 해당 행을 제거
+                    removeRowByBoardNo(boardNo);
+                    checkIfNoData();
+                } else {
+                    alert(data.message || '삭제에 실패했습니다.');
+                    // 실패시 버튼 상태 복원
+                    restoreButtons(buttons, [{ class: 'btn-delete', text: '삭제' }, { class: 'btn-unreport', text: '신고해제' }]);
+                }
+            })
+            .catch(error => {
+                console.error('삭제 오류:', error);
+                alert('삭제 중 오류가 발생했습니다: ' + error.message);
+                // 오류시 버튼 상태 복원
+                restoreButtons(buttons, [{ class: 'btn-delete', text: '삭제' }, { class: 'btn-unreport', text: '신고해제' }]);
+            });
+        }
+
+        // 신고 해제
+        function unreportPost(boardNo) {
+            if (!confirm('이 게시글의 신고를 해제하시겠습니까?')) {
+                return;
+            }
+
+            // 버튼 비활성화
+            const row = findRowByBoardNo(boardNo);
+            const buttons = row.querySelectorAll('.btn');
+            buttons.forEach(btn => {
+                btn.disabled = true;
+                btn.textContent = btn.classList.contains('btn-unreport') ? '해제중...' : '처리중...';
+            });
+
+            fetch('/admin/community/unreport', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `boardNo=${boardNo}`
+            })
+            .then(response => {
+                console.log('신고해제 응답 상태:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('신고해제 응답 데이터:', data);
+                
+                if (data.success === true) {
+                    alert(data.message || '신고가 해제되었습니다.');
+                    // 성공시에만 해당 행을 제거
+                    removeRowByBoardNo(boardNo);
+                    checkIfNoData();
+                } else {
+                    alert(data.message || '신고 해제에 실패했습니다.');
+                    // 실패시 버튼 상태 복원
+                    restoreButtons(buttons, [{ class: 'btn-delete', text: '삭제' }, { class: 'btn-unreport', text: '신고해제' }]);
+                }
+            })
+            .catch(error => {
+                console.error('신고해제 오류:', error);
+                alert('처리 중 오류가 발생했습니다: ' + error.message);
+                // 오류시 버튼 상태 복원
+                restoreButtons(buttons, [{ class: 'btn-delete', text: '삭제' }, { class: 'btn-unreport', text: '신고해제' }]);
+            });
+        }
+
+        // 버튼 상태 복원 함수
+        function restoreButtons(buttons, buttonConfigs) {
+            buttons.forEach((btn, index) => {
+                btn.disabled = false;
+                if (buttonConfigs[index]) {
+                    btn.textContent = buttonConfigs[index].text;
+                }
+            });
+        }
+
+        // 게시글 번호로 행 찾기 (개선된 버전)
+        function findRowByBoardNo(boardNo) {
+            return document.querySelector(`#communityTable tbody tr[data-board-no="${boardNo}"]`);
+        }
+
+        // 게시글 번호로 행 제거 (개선된 애니메이션)
+        function removeRowByBoardNo(boardNo) {
+            const row = findRowByBoardNo(boardNo);
+            if (row) {
+                // 애니메이션 클래스 추가
+                row.classList.add('removing');
+                
+                setTimeout(() => {
+                    row.remove();
+                }, 300);
+            }
+        }
+
+        // 데이터가 없는지 확인하고 메시지 표시
+        function checkIfNoData() {
+            setTimeout(() => {
+                const tbody = document.getElementById('communityTableBody');
+                const visibleRows = tbody.querySelectorAll('tr').length;
+                
+                if (visibleRows === 0) {
+                    document.getElementById('communityTable').style.display = 'none';
+                    document.getElementById('noDataDiv').style.display = 'block';
+                }
+            }, 350); // 애니메이션이 끝난 후 체크
+        }
+
+        // 검색 기능
+        document.getElementById("searchInput").addEventListener("keyup", function () {
+            let keyword = this.value.toLowerCase();
+            let rows = document.querySelectorAll("#communityTable tbody tr");
+
+            rows.forEach(row => {
+                let title = row.cells[1].innerText.toLowerCase();
+                let author = row.cells[2].innerText.toLowerCase();
+
+                if (title.includes(keyword) || author.includes(keyword)) {
+                    row.style.display = "";
+                } else {
+                    row.style.display = "none";
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>관리비 매니저 | A.P.T</title>
+
+<!-- 사이드바 css -->
+<link rel="stylesheet" href="/css/sidebar.css">
+
+<!-- Pretendard(Font) -->
+<link rel="stylesheet" th:href="@{/css/font.css}" />
+
+<!-- Favicon -->
+<link rel="icon" href="/icons/favicon.png" type="image/png">
+
+<style>
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+body {
+	display: flex;
+	height: 100vh;
+	overflow: hidden;
+	flex-direction: column; /* 자식 요소들을 세로로 정렬 */
+}
+
+/* 메인 부분 시작 */
+#main {
+	margin-left: 60px;
+	transition: margin-left 0.3s ease;
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	padding: 20px;
+	text-align: center;
+}
+
+#title_fir {
+	font-size: 54px;
+	font-weight: bold;
+	background: linear-gradient(to right, #FF9C97, #FFBD7C);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+}
+
+#title_sec {
+	font-size: 54px;
+	font-weight: bold;
+	background: linear-gradient(to right, #FF9C97, #FFBD7C);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	margin-bottom: 50px;
+}
+
+#btnImg {
+	width: 250px;
+	height: auto;
+	transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+#btnImg:hover {
+	cursor: pointer;
+	transform: translateY(-5px) scale(1.03);
+	/* box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2); */
+}
+
+/* 설명 툴팁 기본 스타일 */
+.tooltip-message {
+  position: absolute;
+  top: 100%;
+  left: -15%;
+  transform: translateX(50%);
+  transform: translateY(-80%);
+  background-color: #333;
+  color: #fff;
+  font-size: 15px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  white-space: nowrap;
+  z-index: 10;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.tooltip-message::before {
+  content: "";
+  position: absolute;
+  top: -11px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: transparent transparent #333 transparent;
+}
+
+/* hover 시 보이게 */
+#button_box:hover .tooltip-message {
+  opacity: 1;
+}
+
+
+#img_box img {
+	width: 650px;
+	height: auto;
+	padding-right: 50px;
+}
+
+.my-fee-btn {
+	position: absolute;
+	width: 250px;
+	height: auto;
+	top: 75%;
+	left: 80%;
+	transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.my-fee-btn:hover {
+	cursor: pointer;
+	transition: transform 0.3s ease, box-shadow 0.3s ease;
+	transform: translateY(-5px) scale(1.03);
+}
+
+footer {
+	background-color: #f2f2f2;
+	padding: 15px 0;
+	text-align: center;
+	font-size: 14px;
+	color: #666;
+	width: 100%;
+	flex-shrink: 0;
+}
+</style>
+</head>
+<body>
+	<!-- 사이드바 포함 -->
+	<div th:replace="common/sidebar :: sidebar"></div>
+
+	<!-- 메인 시작 -->
+		<div id="main">
+			<div id="title_fir">한 번의 촬영으로</div>
+			<div id="title_sec">간편하게 관리비를 담아보세요</div>
+			<form id="upload-form" method="POST" action="/upload"
+				enctype="multipart/form-data">
+				<input type="file" id="fileInput" name="image" accept="image/*"
+					style="display: none;" />
+				<div id="button_box" style="position: relative;">
+					<img src="/cards/관리비 업로드 버튼.png" alt="버튼 이미지" id="btnImg">
+					<div class="tooltip-message">관리비 납입영수증 (입주자용)이 보이게 찍어주세요.</div>
+				</div>
+			</form>
+			<div id="img_box">
+				<img src="/images/관리비 등록 이미지.png" alt="관리비 이미지">
+			</div>
+		</div>
+	
+	<a th:href="@{feeFeedBack}">
+		<img class="my-fee-btn" src="/cards/관리비 현황보기 버튼.png" alt="내 관리비 현황 보기">
+	</a>
+	
+	<!-- footer 시작 -->
+    <footer>
+		<div>
+			<p style="margin: 0;">© 2025 A.P.T. All rights reserved.</p>
+			<p style="margin: 5px 0 0;">
+				Made with <span class="computer-icon">💻</span> by 팀 EF
+			</p>
+		</div>
+	</footer>
+	<!-- footer 끝 -->
+
+	<script>
+	  document.addEventListener('DOMContentLoaded', () => {
+	    const btnImg = document.getElementById('btnImg');
+	    const fileInput = document.getElementById('fileInput');
+
+	    btnImg.addEventListener('click', () => {
+	      fileInput.click();
+	    });
+
+	    fileInput.addEventListener('change', () => {
+	      if (fileInput.files.length > 0) {
+	        const formData = new FormData();
+	        formData.append('image', fileInput.files[0]);
+
+	        fetch('http://192.168.0.35:5000/', {
+	        	  method: 'POST',
+	        	  body: formData
+	        	})
+	        	.then(response => response.json())
+	        	.then(data => {
+				  console.log(data);
+	        	  if (data) {
+	        	      sessionStorage.setItem('message',  JSON.stringify(data.message));
+	        	      sessionStorage.setItem('image', data.image);
+	        	      window.location.href = 'feeOcrResult';
+	        	  }
+	        	})
+	        	.catch(err => {
+	        	  console.error("업로드 실패:", err);
+	        	});
+	      }
+	    });
+	  });
+	</script>
+</body>
+</html>

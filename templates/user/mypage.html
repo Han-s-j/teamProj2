@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>마이페이지 | A.P.T</title>
+
+<!-- Pretendard(Font) -->
+<link rel="stylesheet" th:href="@{/css/font.css}" />
+
+<!-- Favicon -->
+<link rel="icon" href="/icons/favicon.png" type="image/png">
+
+<style>
+* {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+	padding: 0;
+	font-family: 'Pretendard', sans-serif;
+	background-color: #FDFDFD;
+	height: 100%;
+	overflow: hidden;
+}
+
+.container {
+	max-width: 1000px;
+	margin: 50px auto;
+	padding: 20px;
+	display: flex;
+	gap: 40px;
+}
+
+.left-card {
+	background: white;
+	border-radius: 20px;
+	padding: 40px;
+	width: 50%;
+	box-shadow: 4px 4px 16px rgba(0, 0, 0, 0.1);
+	text-align: center;
+}
+
+.left-card img {
+	width: 140px;
+	height: 140px;
+	margin-bottom: 20px;
+}
+
+.left-card hr {
+	border: none; /* 기본 hr 테두리 제거 */
+	border-top: 1px solid #D0D0D0; /* 상단 테두리 3px 두께, 단색, 회색으로 설정 */
+}
+
+.nickname {
+	font-size: 24px;
+	font-weight: 800;
+	margin-bottom: 20px;
+	margin-top: 20px;
+	color: #292929;
+}
+
+.section-title {
+	font-weight: 800;
+	margin-top: 20px;
+	margin-bottom: 10px;
+	font-size: 24px;
+	text-align: left;
+	color: #292929;
+}
+/* 아파트 인증 후 */
+.authenticated-apt-info {
+	font-size: 20px; /* 미인증 텍스트보다 살짝 작게 */
+	color: #292929; /* 미인증 텍스트보다 진하게 */
+	text-align: left;
+	margin-left: 20px;
+	font-weight: 600;
+	line-height: 1.4; /* 줄 간격 조절 */
+}
+
+.info-text {
+	font-size: 24px;
+	color: #919191;
+	/* margin-bottom: 5px; 제거 (Flexbox 부모에서 간격 조절) */
+	text-align: left;
+	/* display: inline; 제거 (이제 div 안에 있으므로 필요 없음) */
+	font-weight: 600;
+	margin-left: 20px;
+}
+
+/* 새로 추가된 스타일 */
+.subscription-item {
+	display: flex; /* Flexbox 활성화 */
+	justify-content: space-between; /* 양쪽 끝으로 정렬 */
+	align-items: baseline; /* 텍스트 베이스라인에 맞춤 */
+	margin-bottom: 5px; /* 항목 간 간격 조절 */
+}
+
+.status-text {
+	font-size: 24px;
+	color: #919191;
+	font-weight: 600;
+}
+
+.subscribe_date {
+	font-size: 18px;
+	color: #919191;
+	margin: 0px;
+	text-align: right;
+}
+
+.right-menu {
+	width: 50%;
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+.right-menu a img {
+	width: 500px;
+	height: auto;
+	transition: transform 0.3s ease-in-out;
+}
+
+.right-menu a img:hover {
+	transform: translateY(-5px);
+}
+
+.menu-box {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	background: white;
+	padding: 20px;
+	border-radius: 15px;
+	box-shadow: 4px 4px 16px rgba(0, 0, 0, 0.1);
+	font-size: 16px;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.menu-box img {
+	width: 48px;
+	height: 48px;
+}
+
+.out-btn {
+	align-self: flex-end;
+	padding: 10px 20px;
+	font-size: 14px;
+	font-weight: 400;
+	border: none;
+	border-radius: 10px;
+	background-color: white;
+	box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+	cursor: pointer;
+	margin-top: 30px;
+}
+
+.logo {
+	padding: 20px;
+	font-size: 24px;
+	font-weight: 800;
+	color: #4281FF;
+}
+
+a {
+	text-decoration: none; /* 링크의 밑줄 제거 */
+}
+</style>
+</head>
+
+<body>
+	<a th:href="@{/}"><div class="logo">A.P.T</div></a>
+	<div class="container">
+		<div class="left-card">
+			<img src="/icons/profile.png" alt="profile" />
+			<div class="nickname">
+				<span class="personal" th:text="${session.loginUser.nickname}">닉네임</span>
+				님
+			</div>
+
+			<hr>
+
+			<div class="section-title">아파트 인증 현황</div>
+			<div th:if="${session.loginUser.kaptCode == null}" class="info-text"
+				id="house-auth">미인증</div>
+			<div th:if="${session.loginUser.kaptCode != null}"
+				class="authenticated-apt-info">
+				<span th:text="${session.loginUser.kaptName}"></span> <br> <span
+					th:text="${session.loginUser.userBlock}"></span> <span
+					th:text="${session.loginUser.userFloor}"></span>층
+			</div>
+
+			<div class="section-title">A.P.T핑 구독 상태</div>
+
+			<div class="subscription-item">
+			    <div class="info-text">동네 알림</div>
+			    <div class="status-text" 
+			         th:style="${communitySubscribed} ? 'color: #4281FF; font-weight: 700;' : 'color: #919191; font-weight: 600;'"
+			         th:text="${communitySubscribed} ? '구독 완료' : '미구독'">구독 완료</div>
+			</div>
+			<div th:if="${communitySubscribed and communitySubscribeDate != null}" class="subscribe_date">
+			    (<span th:text="${#dates.format(communitySubscribeDate, 'yyyy년 M월 d일')}">2025년 6월 16일</span>)
+			</div>
+			<!-- <div class="subscription-item">
+				<div class="info-text">환기 알림</div>
+				<div class="status-text subscribe_vent">미구독</div>
+			</div> -->
+		</div>
+
+		<div class="right-menu">
+			<a th:href="@{/myAptAuth}"><img src="/cards/아파트인증버튼.png" alt="인증" /></a>
+			<a th:href="@{/myEdit}"><img src="/cards/개인정보수정버튼.png" alt="수정" /></a> 
+			<a th:href="@{/communutyPingMain}"><img src="/cards/구독설정버튼.png" alt="구독" /></a>
+			<button class="out-btn" onclick="confirmDeleteAccount()">탈퇴하기</button>
+		</div>
+	</div>
+
+	<!-- Footer 시작 -->
+	<footer
+		style="position: absolute; background-color: #f2f2f2; bottom: 0px; padding: 15px 0; text-align: center; font-size: 14px; color: #666; width: 100%;">
+		<div>
+			<p style="margin: 0;">© 2025 A.P.T. All rights reserved.</p>
+			<p style="margin: 5px 0 0;">
+				Made with <span class="computer-icon">💻</span> by 팀 EF
+			</p>
+		</div>
+	</footer>
+	<!-- Footer 끝 -->
+</body>
+<script>
+		    function confirmDeleteAccount() {
+		        // 팝업 창 띄우기
+		        if (confirm("정말 탈퇴하시겠습니까?")) {
+		            // 예 버튼 클릭 시 계정 삭제 요청 보내기
+		            window.location.href = "/deleteAccount";  // 삭제 요청 경로
+		        }
+		    }
+		</script>
+</html>

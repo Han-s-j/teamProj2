@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사이드바</title>
+</head>
+<body>
+    <!-- 사이드바 시작 -->
+    <div id="sidebar" th:fragment="sidebar">
+        <a th:href="@{/}"><div class="sidebar-logo">A.P.T</div></a>
+
+        <div class="sidebar-menu">
+            <a th:href="@{communityMain}" class="menu-item">
+	            <img src="/icons/side_talk.png" class="initial-image">
+	            <img src="/icons/side_talk_hover.png" class="hover-image">
+	            <span class="label">A.P.T톡</span>
+            </a>
+            
+             <a th:href="@{feeMain}" class="menu-item">
+	            <img src="/icons/side_money.png" class="initial-image">
+	            <img src="/icons/side_money_hover.png" class="hover-image">
+	            <span class="label">관리비 매니저</span>
+        	</a>
+
+            
+            <a th:href="@{challengeMain}" class="menu-item">
+	            <img src="/icons/side_star.png" class="initial-image">
+	            <img src="/icons/side_star_hover.png" class="hover-image">
+	            <span class="label">절약 챌린지</span>
+            </a>
+            
+            <a th:href="@{guideMain}" class="menu-item">
+	            <img src="/icons/side_cloud.png" class="initial-image">
+				<img src="/icons/side_cloud_hover.png" class="hover-image">
+	            <span class="label">스마트 환기 가이드</span>
+            </a>
+        </div>
+
+        <div class="sidebar-profile">
+            <!-- 로그인 링크 -->
+            <a th:if="${session.loginUser == null}" th:href="@{sign}" class="login-link">
+            	<img src="/icons/side_mypage.png" class="initial-image">
+            	<img src="/icons/side_mypage_hover.png" class="hover-image">
+            	<span class="label">로그인</span>
+           	</a>
+              
+        	<a th:if="${session.loginUser != null}" th:href="@{mypage}">
+	        	<img src="/icons/side_mypage.png" class="initial-image">
+	        	<img src="/icons/side_mypage_hover.png" class="hover-image">
+	        	<span class="label">마이페이지</span>
+        	</a>
+        </div>
+    </div>
+</body>
+</html>

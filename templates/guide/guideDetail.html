@@ -1,0 +1,1419 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>스마트 환기 가이드 | A.P.T</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script type="text/javascript"
+	src="https://map.vworld.kr/js/webglMapInit.js.do?version=3.0&apiKey=59E8E97C-1463-372A-9540-000DB836F45D&domain=localhost"></script>
+<script type="text/javascript"
+	src="https://map.vworld.kr/js/dtkmap/tool3d/libapis/sunlight/sunlight_analysis_api.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link rel="stylesheet"
+	href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+
+<!-- 스타일시트 -->
+<link rel="stylesheet" href="/css/sidebar.css">
+
+<link rel="stylesheet" th:href="@{/css/font.css}" />
+
+<!-- Favicon -->
+<link rel="icon" href="/icons/favicon.png" type="image/png">
+
+<style>
+html, body {
+	margin: 0;
+	padding: 0;
+	height: 100%;
+	width: 100%;
+	background-color: #fdfdfd;
+}
+
+.page-title {
+	font-size: 30px;
+	font-weight: bold;
+	text-align: left;
+	margin-top: 50px;
+	margin-bottom: 20px;
+	margin-left: 140px;
+	color: #292929;
+	transition: background-color 0.3s ease-out;
+}
+
+.page-title:hover {
+	color: #6DCBF9;
+}
+
+.page-title a {
+    text-decoration: none; /* 링크의 밑줄 제거 */
+    color: inherit;      /* 부모 요소의 글자 색을 상속받아 기본 파란색/보라색 제거 */
+}
+
+#vmap {
+	width: 60%;
+	height: 80%;
+	float: left;
+	margin-left: 120px;
+	border-radius: 16px;
+  	overflow: hidden;
+  	box-shadow: 4px 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+.controls-container {
+	width: 28%;
+	height: 720px;
+	padding: 60px;
+	background: #fff;
+	box-sizing: border-box;
+	overflow-y: hidden;
+	font-family: 'Pretendard', sans-serif;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	border-radius: 20px;
+	
+    position: absolute; /* 또는 absolute */
+    top: 110px; /* 페이지 상단에서 px 떨어진 위치 */
+    right: 60px; /* 페이지 오른쪽에서 px 떨어진 위치 */
+    /* left: auto; */
+    /* margin-left: 50px; 제거 */
+
+    /* 내부 요소 정렬용 Flexbox는 유지 */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.controls-container > *:not(:last-child) {
+	margin-bottom: 12px;
+}
+
+.controls-container h2 {
+	color: #292929;
+	margin-bottom: 20px;
+	margin-top: 20px;
+}
+
+.controls {
+	display: flex;
+	flex-direction: column;
+	gap: 30px;
+	margin-bottom: 20px;
+}
+
+.search-bar {
+	padding: 10px;
+	border: 1px solid #ddd;
+	border-radius: 10px;
+	background-color: #fff;
+	display: flex; /* 자식 요소들을 Flex Items로 만듭니다. */
+  	align-items: center;
+  	margin: 20px auto;
+  	color: #292929;
+}
+
+.search-bar input {
+	padding: 5px;
+	border: 1px solid #ccc;
+	border-radius: 10px;
+	margin-right: 15px;
+	margin-left: 30px;
+	padding-left: 15px;
+}
+
+.search-bar input:focus {
+	border-color: #6DCBF9;
+}
+
+.search-bar select {
+	padding: 5px;
+	border: 1px solid #ccc;
+	border-radius: 10px;
+	margin-right: 50px;
+}
+
+.search-bar select:focus {
+	border-color: #6DCBF9;
+}
+
+.search-bar button {
+	padding: 5px;
+	/* border: 1px solid #99C0FF; */
+	background-color: #6DCBF9;
+	color: #fff;
+	border-radius: 20px;
+	width: 70px;
+	transition: transform 0.3s ease-out, box-shadow 0.3s ease-out;
+}
+
+.search-bar button:hover {
+	box-shadow: 0 4px 16px rgba(0,0,0,0.2); /* 마우스 오버 시 그림자 진하게, 퍼지게 */
+	z-index: 1; /* 다른 요소 위에 튀어나오도록 (선택 사항) */
+}
+
+/* 일조량 지점 선택 부분 */
+.point-part p{
+	color: #919191;
+	font-size: 14px;
+	text-align: center;
+}
+
+#btnPoint {
+	display: block;
+	margin: 10px auto;
+	width: 150px;
+	height: 30px;
+	background-color: #fff;
+	color: #6DCBF9;
+	border: 1px solid #6DCBF9;
+	border-radius: 20px;
+	font-size: 13px;
+	font-weight: 500;
+	transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+#btnPoint:hover {
+	box-shadow: 0 4px 16px rgba(0,0,0,0.2); /* 마우스 오버 시 그림자 진하게, 퍼지게 */
+	z-index: 1; /* 다른 요소 위에 튀어나오도록 (선택 사항) */
+}
+
+/* 층수 입력 부분 */
+#floor_input {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+  	margin: 20px auto;
+  	font-family: 'Pretendard', sans-serif;
+  	padding-left: 20px;
+  	padding-right: 20px;
+}
+
+#floor_input input {
+	border: 1px solid #ccc;
+	border-radius: 10px;
+	margin-right: 20px;
+	margin-left: 10px;
+	width: 150px; /* 원하는 너비 지정 */
+	height: 30px; /* 원하는 높이 지정 */
+	padding-left: 7px;
+	font-family: 'Pretendard', sans-serif;
+}
+
+#btnAnalyzeSolar {
+	margin: 10px auto;
+	width: 150px;
+	height: 30px;
+	background-color: #fff;
+	color: #6DCBF9;
+	border: 1px solid #6DCBF9;
+	border-radius: 20px;
+	font-size: 13px;
+	font-weight: 500;
+	transition: transform 0.3s ease-out, box-shadow 0.3s ease-out;
+}
+
+#btnAnalyzeSolar:hover {
+	box-shadow: 0 4px 16px rgba(0,0,0,0.2); /* 마우스 오버 시 그림자 진하게, 퍼지게 */
+	z-index: 1; /* 다른 요소 위에 튀어나오도록 (선택 사항) */
+}	
+
+.apt-info-display {
+	margin-top: -20px;
+	padding-top: 0;
+	padding-bottom: 20px;
+	/* border: 1px solid #e0e0e0; */
+	border-radius: 5px;
+	background-color: #fff;
+	font-size: 0.95em;
+	color: #333;
+}
+
+/* container 하단 부분 */
+#toolbar {
+	border: 1px solid #ddd;
+	border-radius: 10px;
+	/*margin: [margin-top] [margin-right] [margin-bottom] [margin-left];*/
+	padding: 20px 70px 20px 70px;
+	
+	display: flex; /* 내부 dl을 flex 아이템으로 만들기 위해 */
+    flex-direction: column; /* dl을 세로로 배치 */
+    gap: 20px; /* 각 dl 내부 항목들 사이의 간격 */
+    
+    font-family: 'Pretendard', sans-serif;
+}
+
+#toolbar dl {
+    display: flex; /* dt와 dd를 가로로 나열 */
+    align-items: center; /* 세로축 중앙 정렬 */
+    margin: 0; /* dl의 기본 마진 제거 */
+    padding: 0; /* dl의 기본 패딩 제거 */
+    flex-wrap: wrap; /* 내용이 길어지면 다음 줄로 넘어갈 수 있도록 */
+    gap: 10px; /* dt와 dd 사이의 기본 간격 */
+}
+
+/* dt (제목) 스타일 */
+#toolbar dt {
+    font-size: 15px; /* 글씨 크기 약간 줄여서 깔끔하게 */
+    font-weight: 600; /* 제목 강조 */
+    color: #292929;
+    width: 90px; /* 고정 너비로 왼쪽 정렬 */
+    flex-shrink: 0; /* 줄어들지 않도록 */
+    text-align: left; /* 왼쪽 정렬 */
+    margin-right: 15px; /* dt와 dd 사이 간격 */
+    margin-bottom: 15px;
+}
+
+/* dd (내용) 스타일 */
+#toolbar dd {
+    flex-grow: 1; /* 남은 공간을 최대한 차지하도록 */
+    margin-left: 0; /* dd의 기본 들여쓰기 마진 제거 */
+    display: flex; /* dd 내부 요소들을 정렬하기 위해 flex 사용 */
+    align-items: center; /* dd 내부 요소들 세로 중앙 정렬 */
+    gap: 10px; /* dd 내부 요소들 사이의 간격 (예: input과 select) */
+    flex-wrap: wrap; /* dd 내부 요소도 길어지면 줄바꿈 */
+    margin-bottom: 15px;
+}
+
+#toolbar input[type="date"] {
+	font-family: 'Pretendard', sans-serif;
+}
+
+#toolbar .range {
+    position: relative; /* 자식 요소(시간 텍스트)의 absolute 위치 지정을 위한 기준점 */
+    display: flex; /* label과 range input을 flex items로 배치 */
+    align-items: center; /* 세로 중앙 정렬 */
+    width: 100%; /* dd 내부에서 최대한 너비를 차지하도록 */
+    gap: 10px; /* label과 input 사이의 간격 */
+}
+
+/* 시간 텍스트가 있는 label 스타일 */
+#toolbar .range label {
+    /* 이전 absolute positioning 관련 스타일은 유지 */
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: -20px; /* 슬라이더 위에 위치 */
+
+    /* 여기를 추가/수정: 숫자와 '시'의 정렬 */
+    display: flex; /* 내부 요소들을 Flex Item으로 만듦 */
+    align-items: baseline; /* 중요: 텍스트의 기준선을 맞춰 정렬 */
+    gap: 0; /* 숫자와 '시' 사이에 불필요한 간격 제거 */
+    white-space: nowrap; /* 텍스트 줄바꿈 방지 */
+    font-weight: 500;
+    color: #292929;
+    font-size: 14px;
+}
+
+/* 숫자 부분을 감싸는 span (id="time_span") */
+#toolbar .range label #time_span {
+    /* 기존 float: left; 가 있다면 제거 */
+    width: auto; /* 내용물 너비만큼 차지 */
+    text-align: right; /* 숫자만 오른쪽 정렬 */
+    font-size: 14px; /* 필요하다면 숫자만 크기를 조절 */
+    /* line-height: 1; /* 높이 고정 (선택 사항) */
+}
+
+/* range input 스타일 (이전 스타일에서 조금 조정) */
+#toolbar input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%; /* 부모 .range의 100% 너비 차지 */
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 5px;
+    outline: none;
+    opacity: 0.8;
+    transition: opacity .2s;
+    margin: 0;
+    z-index: 1; /* 슬라이더 핸들이 텍스트 위에 오도록 */
+}
+
+/* range 슬라이더 핸들 스타일 (기존 유지) */
+#toolbar input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: #6DCBF9;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    z-index: 2; /* 핸들이 텍스트보다 위에 오도록 */
+    position: relative; /* z-index가 작동하도록 */
+}
+
+#toolbar input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: #6DCBF9;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    z-index: 2;
+    position: relative;
+}
+
+#toolbar select {
+	border: 1px solid #ddd;
+	border-radius: 10px;
+	padding: 5px 5px;
+}
+
+#toolbar select:focus {
+	border-color: #6DCBF9;
+}
+
+#runAnlys {
+	padding: 5px;
+	margin-top: 20px;
+	margin-bottom: 20px;
+	border: 1px solid #6DCBF9;
+	background-color: #fff;
+	color: #6DCBF9;
+	border-radius: 20px;
+	width: 100px;
+	height: 40px;
+	transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+	font-size: 16px;
+}
+
+#runAnlys:hover {
+	box-shadow: 4px 4px 16px rgba(0,0,0,0.2); /* 마우스 오버 시 그림자 진하게, 퍼지게 */
+	z-index: 1; /* 다른 요소 위에 튀어나오도록 (선택 사항) */
+	background-color: #6DCBF9;
+	color: #fff;
+}
+
+/* 얜.. 뭔지 모르겠음 */
+.ui-autocomplete {
+	max-height: 200px;
+	overflow-y: auto;
+	overflow-x: hidden;
+	z-index: 1000;
+	border: 1px solid #ccc;
+	background-color: #fff;
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.ui-menu-item {
+	padding: 5px 10px;
+	cursor: pointer;
+}
+
+.ui-menu-item:hover {
+	background-color: #f0f0f0;
+}
+
+/* 분석 수행 결과 */
+#resultArea {
+	display: flex;
+	justify-content: center; /* 가운데 정렬 */
+	flex-direction: column; /* 자식 요소를 세로로 배열 */
+	align-items: center;     /* 세로도 가운데 (필요 시) */
+	width: 100%;
+	padding: 20px 0;
+}
+
+#maskSolarRightsImageOverlay_mergedResult {
+	display: none;
+}
+
+/* Chart.js 컨테이너 */
+#solarChartContainer {
+	width: 100%;
+	max-width: 750px;
+	margin: 20px 0;
+}
+
+/* 날씨 테이블 스타일 */
+.weather-msg-text {
+	margin-top: 20px;
+	font-size: 18px;
+	color: #292929;
+}
+
+/* 날씨 예보: 어디동 */
+.weather-location {
+	font-size: 14px;
+	font-weight: 500;
+	color: #292929;
+}
+
+.weather-desc {
+	font-size: 0.92em;
+	margin: 8px 0 0 3px;
+	color: #888;
+}
+
+.weather-table {
+    border-collapse: separate; /* border-collapse를 separate로 유지 */
+    border-spacing: 0; /* 셀 사이 간격 제거 */
+    margin: 10px 0 14px 0;
+    width: 100%;
+    max-width: 750px;
+    min-width: 300px;
+    font-size: 0.9em; /* 대기질 테이블과 유사하게 폰트 크기 조정 */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); /* 그림자 더 선명하게 (대기질 테이블과 동일) */
+    border-radius: 12px; /* 모서리 더 둥글게 (대기질 테이블과 동일) */
+    color: #333; /* 기본 글자색 (더 자연스럽게) */
+    overflow: hidden;
+    background: white;
+    font-family: 'Noto Sans KR', sans-serif; /* 가독성 좋은 폰트 추가 (필요시) */
+}
+
+.weather-table th {
+    background-color: #6DCBF9;
+    color: #fff; /* 대기질 테이블 헤더와 동일한 색상 */
+    padding: 12px 15px; /* 대기질 테이블 헤더와 동일한 패딩 */
+    text-align: center;
+    font-weight: bold;
+    border: none; /* 기존 유지 */
+    position: sticky; /* 스크롤 시 헤더 고정 (테이블이 길어질 경우 유용) */
+    top: 0;
+    z-index: 1;
+}
+
+/* 첫 번째 헤더의 왼쪽 위 모서리 둥글게 */
+.weather-table thead th:first-child {
+    border-top-left-radius: 12px;
+}
+
+/* 마지막 헤더의 오른쪽 위 모서리 둥글게 */
+.weather-table thead th:last-child {
+    border-top-right-radius: 12px;
+}
+
+.weather-table td {
+    padding: 10px 15px; /* 대기질 테이블 본문 셀과 유사하게 패딩 조정 */
+    border-bottom: 1px solid #e0e7ee; /* 셀 하단에 얇은 구분선 추가 (대기질 테이블과 동일) */
+    text-align: center;
+}
+
+/* 마지막 행의 셀에는 하단 구분선 제거 */
+.weather-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.weather-table tr {
+    background-color: #ffffff; /* 본문 행 배경색을 흰색으로 통일하여 깔끔하게 (대기질 테이블과 동일) */
+    transition: background-color 0.2s ease; /* 호버 효과를 위한 트랜지션 추가 (대기질 테이블과 동일) */
+}
+
+.weather-table tr:nth-child(even) { /* 짝수 행에만 살짝 다른 배경색 적용 (스트라이프 효과) */
+    background-color: #F8FBFF; /* 대기질 테이블과 동일한 색상 */
+}
+
+.weather-table tr:hover { /* 마우스 오버 시 강조 효과 */
+    background-color: #e9f5ff; /* 대기질 테이블과 동일한 색상 */
+}
+
+/* 첫 번째 열 스타일은 날씨 테이블에 맞춰 조정 (없다면 이 부분은 생략) */
+.weather-table tbody tr td:first-child {
+    background-color: #F0F6FF;
+    font-weight: 600;
+    color: #0056b3;
+    border-right: 1px solid #e0e7ee;
+}
+
+/* 날씨 상태 아이콘/텍스트 색상 (기존 유지) */
+.weather-table .sunny {
+    color: #f7b90d; /* 밝은 노란색 */
+    font-weight: bold;
+}
+
+.weather-table .cloud {
+    color: #4a7db8; /* 부드러운 파란색 */
+    font-weight: bold;
+}
+
+.weather-table .rain {
+    color: #3285ff; /* 선명한 파란색 */
+    font-weight: bold;
+}
+
+.weather-table .snow {
+    color: #85bcff; /* 연한 하늘색 */
+    font-weight: bold;
+}
+
+.weather-table .hazy {
+    color: #999; /* 회색 */
+    font-weight: bold;
+}
+
+/* 대기질 표 스타일 (index.html에서 가져옴) */
+/* 오늘의 대기질 */
+.air-msg-text {
+	margin-top: 20px;
+	font-size: 18px;
+	color: #292929;
+}
+
+/* [대기질] 무슨동(날짜) */
+.air-quality-title {
+	font-size: 14px;
+	font-weight: 500;
+	color: #292929;
+}
+
+.air-quality-table {
+    width: 100%;
+    max-width: 750px;
+    border-collapse: separate; /* border-collapse를 separate로 변경하여 border-spacing 및 border-radius 적용 */
+    border-spacing: 0; /* 셀 사이 간격 제거 */
+    margin-top: 15px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); /* 그림자 더 선명하게 */
+    border-radius: 12px; /* 모서리 더 둥글게 */
+    overflow: hidden; /* 둥근 모서리 안쪽 내용도 깔끔하게 */
+    font-size: 0.9em;
+    font-family: 'Noto Sans KR', sans-serif; /* 가독성 좋은 폰트 추가 (필요시) */
+}
+
+.air-quality-table thead th {
+    background-color: #D2C5FF; 
+    color: #fff;
+    padding: 12px 15px; /* 패딩 늘려 여백 확보 */
+    text-align: center;
+    font-size: 15px;
+    font-weight: bold;
+    border: none;
+    position: sticky; /* 스크롤 시 헤더 고정 (테이블이 길어질 경우 유용) */
+    top: 0;
+    z-index: 1;
+}
+
+/* 첫 번째 헤더의 왼쪽 위 모서리 둥글게 */
+.air-quality-table thead th:first-child {
+    border-top-left-radius: 12px;
+}
+
+/* 마지막 헤더의 오른쪽 위 모서리 둥글게 */
+.air-quality-table thead th:last-child {
+    border-top-right-radius: 12px;
+}
+
+.air-quality-table tbody tr {
+    background-color: #ffffff; /* 본문 행 배경색을 흰색으로 통일하여 깔끔하게 */
+    transition: background-color 0.1s ease; /* 호버 효과를 위한 트랜지션 추가 */
+}
+
+.air-quality-table tbody tr:nth-child(even) { /* 짝수 행에만 살짝 다른 배경색 적용 (스트라이프 효과) */
+    background-color: #F8FBFF;
+}
+
+.air-quality-table tbody tr:hover { /* 마우스 오버 시 강조 효과 */
+    background-color: #e9f5ff; /* 살짝 더 진한 파란색 계열 */
+}
+
+.air-quality-table tbody td {
+    padding: 10px 15px; /* 본문 셀 패딩 조정 */
+    text-align: center;
+    border-bottom: 1px solid #e0e7ee; /* 셀 하단에 얇은 구분선 추가 */
+    color: #333; /* 기본 글자색 */
+}
+
+/* 마지막 행의 셀에는 하단 구분선 제거 */
+.air-quality-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.air-quality-table tbody tr td:first-child {
+    background-color: #E7E0FF; /* 첫 번째 열 배경색을 헤더보다 밝은 톤으로 변경하여 부드럽게 강조 */
+    font-weight: 600; /* 글자 두께 약간 강조 */
+    color: #5C4F8B; 
+    border-right: 1px solid #e0e7ee; /* 첫 번째 열 오른쪽에 구분선 추가 */
+}
+
+/* 마지막 열 스타일 (환기 적합도) */
+.air-quality-table tbody td.last-col {
+    font-weight: bold;
+    /* 색상은 JavaScript에서 직접 적용되므로 여기서는 추가하지 않음 */
+}
+
+
+/* 일사량 분석 결과 - 자동제공 */
+ul.styled-sunlight-result {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0 40px 0;
+    max-width: 700px; /* 고정된 최대 너비 */
+    /* width: 100%; */ /* 추가: 부모 컨테이너에 맞춰 100% 사용하도록 */
+    border-radius: 12px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    overflow: hidden;
+    font-size: 15px;
+}
+
+/* 헤더 역할을 하는 li (class="th") */
+ul.styled-sunlight-result li.th {
+    background-color: #B5B5B5; /* 이전과 동일 */
+    color: #fff; /* 이전과 동일 */
+    font-weight: bold;
+    padding: 12px 15px; /* 패딩 조정 */
+    border: none;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    box-sizing: border-box;
+
+    /* 핵심 변경: 내부 요소들을 직접 flex 아이템으로 만들 수 없으므로, */
+    /* h3을 중앙에 두고, b 태그들을 나란히 배치하기 위해 */
+    /* 이 li 자체는 flex-direction: column으로 유지 */
+    display: flex;
+    flex-direction: column; /* h3과 b 태그들이 세로로 쌓이도록 */
+    align-items: center; /* 모든 내부 요소(h3, b)를 가로 중앙에 정렬 */
+    position: relative; /* b 태그 위치 조정을 위해 */
+}
+
+/* 메인 제목 h3 스타일 */
+ul.styled-sunlight-result li.th h3 {
+    margin: 0 0 30px 0; /* 상단 마진 제거, 하단 마진으로 '시간', '일조량'과 간격 */
+    font-size: 1.1em;
+    text-align: center; /* h3 텍스트 자체 중앙 정렬 */
+    width: 100%; /* 부모 li.th의 너비를 꽉 채우도록 */
+    box-sizing: border-box; /* 패딩이 너비에 포함되도록 */
+    padding: 0 10px; /* 좌우 패딩으로 텍스트가 너무 붙지 않게 */
+}
+
+/* '시간' b 태그 스타일 */
+ul.styled-sunlight-result li.th b:first-of-type { /* 첫 번째 b (시간) */
+    /* 현재 이미지를 보면 '시간'이 '분석결과(시간별 일조량)' 바로 아래, 왼쪽에 붙어있음 */
+    /* flex 컨테이너 내부에서 position: absolute 등을 사용해야 할 수도 있지만 복잡해짐 */
+    /* 간단하게는 padding이나 margin으로 강제 정렬 시도 */
+    
+    /* `li.th`가 `flex-direction: column`이므로, `b` 태그들도 아래로 쌓입니다. */
+    /* '시간'과 '일조량'을 한 줄에 배치하려면, 이들을 감싸는 `div`가 꼭 필요합니다. */
+    /* HTML 변경 없이는 완벽한 정렬이 어렵습니다. */
+
+    /* 차선책: `b` 태그들이 `li` 내에서 직접 float 되거나 `display: inline-block`으로 */
+    /* 이 경우 `li.th`는 `display: flex; flex-direction: column;`이 아닌 다른 방식이 필요 */
+    /* -> 현재 CSS와 충돌. */
+
+    /* **다시 제안:**
+       HTML 구조 변경이 불가하다면, `li.th`를 `position: relative;`로 두고
+       `b` 태그들을 `position: absolute;`로 띄워서 위치를 강제 지정하는 방법이 있습니다.
+       이는 '핵'에 가까운 방법이지만, HTML 수정 없이 원하는 배치를 만드는 유일한 길입니다.
+    */
+    position: absolute; /* li.th 내부에서 절대 위치 지정 */
+    bottom: 12px; /* li.th의 하단 패딩과 맞춰서 배치 */
+    left: 50%; /* 왼쪽 50% 위치 */
+    transform: translateX(-50%); /* 정확히 중앙 */
+    margin-left: -70px; /* '시간'을 왼쪽으로 더 이동 (조정 필요) */
+    white-space: nowrap; /* 줄바꿈 방지 */
+}
+
+/* '일조량' b 태그 스타일 */
+ul.styled-sunlight-result li.th b:last-of-type { /* 두 번째 b (일조량) */
+    position: absolute; /* li.th 내부에서 절대 위치 지정 */
+    bottom: 12px; /* li.th의 하단 패딩과 맞춰서 배치 */
+    left: 50%; /* 왼쪽 50% 위치 */
+    transform: translateX(-50%); /* 정확히 중앙 */
+    margin-left: 50px; /* '일조량'을 오른쪽으로 더 이동 (조정 필요) */
+    white-space: nowrap; /* 줄바꿈 방지 */
+}
+
+/* --- 일반 행 및 기타 스타일 (주신 코드와 제안된 개선사항 통합) --- */
+
+/* 일반 행 */
+ul.styled-sunlight-result li:not(.th):not(:last-child) {
+    padding: 13px 20px;
+    display: flex;
+    justify-content: space-between; /* 양 끝 정렬 */
+    align-items: center;
+    border-bottom: 1px solid #e0e7ee; /* 약간 더 진하게 */
+    background: #ffffff; /* 흰색으로 통일 */
+    transition: background 0.2s ease; /* 호버 효과 부드럽게 */
+    
+    color: #292929;
+}
+
+/* 스트라이프 효과 */
+ul.styled-sunlight-result li:nth-child(even):not(.th):not(:last-child) { /* 짝수 행에 적용 (CSS에서 nth-child(odd)는 1,3,5..., even은 2,4,6...) */
+    background: #EEEEEE;
+}
+
+/* hover 효과 */
+ul.styled-sunlight-result li:hover:not(.th):not(:last-child) {
+    background: #E0EBFE; 
+}
+
+/* 합계 row */
+ul.styled-sunlight-result li:last-child {
+    padding: 14px 20px;
+    display: flex;
+    justify-content: space-between; /* 양 끝 정렬 */
+    align-items: center;
+    background: #B5B5B5; /* 대기질 테이블 합계와 유사한 색상 */
+    color: #fff; /* 대기질 테이블 합계와 유사한 글자색 */
+    font-weight: 600;
+    border-top: 1px solid #e0e7ee; /* 상단 구분선 (테이블 통일감을 위해 1px solid로 변경) */
+    border-bottom-left-radius: 12px; /* 하단 모서리 둥글게 */
+    border-bottom-right-radius: 12px; /* 하단 모서리 둥글게 */
+}
+
+/* 내부 항목: 시간 */
+ul.styled-sunlight-result li span:first-child {
+    /* flex: 1; */ /* flex-basis와 함께 쓰거나 flex: 0 1 auto; 로 자동 계산 */
+    flex-basis: 40%; /* 시간 부분이 더 많은 공간 차지 (조절 가능) */
+    text-align: center; /* 가운데 정렬 */
+    color: #004080; /* 진한 파란색 (테이블 헤더/첫 컬럼과 유사) */
+    font-weight: 600; /* 좀 더 강조 */
+}
+
+/* 내부 항목: 일조량 */
+ul.styled-sunlight-result li span:last-child {
+    /* flex: 0; */
+    flex-basis: 45%; /* 일조량 부분이 공간 차지 (조절 가능) */
+    text-align: center; /* 가운데 정렬 */
+    font-weight: 600; /* 글자 두께 통일 */
+    color: #333; /* 기본 글자색 */
+}
+
+/* 일조량이 0이면 강조 */
+ul.styled-sunlight-result li span.sunlight-zero {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.result-block {
+	width: 100%;
+	max-width: 550px;
+	padding: 0 0;
+	border-radius: 14px;
+	box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+
+.result-block h4 {
+	margin-bottom: 12px;
+	padding-left: 10px;
+  	margin-top: 20px;
+	font-size: 18px;
+	color: #292929;
+}
+
+/* 6DCBF9 */
+
+/* 로딩 스피너 스타일 (간단 예시) */
+.spinner {
+	border: 4px solid #ddd;
+	width: 36px;
+	height: 36px;
+	border-radius: 50%;
+	border-left-color: #6DCBF9;
+	animation: spin 1s ease infinite;
+	position: absolute;
+	top: 98%; /* 부모 기준으로 세로 중앙 */
+    left: 49%; /* 부모 기준으로 가로 중앙 */
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+footer {
+	background-color: #f2f2f2;
+	padding: 15px 0;
+	text-align: center;
+	font-size: 14px;
+	color: #666;
+	width: 100%;
+	margin-top: auto; /* 푸터를 하단에 고정 */
+}
+</style>
+</head>
+<body>
+
+	<script th:inline="javascript">
+	    const userLat = /*[[${latitude}]]*/ 36.3504;
+	    const userLng = /*[[${longitude}]]*/ 127.3845;
+	    const userAptName = /*[[${kapt_name}]]*/ "";
+	    const aptInfo = /*[[${aptInfo}]]*/ {}; // aptInfo 내려받기 (GuideVO 필드명과 일치해야 함)
+	</script>
+
+	<div th:replace="common/sidebar :: sidebar"></div>
+
+	<div class="page-title"><a th:href="@{guideMain}">스마트 환기 분석 시스템</a></div>
+	<div id="vmap"></div>
+
+	<div class="controls-container">
+		<h2>3D 일조량 분석</h2>
+
+		<div class="search-bar">
+			<input type="text" id="aptName" placeholder="아파트명을 입력하세요"
+				style="width: 140px;"> <select id="aptBlock">
+				<option value="">동 선택</option>
+			</select>
+			<button type="button" id="searchBtn" class="btn">검색</button>
+		</div>
+
+		<div class="point-part" style="margin: 10px 0;">
+			<button id="btnPoint" class="btn">일조량 지점선택</button>
+			<p>위 버튼을 클릭한 후, 분석을 원하는 위치를 선택하세요! <br>
+				위치를 선택해야 '분석수행'이 가능합니다.
+			</p>
+		</div>
+
+		<div id="floor_input">
+			<label for="floorInput">우리집 층수 입력:</label> <input type="number"
+				id="floorInput" placeholder="층수" min="1" max="100"
+				style="width: 60px;">
+			<button id="btnAnalyzeSolar" class="btn">내 아파트 일사량 분석</button>
+		</div>
+
+		<div id="aptDirectionDisplay" class="apt-info-display"
+			style="display: none;">
+			<strong>우리집 방향: </strong> <span id="displayDirection"></span>
+		</div>
+
+		<form class="field" id="frmSetList">
+			<div id="toolbar">
+				<dl>
+					<dt>분석날짜</dt>
+					<dd>
+						<input type="date" id="anaDate" name="anaDate" class="input date"
+							data-bind="value: contourDate, valueUpdate: 'input'"
+							onchange="sunlightAnalysis.createSunObject()" valCheck="date"
+							fieldTitle="분석날짜" />
+					</dd>
+					<dt>시간별 태양위치</dt>
+					<dd>
+						<div class="range">
+							<label for="anaTim"> <span id="time_span" data-bind="text: contourTime"></span>시
+							</label> <input type="range" id="anaTim" name="anaTim"
+								class="form-control-range" min="5.0" max="20.0" step="1"
+								data-bind="value: contourTime, valueUpdate: 'input'"
+								onchange="sunlightAnalysis.createSunObject()" />
+						</div>
+					</dd>
+					<dt>분석시간범위</dt>
+					<dd>
+						<select class="select" style="width: auto;" id="anaStTime"
+							onchange="sunlightAnalysis.anaTimeCheck(this.value, document.getElementById('anaEdTime').value)"></select>
+						<select class="select" style="width: auto;" id="anaEdTime"
+							onchange="sunlightAnalysis.anaTimeCheck(document.getElementById('anaStTime').value, this.value)"></select>
+					</dd>
+					<dt>분석시간간격</dt>
+					<dd>
+						<select class="form-control" id="anlysTimeInterval">
+							<option value="15">15분</option>
+							<option value="10">10분</option>
+							<option value="5">5분</option>
+							<option value="1">1분</option>
+						</select>
+					</dd>
+				</dl>
+			</div>
+		</form>
+
+		<div class="run-anlys-wrapper">
+			<button id="runAnlys" class="btn">분석 수행</button>
+		</div>
+	</div>
+
+	<div id="resultArea" >
+		<div id="solarChartContainer">
+			<canvas id="solarChart"></canvas>
+		</div>
+		<div id="weatherAndAirQuality"></div>
+	</div>
+	
+	<footer>
+		<div>
+			<p style="margin: 0;">© 2025 A.P.T. All rights reserved.</p>
+			<p style="margin: 5px 0 0;">
+				Made with <span class="computer-icon">💻</span> by 팀 EF
+			</p>
+		</div>
+	</footer>
+
+	<script type="text/javascript">
+    let map; // 전역 map 변수 선언
+
+    // 지도 초기화 함수 (기존 guideMain.html 유지)
+    function vwmap() {
+        const options = {
+            mapId: "vmap",
+            initPosition: new vw.CameraPosition(
+                new vw.CoordZ(userLng, userLat, 500),
+                new vw.Direction(0, -90, 0)
+            ),
+            logo: true,
+            navigation: true
+        };
+        map = new vw.Map(); // 전역 map 변수에 할당
+        map.setOption(options);
+        map.start();
+
+        // 사용자 위치 마커 (초기 위치)
+        const userPt = new vw.geom.Point(new vw.Coord(userLng, userLat));
+        userPt.setImage("https://map.vworld.kr/images/op02/map_point.png");
+        userPt.setName("사용자 위치");
+        userPt.setFont("고딕");
+        userPt.setFontSize(14);
+        userPt.create();
+    }
+    vwmap(); // 지도 초기화 함수 호출
+
+    // 전역 변수 (index.html에서 가져옴)
+    let solarChartObj = null;
+
+    // "검색" 버튼 클릭 시 (기존 guideMain.html 유지)
+    document.getElementById("searchBtn").addEventListener("click", function () {
+        const aptName = document.getElementById("aptName").value.trim();
+        const aptBlock = document.getElementById("aptBlock").value;
+        if (!aptName) {
+            alert("아파트명을 입력하세요!");
+            return;
+        }
+
+        fetch("/search_address", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({name: aptName, block: aptBlock})
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const lat = data.latitude, lng = data.longitude;
+                    // 지도 이동
+                    map.moveTo(new vw.CameraPosition(
+                        new vw.CoordZ(lng, lat, 500),
+                        new vw.Direction(0, -90, 0)
+                    ));
+                    // 새로운 마커 생성 및 기존 마커 제거 (필요하다면)
+                    // 현재 마커를 지우는 로직은 없지만, 같은 위치에 계속 추가될 수 있으므로 필요시 추가
+                    const pt = new vw.geom.Point(new vw.Coord(lng, lat));
+                    pt.setImage("https://map.vworld.kr/images/op02/map_point.png");
+                    pt.setName(data.kaptName);
+                    pt.setFont("고딕");
+                    pt.setFontSize(14);
+                    pt.create();
+                } else {
+                    alert("검색 결과 없음");
+                }
+            });
+    });
+
+    // 일조량 지점 선택 (기존 guideMain.html 유지)
+    document.getElementById("btnPoint").addEventListener("click", function () {
+        sunlightAnalysis.drawPointOnMap();
+    });
+
+    // 분석 수행 (기존 guideMain.html 유지)
+    document.getElementById("runAnlys").addEventListener("click", function () {
+        const interval = parseInt(document.getElementById('anlysTimeInterval').value);
+        const stTime = parseInt(document.getElementById('anaStTime').value) + 1;
+        const endTime = parseInt(document.getElementById('anaEdTime').value);
+        sunlightAnalysis.runSunlight(interval, stTime, endTime, function (ResultInfo) {
+            console.log("성공 : " + "clickeddata.selected");
+            console.log(ResultInfo);
+        });
+    });
+
+    // 분석시간 select 옵션(5~20시 자동 생성) 및 슬라이더 초기화 (기존 guideMain.html 유지)
+    window.addEventListener('load', function() {
+        let st = document.getElementById('anaStTime');
+        let ed = document.getElementById('anaEdTime');
+        st.innerHTML = ""; // 옵션 초기화
+        ed.innerHTML = ""; // 옵션 초기화
+        for (let i = 5; i <= 20; i++) {
+            let opt1 = document.createElement('option');
+            opt1.value = i;
+            opt1.text = i + "시";
+            st.appendChild(opt1);
+
+            let opt2 = document.createElement('option');
+            opt2.value = i;
+            opt2.text = i + "시";
+            ed.appendChild(opt2);
+        }
+        st.value = 5;
+        ed.value = 20;
+
+        document.getElementById('anaTim').value = 5;
+        document.getElementById('time_span').innerText = 5;
+
+        // aptInfo가 있을 경우 aptName과 aptBlock 초기값 설정 및 방향 표시
+        if (aptInfo && aptInfo.kaptName) {
+            document.getElementById('aptName').value = aptInfo.kaptName;
+            // aptBlock은 동적으로 로드되므로, aptName 설정 후 블록 로드 함수 호출
+            fetch("/get_blocks?apt_name=" + encodeURIComponent(aptInfo.kaptName))
+                .then(res => res.json())
+                .then(data => {
+                    const $block = document.getElementById("aptBlock");
+                    $block.innerHTML = '<option value="">동 선택</option>';
+                    data.forEach(block => {
+                        $block.innerHTML += `<option value="${block}">${block}</option>`;
+                    });
+                    if (aptInfo.aptBlock) {
+                        $block.value = aptInfo.aptBlock; // aptInfo에 block 정보가 있으면 선택
+                    }
+                });
+
+            // 아파트 방향 정보 표시
+            const aptDirectionDisplay = document.getElementById('aptDirectionDisplay');
+            const displayDirection = document.getElementById('displayDirection');
+            if (aptInfo.direction) {
+                displayDirection.textContent = aptInfo.direction;
+                aptDirectionDisplay.style.display = 'block'; // 방향 정보가 있으면 보이도록 설정
+            } else {
+                aptDirectionDisplay.style.display = 'none'; // 없으면 숨김
+            }
+        }
+    });
+
+    // jQuery UI Autocomplete 및 블록 선택 (기존 guideMain.html 유지)
+    $(function () {
+        $("#aptName").autocomplete({
+            source: function (req, res) {
+                $.ajax({
+                    url: "/autocomplete_name",
+                    dataType: "json",
+                    data: {term: req.term},
+                    success: function (data) {
+                        res(data);
+                    }
+                });
+            },
+            minLength: 1,
+            select: function (event, ui) {
+                $("#aptName").val(ui.item.value);
+                fetch("/get_blocks?apt_name=" + encodeURIComponent(ui.item.value))
+                    .then(res => res.json())
+                    .then(data => {
+                        const $block = document.getElementById("aptBlock");
+                        $block.innerHTML = '<option value="">동 선택</option>';
+                        data.forEach(block => {
+                            $block.innerHTML += `<option value="${block}">${block}</option>`;
+                        });
+                    });
+                return false;
+            }
+        });
+    });
+
+    // "내 아파트 일사량 분석" 버튼 클릭 감지 (index.html에서 가져온 로직)
+    document.getElementById("btnAnalyzeSolar").onclick = async function () {
+        if (!aptInfo || !aptInfo.kaptCode) {
+            alert("회원 정보가 없거나, 아파트 정보가 등록되어 있지 않습니다.\n(로그인 또는 아파트 정보 등록 후 이용 가능합니다)");
+            return;
+        }
+
+        const floor = document.getElementById('floorInput').value;
+        if (!floor || isNaN(floor) || floor < 1) {
+            alert("층수를 입력하세요!");
+            return;
+        }
+
+        const resultArea = document.getElementById('weatherAndAirQuality');
+        resultArea.innerHTML = "<div class='spinner' id='loadingSpinner'></div>"; // 기존 resultArea 대신 weatherAndAirQuality 사용
+        if (solarChartObj) solarChartObj.destroy();
+        solarChartObj = null; // 차트 객체 초기화
+
+        try {
+            const res = await fetch("http://192.168.0.17:5000/analyze_solar", { // Flask 서버 주소 확인
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    apt_code: aptInfo.kaptCode,
+                    block: aptInfo.aptBlock,
+                    floor: floor,
+                    direction: aptInfo.direction,
+                    dong: aptInfo.dong
+                })
+            });
+            const result = await res.json();
+
+            // Chart.js로 데이터 시각화
+            const chartDataLines = result.message
+                .split('\n')
+                .filter(line => line && !line.startsWith('시간'));
+
+            const xs = chartDataLines.map(line => line.split('\t')[0]);
+            const baseSolar = chartDataLines.map(line => Number(line.split('\t')[2])); // "기본 일사량" (3번째)
+            const finalSolar = chartDataLines.map(line => Number(line.split('\t')[4])); // "최종 보정 일사량" (5번째)
+            const dry = chartDataLines.map(line => line.split('\t')[5]);
+
+            const ctx = document.getElementById('solarChart').getContext('2d');
+            if (solarChartObj) {
+                solarChartObj.destroy(); // 기존 차트 객체 파괴
+            }
+            solarChartObj = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: xs,
+                    datasets: [
+                        {
+                            label: '기본 일사량 (W/㎡)',
+                            data: baseSolar,
+                            fill: false,
+                            borderColor: '#FAF3A0',
+                            backgroundColor: '#FAF3A0',
+                            pointRadius: 6,
+                            pointHoverRadius: 8,
+                            tension: 0.2,
+                            borderDash: [6, 4],
+                        },
+                        {
+                            label: '최종 보정 일사량 (W/㎡)',
+                            data: finalSolar,
+                            fill: false,
+                            borderColor: '#6DCBF9',
+                            backgroundColor: '#6DCBF9',
+                            pointRadius: 7,
+                            pointHoverRadius: 10,
+                            tension: 0.2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+						title: {
+						       	display: true,
+						        text: '일사량 분석 그래프'
+						},
+                        legend: {display: true},
+                        tooltip: {
+                            enabled: true,
+                            callbacks: {
+                                title: ctx => `${ctx[0].label}`,
+                                label: ctx => {
+                                    let line = `${ctx.dataset.label}: ${ctx.parsed.y} W/㎡`;
+                                    if (ctx.datasetIndex === 1) {
+                                        line += ` (건조 적합도: ${dry[ctx.dataIndex]})`;
+                                    }
+                                    return line;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {beginAtZero: true, title: {display: true, text: '일사량 (W/㎡)'}}
+                    }
+                }
+            });
+
+            // 결과 표, 날씨, 대기질 렌더링
+            resultArea.innerHTML = `
+                <h4 class="weather-msg-text">시간 별 날씨 조건</h4>
+                ${renderWeatherTable(result.weather_message || '날씨 정보 없음')}
+                <h4 class="air-msg-text">하루 대기질 조건</h4>
+                ${renderAirQualityTable(result.air_message || '대기질 정보 없음')}
+            `;
+            
+            console.log(result.weather_message);
+            console.log(result.air_message);
+            
+            // css 적용을 위한 추가(06.25)
+            const sunlightUL = document.getElementById('sunlightResultTable');
+            if (sunlightUL) {
+                const sunlightWrapper = document.createElement('div');
+                sunlightWrapper.className = 'result-block';
+                sunlightWrapper.innerHTML = '<h4>일사량 분석 결과</h4>';
+                sunlightUL.parentNode.insertBefore(sunlightWrapper, sunlightUL);
+                sunlightWrapper.appendChild(sunlightUL);
+            }
+
+        } catch (e) {
+            console.error("분석 실패 또는 네트워크 오류:", e);
+            resultArea.innerHTML = "<span style='color:red;'>분석 실패 또는 네트워크 오류</span>";
+        }
+    };
+
+    // 날씨 상태 → 이모지/컬러 매핑 (index.html에서 가져옴)
+    function weatherIcon(cell) {
+        if (cell.includes("맑음")) return `<span class="sunny">☀️ 맑음</span>`;
+        if (cell.includes("흐림")) return `<span class="cloud">⛅ 흐림</span>`;
+        if (cell.includes("구름")) return `<span class="cloud">☁️ 구름많음</span>`;
+        if (cell.includes("비") && !cell.includes("없음")) return `<span class="rain">🌧️ 비</span>`;
+        if (cell.includes("눈")) return `<span class="snow">❄️ 눈</span>`;
+        return `<span class="hazy">${cell}</span>`;
+    }
+
+    // 날씨 표 자동 변환 함수 (index.html에서 가져옴)
+	function renderWeatherTable(weather_message) {
+	    const lines = weather_message.trim().split('\n');
+	    if (lines.length < 2) return '<span>날씨 정보 없음</span>';
+	
+	    let locationText = '';
+	    if (lines[0].startsWith('[')) {
+	        locationText = lines.shift(); // 첫 줄 따로 뺌
+	    }
+	
+	    let table = '<table class="weather-table">';
+	    lines.forEach((line, i) => {
+	        const cells = line.split('\t');
+	        table += '<tr>';
+	        cells.forEach((cell, j) => {
+	            if (i === 0) {
+	                table += `<th>${cell}</th>`;
+	            } else if (j === 1) {
+	                if (cell.includes('실황')) {
+	                    table += `<td style="background:#e3fae5;color:#217943;font-weight:bold;">${cell}</td>`;
+	                } else if (cell.includes('초단기')) {
+	                    table += `<td style="background:#e6f4ff;color:#2261ae;font-weight:bold;">${cell}</td>`;
+	                } else {
+	                    table += `<td>${cell}</td>`;
+	                }
+	            } else if (j === 5 || j === 6) {
+	                table += `<td>${weatherIcon(cell)}</td>`;
+	            } else {
+	                table += `<td>${cell}</td>`;
+	            }
+	        });
+	        table += '</tr>';
+	    });
+	    table += '</table>';
+	
+	    table = `
+	        <div class="weather-location">${locationText}</div>
+	        ${table}
+	        <div class="weather-desc">
+	            <span style="background:#e3fae5;padding:1px 7px;border-radius:6px;">초단기실황</span>
+	            : 관측값, 현재 시각 이전 /
+	            <span style="background:#e6f4ff;padding:1px 7px;border-radius:6px;">초단기예보</span>
+	            : 1시간 간격 예측, 6시간 이내
+	        </div>
+	    `;
+	
+	    return table;
+	}
+
+	// 대기질 표 자동 변환 함수 (index.html에서 가져옴 - `air_message` 형식에 맞춰 수정)
+	function renderAirQualityTable(air_message) {
+	    if (air_message.trim().startsWith('<')) {
+	        return styleAirMessageHTML(air_message); // ✅ 후처리해서 리턴
+	    }
+	
+	    // 텍스트일 경우 기존 로직 실행
+	    const lines = air_message.trim().split('\n');
+	    if (lines.length < 2) return '<span>대기질 정보 없음</span>';
+	
+	    let table = '<table class="air-quality-table">';
+	    table += '<thead><tr>';
+	    lines[0].split('\t').forEach(header => {
+	        table += `<th>${header}</th>`;
+	    });
+	    table += '</tr></thead><tbody>';
+	
+	    lines.slice(1).forEach(line => {
+	        const cells = line.split('\t');
+	        table += '<tr>';
+	        cells.forEach((cell, j) => {
+	            let cellClass = '';
+	            if (j === 0) {
+	                cellClass = 'first-col';
+	            } else if (j === cells.length - 1) {
+	                cellClass = 'last-col';
+	            }
+	
+	            if (j === cells.length - 1) {
+	                if (cell.includes('적합')) {
+	                    table += `<td style="color:#007bff; font-weight: bold;">${cell}</td>`;
+	                } else if (cell.includes('보통')) {
+	                    table += `<td style="color:#28a745; font-weight: bold;">${cell}</td>`;
+	                } else if (cell.includes('주의') || cell.includes('나쁨')) {
+	                    table += `<td style="color:#dc3545; font-weight: bold;">${cell}</td>`;
+	                } else {
+	                    table += `<td>${cell}</td>`;
+	                }
+	            } else {
+	                table += `<td class="${cellClass}">${cell}</td>`;
+	            }
+	        });
+	        table += '</tr>';
+	    });
+	    table += '</tbody></table>';
+	    return table;
+	}
+	
+	// 후처리용 함수
+	function styleAirMessageHTML(htmlString) {
+	    const wrapper = document.createElement('div');
+	    wrapper.innerHTML = htmlString;
+	
+	    // h4에 클래스 주기
+	    const h4 = wrapper.querySelector('h4');
+	    if (h4) {
+	        h4.className = 'air-quality-title';
+	        h4.removeAttribute('style'); // 기존 인라인 스타일 제거
+	    }
+	
+	    // 표의 마지막 td에 색상 입히기 (환기 적합도)
+	    const trs = wrapper.querySelectorAll('table.air-quality-table tbody tr');
+	    trs.forEach(tr => {
+	        const lastTd = tr.querySelector('td:last-child');
+	        if (!lastTd) return;
+	
+	        const text = lastTd.textContent.trim();
+	        lastTd.style.fontWeight = 'bold';
+	
+	        if (text.includes('매우 적합')) {
+	            lastTd.style.color = '#0056b3';
+	        } else if (text.includes('적합')) {
+	            lastTd.style.color = '#007bff';
+	        } else if (text.includes('보통')) {
+	            lastTd.style.color = '#28a745';
+	        } else if (text.includes('주의') || text.includes('나쁨')) {
+	            lastTd.style.color = '#dc3545';
+	        }
+	    });
+	
+	    return wrapper.innerHTML;
+	}
+
+	
+	// ul 위치 조정
+	const observer = new MutationObserver((mutations, obs) => {
+	const ul = document.getElementById("sunlightResultTable");
+	const target = document.getElementById("resultArea");
+		if (ul && target) {
+			target.appendChild(ul);
+			ul.classList.add("styled-sunlight-result");
+			console.log("✅ MutationObserver로 이동 완료");
+			obs.disconnect(); // 감지 종료
+		}
+	});
+
+	observer.observe(document.body, { childList: true, subtree: true });
+	
+	// 슬라이더 자동 움직임 함수
+	window.addEventListener('load', () => {
+		// 5초 뒤에 실행
+		setTimeout(() => {
+			const slider = document.getElementById('anaTim');
+			const max = parseFloat(slider.max);
+			const step = parseFloat(slider.step);
+			let current = parseFloat(slider.min);
+	
+			// 0.1초마다 한 스텝씩 증가시키는 타이머
+			const interval = setInterval(() => {
+				if (current >= max) {
+					clearInterval(interval); // 도달하면 멈추기
+				} else {
+					current += step;
+					slider.value = current;
+	
+					// KnockoutJS 바인딩 수동 업데이트 (contourTime 갱신)
+					const evt = new Event('input', { bubbles: true });
+					slider.dispatchEvent(evt);
+	
+					// onChange도 호출
+					slider.onchange();
+				}
+			}, 100); // 슬라이더 이동 속도 조절 (0.1초마다 움직임)
+		}, 13000); // 13초 대기
+	});
+</script>
+
+</body>
+</html>

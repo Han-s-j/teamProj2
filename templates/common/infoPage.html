@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>알아보기 | A.P.T</title>
+
+<link rel="stylesheet" href="/css/sidebar.css">
+
+<link rel="stylesheet" th:href="@{/css/font.css}" />
+
+<!-- Favicon -->
+<link rel="icon" href="/icons/favicon.png" type="image/png">
+
+<style>
+body {
+	font-family: 'Pretendard', sans-serif;
+	background-color: #fdfdfd;
+	color: #333;
+	margin: 0;
+	padding: 0;
+	min-height: 100vh; /* 뷰포트 높이의 100%를 최소 높이로 설정 */
+	display: flex; /* Flexbox 사용 */
+	flex-direction: column; /* 세로 방향으로 아이템 정렬 */
+}
+
+.title-text {
+	text-align: center; /* 기존대로 유지합니다. */
+	margin-top: 5%;
+	font-size: 28px;
+	font-weight: 800;
+	margin-bottom: 10px; /* 제목 아래 간격 유지 */
+}
+
+.title-text h1 {
+	color: #292929;
+}
+
+.info-text {
+	color: #292929;
+	max-width: 1000px;
+	text-align: center;
+	margin: 0 auto;
+	padding-bottom: 20px;
+}
+
+.info-text strong {
+	color: #4281FF;
+}
+
+.info-text p {
+	font-size: 18px;
+	letter-spacing: 1px;
+	line-height: 1.6;
+}
+
+.container {
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 20px;
+	padding-top: 5px;
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	flex-grow: 1; /* 컨테이너가 사용 가능한 공간을 채우도록 설정 */
+}
+
+.card {
+	width: 45%;
+	background-color: #fff;
+	padding: 20px;
+	border-radius: 15px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	margin: 10px 0;
+	text-align: center;
+	transition: transform 0.3s ease;
+}
+
+.card:hover {
+	transform: translateY(-10px);
+}
+
+.card img {
+	width: 80px;
+	height: 80px;
+	margin-bottom: 0px;
+}
+
+/* 새로 추가: 카드 내부 이미지 링크의 기본 밑줄 제거 */
+.card a {
+    text-decoration: none;
+    color: inherit; /* 링크 색상을 부모 요소에서 상속받도록 */
+}
+
+
+#first-card {
+	color: #62B0FF;
+}
+
+#second-card {
+	color: #FF9C97;
+}
+
+#third-card {
+	color: #AB66FF;
+}
+
+#fourth-card {
+	color: #6DCBF9;
+}
+
+.card h3 {
+	font-size: 24px;
+}
+
+.card p {
+	font-size: 16px;
+	line-height: 1.6;
+	color: #666;
+}
+
+.detail-info-text {
+	font-size: 16px;
+	line-height: 1.6;
+	color: #666;
+	text-align: center;
+	margin-top: -10px;
+}
+
+/* 반응형 디자인 */
+@media ( max-width : 768px) {
+	.card {
+		width: 100%;
+	}
+}
+
+footer {
+	background-color: #f2f2f2;
+	padding: 15px 0;
+	text-align: center;
+	font-size: 14px;
+	color: #666;
+	width: 100%;
+	margin-top: auto; /* 푸터를 하단에 고정 */
+}
+</style>
+</head>
+<body>
+	<div th:replace="common/sidebar :: sidebar"></div>
+	<div class="title-text">
+		<h1>A.P.T 알아보기</h1>
+		<img> 
+	</div>
+
+	<!-- 소개글을 카드들 위에 배치 -->
+    <div class="info-text">
+        <h1>팀 EF 소개</h1>
+        <p>저희 팀 <strong>EF</strong>는 계룡건설 빅데이터 기반 Green Tech SW 개발자 과정 9기에 참여하여 A.P.T 프로젝트를 진행한 팀입니다. <br> 총 5명이 약 8주간 함께 만든 이 프로젝트는 <strong>'건물과 에너지'</strong>라는 대주제를 바탕으로, <strong>가정에서 실천할 수 있는 절약 동기부여 플랫폼</strong>을 목표로 프로젝트를 진행했습니다. 이 플랫폼은 사용자들이 에너지를 절약할 수 있도록 돕고, 실천을 장려하며 지속 가능한 환경을 <br> 위한 변화를 이끌어내는 것을 중점으로 개발되었습니다. 팀원들 간의 협업을 통해 현실적이고 실용적인 절약 방법과 동기부여 시스템을 반영하여 유용한 서비스를 지향하였습니다.</p>
+    </div>
+
+	<div class="container">
+		<div class="card" id="first-card">
+            <a th:href="@{communityMain}"> <img src="/icons/talk_icon.png" alt="A.P.T톡 아이콘">
+            </a>
+			<h3>A.P.T톡</h3>
+			<p>동네 주민들과 소통하고, 유용한 절약 팁을 공유하는 공간! 자신이 속한 동네를 기준으로 알림을 설정하여, 필요한
+				정보와 소식을 빠르게 받아볼 수 있습니다.</p>
+		</div>
+		<div class="card" id="second-card">
+            <a th:href="@{feeMain}"> <img src="/icons/fee_icon.png" alt="관리비 매니저 아이콘">
+            </a>
+			<h3>관리비 매니저</h3>
+			<p>OCR 기술을 활용해 내 관리비 내역을 쉽게 저장하고, 직관적인 그래프를 통해 한 눈에 확인할 수 있어요. 절약
+				금액에 따른 동기부여도 제공하여 관리비 절약을 더욱 쉽게!</p>
+		</div>
+		<div class="card" id="third-card">
+            <a th:href="@{challengeMain}"> <img src="/icons/challenge_icon.png" alt="절약 챌린지 아이콘">
+            </a>
+			<h3>절약 챌린지</h3>
+			<p>일상 속에서 실천할 수 있는 절약 챌린지를 통해 포인트와 뱃지를 얻고, 절약을 즐겁고 동기부여가 넘치는 활동으로
+				만들어보세요. 절약도 루틴처럼!</p>
+		</div>
+		<div class="card" id="fourth-card">
+            <a th:href="@{guideMain}"> <img src="/icons/guide_icon.png" alt="스마트 환기 가이드 아이콘">
+            </a>
+			<h3>스마트 환기 가이드</h3>
+			<p>현재 기상상황과 미세먼지를 바탕으로 내가 살고 있는 아파트에 맞춘 환기 적절한<br>시기를 안내해줘요. 공기청정기나
+				건조기 사용을 줄여 에너지 절약까지 도와줍니다!</p>
+		</div>
+	</div>
+
+	<p class="detail-info-text">아이콘을 클릭하면 해당 페이지로 이동합니다.</p>
+
+	<footer>
+		<div>
+			<p style="margin: 0;">© 2025 A.P.T. All rights reserved.</p>
+			<p style="margin: 5px 0 0;">
+				Made with <span class="computer-icon">💻</span> by 팀 EF
+			</p>
+		</div>
+	</footer>
+</body>
+</html>

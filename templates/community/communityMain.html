@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A.P.T톡 | A.P.T</title>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- 사이드바 -->
+<link rel="stylesheet" href="/css/sidebar.css">
+
+<!-- 폰트 css -->
+<link rel="stylesheet" th:href="@{/css/font.css}" />
+
+<!-- Favicon -->
+<link rel="icon" href="/icons/favicon.png" type="image/png">
+
+<style>
+/* 기본 reset (간단하게) */
+* {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	background-color: #FDFDFD;
+	/* 사이드바 너비만큼 왼쪽 여백 (사이드바가 있다면) */
+	/* padding-left: 260px; */
+	display: flex; /* body를 flex 컨테이너로 설정 */
+    flex-direction: column; /* 자식 요소들을 세로 방향으로 배치 */
+    min-height: 100vh; /* body의 최소 높이를 뷰포트 높이의 100%로 설정 */
+}
+
+/* 사이드바와 메인 콘텐츠 영역을 감싸는 래퍼 */
+.main-content-wrapper {
+    display: flex; /* 사이드바와 .container-main을 가로로 배치 */
+    flex-grow: 1; /* 이 래퍼가 푸터를 제외한 남은 세로 공간을 모두 차지하도록 함 */
+    /* 사이드바가 fixed나 absolute로 되어있지 않다면, 사이드바 너비만큼 왼쪽 패딩 필요 */
+    /* 예: padding-left: 250px; (사이드바 너비) */
+}
+
+
+.container-main {
+	max-width: 1000px;
+	margin: 30px auto; /* 상하 30px, 좌우 자동 (중앙 정렬) */
+	padding: 0 15px; /* 좌우 패딩 */
+    flex-grow: 1; /* container-main이 main-content-wrapper 내에서 남은 가로 공간을 채우도록 */
+                  /* 이 flex-grow는 .main-content-wrapper 내부에서 작동하며,
+                     푸터를 아래로 밀어내는 역할은 .main-content-wrapper가 합니다. */
+}
+
+/* --- 상단 검색/버튼 섹션 --- */
+.top-section {
+	display: flex;
+	justify-content: flex-end; /* 오른쪽 정렬 */
+	align-items: center;
+	margin-bottom: 30px;
+	gap: 10px; /* 요소들 간 간격 */
+}
+
+.search-input {
+	width: 250px; /* 고정 너비 */
+	padding: 8px 15px 8px 35px; /* 패딩: 상 우 하 좌 (왼쪽에 아이콘 공간) */
+	border: 1px solid #ced4da;
+	border-radius: 10px;
+	font-size: 1rem;
+	background-image: url('/icons/search.png');
+	background-repeat: no-repeat;
+	background-position: 10px center;
+	background-size: 20px;
+	outline: none; /* 포커스 시 아웃라인 제거 */
+	transition: border-color 0.2s ease;
+}
+
+.search-input:focus {
+	border-color: #62B0FF; /* 포커스 시 색상 변경 */
+}
+
+.action-buttons {
+	display: flex;
+	gap: 10px; /* 버튼 간 간격 */
+}
+
+.button-base {
+	padding: 8px 15px;
+	border-radius: 10px;
+	font-weight: 600;
+	font-size: 14px;
+	cursor: pointer;
+	text-decoration: none; /* 링크인 경우 밑줄 제거 */
+	display: inline-block; /* 패딩, 마진 적용을 위해 */
+	text-align: center;
+	border: 1px solid transparent; /* 기본 테두리 설정 */
+	transition: background-color 0.1s ease, color 0.1s ease, border-color 0.1s ease;
+}
+
+/* 내 할동 */
+.button-outline {
+	background-color: transparent;
+	color: #62B0FF;
+	border-color: #62B0FF;
+}
+
+.button-outline:hover {
+	background-color: #62B0FF;
+	color: #fff;
+}
+
+/* 글 쓰기 */
+.button-primary {
+	background-color: #62B0FF;
+	color: #FFFFFF;
+	border-color: #62B0FF;
+}
+
+.button-primary:hover {
+	background-color: #fff;
+	color: #62B0FF;
+}
+
+/* --- 중앙 배너 섹션 --- */
+.banner-section {
+	display: flex;
+	/* flex-wrap: wrap; 제거 또는 nowrap 명시 */
+	/* flex-wrap: nowrap; /* 줄바꿈을 원치 않으므로 nowrap 유지 또는 제거 */
+	gap: 20px; /* 카드 간 간격 */
+	margin-bottom: 30px;
+	align-items: stretch; /* 카드 간격 동일하게 맞춤 */
+}
+
+.banner-card {
+	/* flex 속성은 개별 카드 (apt-talk, apt-ping)에 지정합니다. */
+	/* 여기서는 공통적인 스타일만 유지 */
+	border-radius: 15px;
+	padding: 25px;
+	min-height: 180px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	position: relative;
+	overflow: hidden;
+}
+
+.banner-card-apt-talk {
+    flex: 1 1 calc(75% - 10px);
+    flex-direction: row; /* 텍스트와 이미지를 가로로 배치 */
+    align-items: center; /* 세로 중앙 정렬 */
+    justify-content: space-between; /* 텍스트와 이미지 사이의 공간 분배 */
+    padding-right: 10px; /* 이미지와의 간격을 위해 오른쪽 패딩 조절 */
+}
+
+/* A.P.T 톡 내부 텍스트 콘텐츠 스타일 */
+.banner-card-apt-talk .text-content {
+    flex-shrink: 1; /* 텍스트가 줄어들 수 있도록 허용 */
+    padding-right: 15px; /* 텍스트와 이미지 사이의 간격 */
+    font-size: 36px;
+    font-weight: 700;
+    color: #62B0FF;
+}
+
+.banner-card-apt-talk .text-content p {
+	font-size: 24px;
+	margin-top: 10px;
+	color: #879AAE;
+}
+
+.banner-card-apt-ping {
+    /* flex-grow: 1 (남는 공간을 차지), flex-shrink: 1 (필요시 줄어듦), flex-basis: 25% */
+    flex: 1 1 350px; /* gap을 고려하여 flex-basis 설정. grow/shrink 허용 */
+    width: 500px;
+    height: auto;
+}
+
+/* APT 톡 카드 내의 큰 아이콘 이미지 */
+.apt-talk-large-icon {
+    width: 160px; /* 이미지 크기 조절 */
+    height: auto;
+    flex-shrink: 0; /* 이미지 크기가 줄어들지 않도록 고정 */
+    /* opacity: 1; (투명도: 스타일 조정 시 추가) */
+    /* position, bottom, right 등 제거 (flex 아이템이므로) */
+}
+
+/* APT 핑 카드 내부 이미지 스타일 */
+.banner-card-apt-ping .full-image-cover {
+    width: 100%; /* 부모(banner-card-apt-ping) 너비에 맞춤 */
+    height: 100%; /* 부모(banner-card-apt-ping) 높이에 맞춤 */
+    object-fit: cover; /* 이미지가 카드 영역을 꽉 채우되 비율 유지 */
+    transition: transform 0.3s ease-in-out;
+}
+
+.banner-card-apt-ping .full-image-cover:hover {
+	transform: scale(1.02);
+}
+
+/* 배너 카드 이미지 */
+.banner-card .banner-image {
+	position: absolute;
+	opacity: 0.8;
+	pointer-events: none; /* 이미지가 텍스트 위에 있어도 클릭 안되도록 */
+}
+
+.banner-image.apt-talk-img {
+	bottom: 10px;
+	right: 10px;
+	width: 140px;
+}
+
+/* --- 게시글 목록 섹션 --- */
+.post-card {
+	background-color: #ffffff;
+	border-radius: 15px;
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+	padding: 20px;
+	margin-bottom: 20px;
+	display: flex;
+	flex-direction: column;
+}
+
+.post-header {
+	display: flex;
+	align-items: center;
+	margin-bottom: 15px;
+}
+
+.post-profile-pic {
+	width: 45px;
+	height: 45px;
+	border-radius: 50%;
+	background-color: #ffe0b2;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	font-size: 1.5em;
+	color: #ff9800;
+	margin-right: 15px;
+	flex-shrink: 0;
+	overflow: hidden;
+}
+
+.post-profile-pic img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.post-info h5 {
+	margin: 0;
+	font-size: 1.1em;
+	font-weight: bold;
+	color: #292929;
+}
+
+.post-info p {
+	margin: 0;
+	font-size: 0.85em;
+	color: #777;
+}
+
+.post-time {
+	margin-left: auto;
+	font-size: 0.8em;
+	color: #999;
+	visibiliy: hidden; /* 초기에 보이지 않게 */
+}
+
+.post-content {
+	font-size: 0.95em;
+	color: #444;
+	line-height: 1.6;
+	margin-bottom: 15px;
+}
+
+.post-footer {
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+	font-size: 0.85em;
+	color: #777;
+}
+
+.post-footer img {
+	width: 18px;
+	height: 18px;
+	margin-right: 5px;
+	vertical-align: middle;
+}
+
+/* 최신순, 인기순 버튼 */
+#popularButton {
+	color: #919191;
+	background-color: #fdfdfd;
+	border: none;
+	font-family: Pretendard, sans-serif;
+	letter-spacing: 1px;
+}
+
+#popularButton:hover {
+	color: #62B0FF;
+}
+
+#popularButton.active {
+	color: #62B0FF;
+}
+
+#latestButton {
+	color: #919191;
+	background-color: #fdfdfd;
+	border: none;
+	font-family: Pretendard, sans-serif;
+	letter-spacing: 1px;
+}
+
+#latestButton:hover {
+	color: #62B0FF;
+}
+
+#latestButton.active {
+	color: #62B0FF;
+}
+
+/* 미디어 쿼리 (반응형 디자인) */
+/* 모바일 화면에서는 여전히 세로로 쌓이도록 flex-wrap: wrap; 또는 flex-direction: column; 유지해야 함 */
+@media ( max-width : 767.98px) {
+    /* 사이드바와 메인 컨텐츠 래퍼의 반응형 처리 */
+    .main-content-wrapper {
+        flex-direction: column; /* 모바일에서 사이드바와 메인 콘텐츠 세로로 쌓이도록 */
+        /* 사이드바가 fixed나 absolute로 되어있지 않다면, 사이드바 너비만큼 왼쪽 패딩 필요 */
+    }
+	.top-section {
+		flex-direction: column;
+		align-items: flex-end;
+	}
+	.search-input {
+		width: 100%;
+		max-width: none; /* 모바일에서 고정 너비 해제 */
+		margin-bottom: 10px;
+	}
+	.action-buttons {
+		width: 100%;
+		justify-content: flex-end;
+	}
+	.button-base {
+		flex-grow: 1; /* 버튼이 공간을 채우도록 */
+	}
+	.banner-section {
+        /* 모바일에서는 줄바꿈을 해야 하므로 다시 wrap을 주거나,
+           flex-direction: column;으로 확실히 세로로 쌓이게 할 수 있습니다. */
+		flex-direction: column; /* 모바일에서는 세로로 쌓이도록 */
+		gap: 20px;
+	}
+	.banner-card,
+    .banner-card-apt-talk,
+    .banner-card-apt-ping {
+		flex: 1 1 100%; /* 모바일에서는 각각 100% 너비 */
+		min-width: unset; /* 최소 너비 제한 해제 */
+	}
+	.banner-card-apt-ping {
+		text-align: left;
+	}
+	
+}
+/* 새로운 정렬 버튼 컨테이너 스타일 */
+.sort-buttons-container {
+    display: flex; /* 버튼들을 Flexbox로 정렬 */
+    justify-content: flex-end; /* 오른쪽 끝으로 정렬 */
+    gap: 10px; /* 버튼들 사이의 간격 */
+    margin-bottom: 15px; /* 게시물 목록과의 간격 */
+    margin-top: 15px; /* 위쪽 요소와의 간격 (옵션) */
+    padding-right: 15px; /* container-main의 좌우 패딩을 고려하여 조절 */
+}
+
+/* 미디어 쿼리 (모바일 반응형)에서도 정렬 버튼 컨테이너가 잘 보이도록 */
+@media (max-width: 767.98px) {
+    .sort-buttons-container {
+        justify-content: flex-end; /* 모바일에서도 오른쪽 정렬 유지 */
+        padding-right: 15px; /* 필요한 경우 패딩 조절 */
+        margin-right: 0; /* 불필요한 마진 제거 */
+    }
+}
+
+
+footer {
+	background-color: #f2f2f2;
+	padding: 15px 0;
+	text-align: center;
+	font-size: 14px;
+	color: #666;
+	width: 100%;
+	flex-shrink: 0;
+}
+</style>
+</head>
+<body>
+
+	<!-- 사이드바 -->
+    <div th:replace="common/sidebar :: sidebar"></div>
+    
+    <div class="main-content-wrapper">
+        <div class="container-main">
+            <div class="top-section">
+                <input type="text" class="search-input" placeholder="게시물을 검색해보세요">
+                <div class="action-buttons">
+					<button type="button" class="button-base button-outline" id="myActivityButton">내 활동</button>
+					<button type="button" class="button-base button-primary" id="writeButton">글쓰기</button>
+                </div>
+            </div>
+
+			<div class="banner-section">
+			    <div class="banner-card banner-card-apt-talk">
+			        <div class="text-content"> <h4>A.P.T 톡</h4>
+			            <p>
+			                생활비 절약 팁을 공유하고,<br> 우리 아파트의 다양한 이야기도 만나보세요
+			            </p>
+			        </div>
+			        <img src="/icons/talk_icon.png" alt="A.P.T 톡 이미지" class="apt-talk-large-icon">
+			    </div>
+			    <div class="banner-card banner-card-apt-ping">
+			    	<a th:href="@{communutyPingMain}">
+			        	<img src="/cards/APT_ping.png" alt="A.P.T 핑 이미지" class="full-image-cover">
+			        </a>
+			    </div>
+			</div>
+			<div id="searchResultsInfo" style="display: none; margin-bottom: 15px; padding: 10px; background-color: #f8f9fa; border-radius: 8px; font-size: 14px; color: #666;"></div>
+			<button id="clearSearch" style="display: none; margin-bottom: 15px; padding: 8px 15px; background-color: #f0f0f0; color: #666; border: none; border-radius: 4px; cursor: pointer;">전체보기</button>
+			 <div class="sort-buttons-container">
+                <button type="button" class="button-base button-outline" id="popularButton"
+                    th:classappend="${orderBy == 'popularity' ? 'button-primary' : 'button-outline'}">인기순</button>
+                <button type="button" class="button-base button-outline" id="latestButton"
+                    th:classappend="${orderBy == 'latest' ? 'button-primary' : 'button-outline'}">최신순</button>
+                <button type="button" class="button-base button-outline" id="noticeButton">공지사항만 보기</button>
+            </div>
+			<div id="post-container">
+            <div class="post-list-section">
+                <div class="post-card" th:each="post : ${postList}">
+                    <div class="post-header">
+                        <div class="post-profile-pic">
+                            <img src="/icons/profile.png" alt="프로필 사진">
+                        </div>
+                        <div class="post-info">
+                            <h5 th:text="${post.nickname}+'님'">주황머리 엔님</h5>
+                            <p th:text="${post.apartmentName}">초록마을 5단지</p>
+                        </div>
+                        <span class="post-time" th:text="${#dates.format(post.publishedDate, 'yyyy-MM-dd''T''HH:mm:ss')}" th:attr="data-published-date=${#dates.format(post.publishedDate, 'yyyy-MM-dd''T''HH:mm:ss')}"></span>
+                    </div>
+                    <div class="post-content">
+					    <p>
+					        <a th:href="@{/communityDetail(boardNo=${post.boardNo})}" style="text-decoration: none; color: inherit;">
+					            <strong th:text="${post.boardTitle}">안녕하세요 이번 달에 새로 입주했어요 ! 반가워요!</strong>
+					        </a>
+					    </p>
+                    </div>
+                    <div class="post-footer">
+                        <img src="/icons/talk_bubble.png" alt="댓글 아이콘"> 댓글 <span th:text="${post.commentCount}" style="margin-left: 4px">0</span>
+                    </div>
+                </div> 
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- footer 시작 -->
+    <footer>
+		<div>
+			<p style="margin: 0;">© 2025 A.P.T. All rights reserved.</p>
+			<p style="margin: 5px 0 0;">
+				Made with <span class="computer-icon">💻</span> by 팀 EF
+			</p>
+		</div>
+	</footer>
+	<!-- footer 끝 -->
+	
+	<!-- 상단 내 활동, 글쓰기 클릭 시 이동 로직 -->
+	<script th:inline="javascript">
+		// 기존 코드에 검색 기능을 추가하되, 모든 기존 기능은 유지
+		document.addEventListener('DOMContentLoaded', function() {
+			
+		    // 🔍 검색 관련 변수들
+		    const searchInput = document.querySelector('.search-input');
+		    const searchResultsInfo = document.getElementById('searchResultsInfo');
+		    const clearSearchBtn = document.getElementById('clearSearch');
+		    const postListSection = document.querySelector('.post-list-section');
+		    
+		    let allPosts = [];
+		    let isSearchActive = false;
+		    let originalPostsHTML = '';
+		    
+		    // 🔧 무한스크롤 제어를 위한 전역 변수
+		    window.isSearchActive = false; // 전역으로 설정하여 무한스크롤에서 접근 가능
+		    
+		    // 🔧 안전한 게시글 저장 함수
+		    function saveAllPosts() {
+		        const checkAndSave = () => {
+		            const postCards = document.querySelectorAll('.post-card');
+		            console.log('🔍 현재 찾은 게시글 수:', postCards.length);
+		            
+		            if (postCards.length === 0) {
+		                console.log('⏳ 게시글이 없음, 1초 후 재시도...');
+		                setTimeout(checkAndSave, 1000);
+		                return;
+		            }
+		            
+		            // 무한스크롤로 추가된 게시글도 포함하여 저장
+		            const postContainer = document.getElementById('post-container');
+		            const allPostCards = postContainer.querySelectorAll('.post-card');
+		            
+		            // 원본 HTML 저장 (전체 post-container 내용)
+		            originalPostsHTML = postContainer.innerHTML;
+		            console.log('✅ 원본 HTML 저장 완료 (총 ' + allPostCards.length + '개 게시글)');
+		            
+		            // 개별 게시글 정보 저장
+		            allPosts = Array.from(allPostCards).map((card, index) => {
+		                let title = '';
+		                
+		                // 여러 방법으로 제목 추출
+		                const titleElement1 = card.querySelector('.post-content strong');
+		                const titleElement2 = card.querySelector('.post-content a strong');
+		                
+		                if (titleElement1) {
+		                    title = titleElement1.textContent.trim();
+		                } else if (titleElement2) {
+		                    title = titleElement2.textContent.trim();
+		                } else {
+		                    const postContent = card.querySelector('.post-content');
+		                    if (postContent) {
+		                        // 링크 텍스트만 추출
+		                        const linkElement = postContent.querySelector('a');
+		                        if (linkElement) {
+		                            title = linkElement.textContent.trim();
+		                        } else {
+		                            title = postContent.textContent.trim();
+		                        }
+		                    }
+		                }
+		                
+		                console.log(`📝 게시글 ${index + 1} 제목:`, title);
+		                
+		                return {
+		                    element: card.cloneNode(true),
+		                    title: title
+		                };
+		            });
+		            
+		            console.log('✅ 총 저장된 게시글:', allPosts.length);
+		        };
+		        
+		        checkAndSave();
+		    }
+		    
+		    // 🔍 검색 실행 함수
+		    function performSearch() {
+		        const keyword = searchInput.value.trim();
+		        console.log('🔍 검색 시작 - 키워드:', keyword);
+		        console.log('🔍 저장된 게시글 수:', allPosts.length);
+		        
+		        if (!keyword) {
+		            showAllPosts();
+		            return;
+		        }
+		        
+		        // 게시글이 저장되지 않았다면 다시 저장 시도
+		        if (allPosts.length === 0) {
+		            console.warn('⚠️ 저장된 게시글이 없습니다. 재저장 시도...');
+		            saveAllPosts();
+		            setTimeout(() => {
+		                if (allPosts.length > 0) {
+		                    performSearch();
+		                } else {
+		                    alert('게시글을 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
+		                }
+		            }, 2000);
+		            return;
+		        }
+		        
+		        // 🔍 검색 로직 - 제목에서 키워드가 포함된 게시글만 필터링
+		        const filteredPosts = allPosts.filter(post => {
+		            if (!post.title) {
+		                console.log('❌ 제목이 없는 게시글:', post);
+		                return false;
+		            }
+		            
+		            // 대소문자 구분 없이 검색
+		            const normalizedTitle = post.title.toLowerCase();
+		            const normalizedKeyword = keyword.toLowerCase();
+		            
+		            const matches = normalizedTitle.includes(normalizedKeyword);
+		            
+		            if (matches) {
+		                console.log(`✅ 매칭됨: "${post.title}" <- "${keyword}"`);
+		            }
+		            
+		            return matches;
+		        });
+		        
+		        console.log('🔍 검색 결과:', filteredPosts.length + '개 게시글 찾음');
+		        
+		        // 검색 결과 표시
+		        showSearchResults(filteredPosts, keyword);
+		        
+		        // 검색 상태 활성화 (무한스크롤 비활성화)
+		        isSearchActive = true;
+		        window.isSearchActive = true;
+		        console.log('🚫 무한스크롤 비활성화됨');
+		    }
+		    
+		    // 🔍 검색 결과 표시 - 매칭된 게시글만 보여주기
+		    function showSearchResults(filteredPosts, keyword) {
+		        console.log('🔍 검색 결과 표시 시작:', filteredPosts.length + '개');
+		        
+		        // 🔧 전체 post-container를 완전히 비우기 (무한스크롤로 추가된 것도 포함)
+		        const postContainer = document.getElementById('post-container');
+		        
+		        // post-container 전체 내용을 완전히 비우기
+		        postContainer.innerHTML = '<div class="post-list-section"></div>';
+		        const postListSection = postContainer.querySelector('.post-list-section');
+		        
+		        if (filteredPosts.length === 0) {
+		            // 검색 결과가 없을 때
+		            postListSection.innerHTML = `
+		                <div style="text-align: center; padding: 50px; color: #666; background-color: #f9f9f9; border-radius: 15px; margin: 20px 0;">
+		                    <h3 style="color: #999; margin-bottom: 10px;">🔍 검색 결과가 없습니다</h3>
+		                    <p style="color: #777;">"<strong>${keyword}</strong>" 와 일치하는 게시글이 없습니다.</p>
+		                    <p style="color: #777; font-size: 0.9em;">다른 키워드로 검색해보세요.</p>
+		                </div>`;
+		        } else {
+		            // 검색된 게시글들만 표시
+		            console.log('✅ 검색된 게시글들을 표시합니다...');
+		            filteredPosts.forEach((post, index) => {
+		                const postElement = post.element.cloneNode(true);
+		                
+		                // 검색어 하이라이팅
+		                const titleElement = postElement.querySelector('.post-content strong') || 
+		                                   postElement.querySelector('.post-content a strong') ||
+		                                   postElement.querySelector('.post-content a');
+		                
+		                if (titleElement) {
+		                    const originalText = titleElement.textContent;
+		                    const regex = new RegExp(`(${keyword})`, 'gi');
+		                    const highlightedText = originalText.replace(regex, '<mark style="background-color: #ffeb3b; padding: 2px 4px; border-radius: 3px; font-weight: bold;">$1</mark>');
+		                    titleElement.innerHTML = highlightedText;
+		                    console.log(`🎯 ${index + 1}번째 게시글 하이라이팅 완료:`, originalText);
+		                }
+		                
+		                postListSection.appendChild(postElement);
+		            });
+		            
+		            // 시간 정보 업데이트
+		            updateTimeElements();
+		            console.log('✅ 검색된 게시글들 표시 완료');
+		        }
+		        
+		        // 검색 결과 정보 표시
+		        searchResultsInfo.style.display = 'block';
+		        searchResultsInfo.innerHTML = `
+		            <strong style="color: #62B0FF;">"${keyword}"</strong> 검색 결과: 
+		            <span style="color: #62B0FF; font-weight: bold;">${filteredPosts.length}개</span>의 게시글이 있습니다.
+		        `;
+		        clearSearchBtn.style.display = 'inline-block';
+		        clearSearchBtn.textContent = '전체보기';
+		        
+		        console.log('🔍 검색 UI 업데이트 완료');
+		        console.log('🧹 post-container 완전히 정리됨 - 검색된 게시글만 표시');
+		    }
+		    
+		    // 🔍 전체보기 복원 - 모든 원본 게시글 다시 표시
+		    function showAllPosts() {
+		        console.log('🔄 전체보기 실행 - 원본 게시글들 복원 시작');
+		        
+		        const postContainer = document.getElementById('post-container');
+		        
+		        if (originalPostsHTML) {
+		            // 🔧 post-container 전체를 원본 HTML로 완전 복원
+		            postContainer.innerHTML = originalPostsHTML;
+		            console.log('✅ 원본 HTML 완전 복원 완료');
+		        } else if (allPosts.length > 0) {
+		            // 백업 방법: 저장된 게시글들로 복원
+		            console.log('📦 저장된 게시글들로 복원 시도...');
+		            postContainer.innerHTML = '<div class="post-list-section"></div>';
+		            const postListSection = postContainer.querySelector('.post-list-section');
+		            
+		            allPosts.forEach((post, index) => {
+		                const clonedPost = post.element.cloneNode(true);
+		                
+		                // 하이라이팅 제거 (검색어 강조 효과 제거)
+		                const highlightedElements = clonedPost.querySelectorAll('mark');
+		                highlightedElements.forEach(el => {
+		                    el.outerHTML = el.textContent;
+		                });
+		                
+		                postListSection.appendChild(clonedPost);
+		                console.log(`📄 ${index + 1}번째 게시글 복원됨:`, post.title);
+		            });
+		            console.log('✅ 저장된 게시글로 복원 완료');
+		        } else {
+		            console.warn('⚠️ 복원할 데이터가 없습니다. 페이지를 새로고침합니다.');
+		            alert('데이터를 불러오는 중 문제가 발생했습니다. 페이지를 새로고침합니다.');
+		            location.reload();
+		            return;
+		        }
+		        
+		        // 시간 정보 업데이트
+		        updateTimeElements();
+		        
+		        // 검색 UI 초기화
+		        searchInput.value = '';
+		        searchResultsInfo.style.display = 'none';
+		        clearSearchBtn.style.display = 'none';
+		        
+		        // 검색 상태 비활성화 (무한스크롤 재활성화)
+		        isSearchActive = false;
+		        window.isSearchActive = false;
+		        
+		        console.log('✅ 전체보기 복원 완료 - 무한스크롤 재활성화됨');
+		        console.log('📊 현재 표시된 게시글 수:', document.querySelectorAll('.post-card').length);
+		    }
+		    
+		    // 🔧 시간 업데이트 함수
+		    function updateTimeElements() {
+		        const postTimeElements = document.querySelectorAll('.post-time');
+		        postTimeElements.forEach(function(element) {
+		            const rawDateString = element.getAttribute('data-published-date');
+		            if (rawDateString && typeof timeAgo === 'function') {
+		                element.textContent = timeAgo(rawDateString);
+		                element.style.visibility = 'visible';
+		            }
+		        });
+		    }
+		    
+		    // 🔍 이벤트 리스너 설정
+		    searchInput.addEventListener('keypress', function(e) {
+		        if (e.key === 'Enter') {
+		            e.preventDefault();
+		            performSearch();
+		        }
+		    });
+		    
+		    searchInput.addEventListener('input', function() {
+		        const keyword = this.value.trim();
+		        if (keyword === '' && isSearchActive) {
+		            showAllPosts();
+		        }
+		    });
+		    
+		    clearSearchBtn.addEventListener('click', function() {
+		        showAllPosts();
+		    });
+		    
+		    // 🔧 게시글 저장 초기화 (기존 타이밍 유지)
+		    setTimeout(() => {
+		        saveAllPosts();
+		    }, 1500);
+		    
+		    // 🔧 무한스크롤이 게시글을 추가할 때마다 다시 저장
+		    const originalAppend = jQuery.fn.append;
+		    jQuery.fn.append = function(...args) {
+		        const result = originalAppend.apply(this, args);
+		        
+		        // post-container에 게시글이 추가되면 다시 저장
+		        if (this.attr('id') === 'post-container' && args[0] && args[0].includes('post-card')) {
+		            console.log('🔄 무한스크롤로 새 게시글 추가됨 - 다시 저장');
+		            setTimeout(() => {
+		                saveAllPosts();
+		            }, 100);
+		        }
+		        
+		        return result;
+		    };
+		    
+		    window.addEventListener('load', function() {
+		        setTimeout(() => {
+		            if (allPosts.length === 0) {
+		                console.log('🔄 window load 이벤트에서 게시글 재저장 시도');
+		                saveAllPosts();
+		            }
+		        }, 500);
+		    });
+		    
+		    // 🔧 디버깅 함수
+		    window.debugSearch = {
+		        getPosts: () => allPosts,
+		        getOriginalHTML: () => originalPostsHTML,
+		        reloadPosts: () => {
+		            console.log('🔄 수동으로 게시글 재저장 실행');
+		            saveAllPosts();
+		        },
+		        testSearch: (keyword) => {
+		            searchInput.value = keyword;
+		            performSearch();
+		        },
+		        isActive: () => isSearchActive,
+		        getCurrentPostCount: () => document.querySelectorAll('.post-card').length,
+		        showPostTitles: () => {
+		            const titles = allPosts.map(post => post.title);
+		            console.log('저장된 게시글 제목들:', titles);
+		            return titles;
+		        }
+		    };
+		    
+		    console.log('🔍 검색 기능 초기화 완료');
+		    console.log('💡 디버깅 명령어:');
+		    console.log('  - window.debugSearch.reloadPosts() : 게시글 다시 저장');
+		    console.log('  - window.debugSearch.getCurrentPostCount() : 현재 게시글 수');
+		    console.log('  - window.debugSearch.showPostTitles() : 저장된 제목들 보기');
+		    
+		});
+		
+
+		// 🔧 기존 JavaScript 코드들은 여기부터 그대로 유지
+
+		/*<![CDATA[*/
+		// Thymeleaf를 사용하여 JavaScript 변수에 URL 주입
+		const myActivityUrl = /*[[@{/communityMy}]]*/ '/communityMy';
+		const writePostUrl = /*[[@{/communityWrite}]]*/ '/communityWrite';
+		const loginPageUrl = /*[[@{/sign}]]*/ '/sign';
+		const currentOrderBy = /*[[${orderBy}]]*/ 'latest';
+
+		// '내 활동' 버튼 클릭 시
+		document.getElementById('myActivityButton').addEventListener('click', function() {
+		    window.location.href = myActivityUrl;
+		});
+
+		// '글쓰기' 버튼 클릭 시
+		document.getElementById('writeButton').addEventListener('click', function() {
+		    const isLoggedIn = checkUserLoggedIn();
+
+		    if (isLoggedIn) {
+		        window.location.href = writePostUrl;
+		    } else {
+		        alert('글을 작성하려면 로그인이 필요합니다.');
+		        window.location.href = loginPageUrl;
+		    }
+		});
+
+		// ★ 정렬 버튼 클릭 이벤트
+		document.getElementById('popularButton').addEventListener('click', function() {
+		    window.location.href = /*[[@{/communityMain(orderBy='popularity')}]]*/ '/communityMain?orderBy=popularity';
+		});
+
+		document.getElementById('latestButton').addEventListener('click', function() {
+		    window.location.href = /*[[@{/communityMain(orderBy='latest')}]]*/ '/communityMain?orderBy=latest';
+		});
+		
+		// 공지사항만 보기 버튼 클릭 이벤트
+		function getNoticeOnlyFromUrl() {
+		    const params = new URLSearchParams(window.location.search);
+		    return params.get("noticeOnly") === "true";
+		  }
+		
+		  document.addEventListener("DOMContentLoaded", function () {
+		    const button = document.getElementById("noticeButton");
+		
+		    // 현재 상태 확인해서 버튼 텍스트 초기화
+		    const isNoticeOnly = getNoticeOnlyFromUrl();
+		    button.textContent = isNoticeOnly ? "전체 게시글 보기" : "공지사항만 보기";
+		
+		    button.addEventListener("click", function () {
+		      const params = new URLSearchParams(window.location.search);
+		      const orderBy = params.get("orderBy") || "latest";
+		
+		      // 현재 상태에서 반대로 이동
+		      const newNoticeOnly = !getNoticeOnlyFromUrl();
+		
+		      // 이동할 URL 구성
+		      const newUrl = `/communityMain?orderBy=${orderBy}&noticeOnly=${newNoticeOnly}`;
+		      window.location.href = newUrl;
+		    });
+		  });
+
+		// --- 게시물 작성 시간 상대 시간으로 변환하는 로직 ---
+		function timeAgo(date) {
+		    const now = new Date();
+		    const publishedDate = new Date(date);
+		    const seconds = Math.floor((now - publishedDate) / 1000);
+
+		    let interval = seconds / 31536000; // 1년
+		    if (interval > 1) {
+		        return Math.floor(interval) + "년 전";
+		    }
+		    interval = seconds / 2592000; // 1개월
+		    if (interval > 1) {
+		        return Math.floor(interval) + "개월 전";
+		    }
+		    interval = seconds / 86400; // 1일
+		    if (interval > 1) {
+		        return Math.floor(interval) + "일 전";
+		    }
+		    interval = seconds / 3600; // 1시간
+		    if (interval > 1) {
+		        return Math.floor(interval) + "시간 전";
+		    }
+		    interval = seconds / 60; // 1분
+		    if (interval > 1) {
+		        return Math.floor(interval) + "분 전";
+		    }
+		    return Math.floor(seconds) + "초 전";
+		}
+
+		// 페이지 로드 후 모든 게시물 시간 업데이트
+		document.addEventListener('DOMContentLoaded', function() {
+		    const postTimeElements = document.querySelectorAll('.post-time');
+		    postTimeElements.forEach(function(element) {
+		        const rawDateString = element.getAttribute('data-published-date');
+		        if (rawDateString) {
+		            element.textContent = timeAgo(rawDateString);
+		            element.style.visibility = 'visible';
+		        } else {
+		            element.style.visibility = 'visible'; 
+		        }
+		    });
+		});
+
+		// 로그인 확인 함수
+		function checkUserLoggedIn() {
+		    return true; 
+		}
+		/*]]>*/
+
+		// 🔧 수정된 무한 스크롤 로직 - 검색 중일 때 비활성화 + 게시글 추가 시 자동 저장
+		let page = 2;
+		let loading = false;
+
+		$(window).scroll(function () {
+		    // ✅ 검색 중이면 무한스크롤 중단
+		    if (loading || window.isSearchActive) {
+		        return;
+		    }
+		    
+		    if ($(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
+		        loading = true;
+		        $.get("/community/posts", { page: page, orderBy: currentOrderBy, noticeOnly: /*[[${noticeOnly}]]*/ false
+					 }, function (data) {
+		            if (data.length > 0) {
+		                data.forEach(post => {
+		                    const formattedDate = new Date(post.publishedDate).toISOString();
+
+		                    $('#post-container').append(`
+		                        <div class="post-card">
+		                            <div class="post-header">
+		                                <div class="post-profile-pic">
+		                                    <img src="/icons/profile.png" alt="프로필 사진">
+		                                </div>
+		                                <div class="post-info">
+		                                    <h5>${post.nickname}님</h5>
+		                                    <p>${post.apartmentName}</p>
+		                                </div>
+		                                <span class="post-time" data-published-date="${formattedDate}">
+		                                    ${timeAgo(formattedDate)} </span>
+		                            </div>
+		                            <div class="post-content">
+		                                <p>
+		                                    <a href="/communityDetail?boardNo=${post.boardNo}" style="text-decoration: none; color: inherit;">
+		                                        <strong>${post.boardTitle}</strong>
+		                                    </a>
+		                                </p>
+		                            </div>
+		                            <div class="post-footer">
+		                                <img src="/icons/talk_bubble.png" alt="댓글 아이콘"> 댓글 ${post.commentCount}
+		                            </div>
+		                        </div>
+		                    `);
+		                });
+		                
+		                // 새롭게 추가된 게시물들의 시간도 업데이트
+		                const newPostTimeElements = $('#post-container .post-card:not([data-time-processed]) .post-time');
+		                newPostTimeElements.each(function() {
+		                    const element = $(this);
+		                    const rawDateString = element.attr('data-published-date');
+		                    if (rawDateString) {
+		                        element.text(timeAgo(rawDateString));
+		                        element.css('visibility', 'visible');
+		                        element.attr('data-time-processed', 'true');
+		                    }
+		                });
+		                
+		                // 🔧 새 게시글이 추가되면 자동으로 다시 저장
+		                console.log('🔄 무한스크롤로 ' + data.length + '개 게시글 추가됨 - 검색용 데이터 업데이트');
+		                setTimeout(() => {
+		                    if (typeof window.debugSearch !== 'undefined' && window.debugSearch.reloadPosts) {
+		                        window.debugSearch.reloadPosts();
+		                    }
+		                }, 200);
+		                
+		                page++;
+		                loading = false;
+		            } else {
+		                loading = true;
+		            }
+		        });
+		    }
+		});
+</script>
+	
+</body>
+</html>

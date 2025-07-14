@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A.P.T 핑</title>
+
+<link rel="stylesheet" th:href="@{/css/font.css}" />
+<link rel="stylesheet" th:href="@{/css/sidebar.css}">
+<!-- Favicon -->
+<link rel="icon" href="/icons/favicon.png" type="image/png">
+<!-- 추가 -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#61AFFE">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="A.P.T 핑">
+<style>
+/* 기존 body 스타일을 flexbox sticky footer를 위해 수정 */
+body {
+    background-color: #fdfdfd;
+    margin: 0;
+    padding: 0;
+    display: flex; /* Flexbox 컨테이너로 설정 */
+    flex-direction: column; /* 자식 요소들을 세로로 배열 */
+    min-height: 100vh; /* 뷰포트 전체 높이를 차지하도록 */
+    box-sizing: border-box;
+}
+
+/* main-wrapper 추가: 푸터가 아래로 밀리도록 남은 공간을 채움 */
+.main-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    flex-grow: 1; /* 사용 가능한 모든 공간을 차지하도록 설정 */
+    padding-top: 50px; /* 상단 여백 (기존 body에서 이동) */
+    width: 100%; /* 너비 설정 */
+}
+
+.container {
+    width: 90%;
+    max-width: 1000px; /* 최대 너비 설정 */
+    padding: 40px;
+    border-radius: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* 중앙 정렬 */
+    margin-top: 170px; /* 기존 컨테이너 마진 유지 (사이드바와의 관계 고려) */
+    /* background-color: #fff; 이 부분은 이미지에 없으니 제거 */
+}
+
+/* 기존 header 스타일 유지 */
+header {
+    width: 100%;
+    display: flex;
+    justify-content: flex-start; /* 왼쪽 정렬 */
+    margin-bottom: 30px;
+}
+
+/* 기존 main-content 스타일 유지 */
+.main-content {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+    width: 100%;
+}
+
+/* 기존 left-section, right-section, action-button, img, h1, p 스타일 유지 */
+.left-section {
+    flex: 2;
+    min-width: 300px;
+    padding-right: 30px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.left-section h1 {
+    font-size: 36px;
+    color: #61AFFE;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.left-section .service-icon {
+    width: 100px;
+    height: 100px;
+    vertical-align: middle;
+    margin-bottom: 0px;
+    margin-left: 10px;
+}
+
+.left-section p {
+    font-size: 18px;
+    line-height: 1.8;
+    color: #292929;
+    font-weight: 500;
+    max-width: 450px;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.right-section {
+    flex: 1;
+    min-width: 250px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+    margin-top: 60px;
+}
+
+.action-button {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    height: 70px;
+    max-width: 280px;
+    padding: 18px 30px;
+    background-color: #fff;
+    border-radius: 12px;
+    font-size: 22px;
+    font-weight: 700;
+    color: #292929;
+    text-decoration: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+}
+
+.action-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.12);
+    color: #61AFFE;
+}
+
+.action-button img {
+    width: 50px;
+    height: 50px;
+    margin-left: 15px;
+}
+
+/* 반응형 디자인 */
+@media ( max-width : 768px) {
+    .container {
+        padding: 30px;
+    }
+    .main-content {
+        flex-direction: column;
+        align-items: center;
+    }
+    .left-section {
+        padding-right: 0;
+        margin-bottom: 40px;
+    }
+    .left-section p {
+        text-align: center;
+    }
+    .right-section {
+        width: 100%;
+        max-width: 350px;
+    }
+    .main-wrapper {
+        padding-top: 30px; /* 모바일에서 상단 여백 줄이기 */
+    }
+}
+
+@media ( max-width : 480px) {
+    .left-section h1 {
+        font-size: 14px;
+    }
+    .left-section .service-icon {
+        width: 60px;
+        height: 60px;
+    }
+    .left-section p {
+        font-size: 14px;
+    }
+    .action-button {
+        font-size: 14px;
+        padding: 15px 20px;
+    }
+    .action-button img {
+        width: 35px;
+        height: 35px;
+    }
+}
+
+/* 푸터 스타일 */
+footer {
+    background-color: #f2f2f2;
+    padding: 15px 0;
+    text-align: center;
+    font-size: 14px;
+    color: #666;
+    width: 100%; /* 너비를 100%로 설정 */
+    flex-shrink: 0; /* 푸터가 줄어들지 않도록 설정 */
+    margin-top: auto; /* 핵심: 남은 공간을 모두 차지한 뒤 푸터를 바닥으로 밀어냄 */
+}
+</style>
+</head>
+<body>
+    <div th:replace="common/sidebar :: sidebar"></div>
+
+    <div class="main-wrapper">
+        <div class="container">
+            <div class="main-content">
+                <div class="left-section">
+                    <h1>
+                        A.P.T 핑 <img src="/icons/ping_icon.png" alt="A.P.T 핑 아이콘"
+                            class="service-icon">
+                    </h1>
+                    <p>
+                        <b>A.P.T핑</b>은 우리 동네의 소식을 빠르고 쉽게 전달받을 수 있는 시스템입니다!<br> 절약 챌린지에서 쌓은
+                        포인트로 이용할 수 있고(회당 300포인트 차감),<br> 횟수 제한과 금칙어 필터링 기능을 통해 더 안전하게 사용하실 수 있어요.<br>
+                        여러분 동네 소식, <b>A.P.T핑</b>으로 놓치지 마세요! ✨🏠
+                    </p>
+                </div>
+
+                <div class="right-section">
+                    <a href="#" class="action-button" id="subscribeButton"> 구독 설정 <img
+                        src="/icons/ping_subsc.png" alt="구독 알림 아이콘">
+                    </a>
+                    <a th:href="@{communityPingSend}" class="action-button"> 알림
+                        보내기 <img src="/icons/ping_send.png" alt="채팅 버블 아이콘">
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div> 
+    
+    <footer>
+        <div>
+            <p style="margin: 0;">© 2025 A.P.T. All rights reserved.</p>
+            <p style="margin: 5px 0 0;">
+                Made with <span class="computer-icon">💻</span> by 팀 EF
+            </p>
+        </div>
+    </footer>
+    
+    <script>
+    	document.getElementById('subscribeButton').addEventListener('click', function(e) {
+        e.preventDefault(); // 기본 링크 동작 방지
+
+        const popupUrl = 'communitySubscribeSetting';
+        const popupName = 'aptPingSubscribeSettings';
+
+        // 현재 브라우저 뷰포트의 너비와 높이를 가져옵니다.
+        // 스크롤바를 포함한 실제 콘텐츠 영역의 크기입니다.
+        const browserWidth = window.innerWidth;
+        const browserHeight = window.innerHeight;
+
+        // 팝업 창의 원하는 비율 설정 (예: 현재 창 너비의 40%, 높이의 80%)
+        const popupWidthPercentage = 0.4; // 40%
+        const popupHeightPercentage = 0.8; // 80%
+
+        // 팝업 창의 실제 픽셀 크기 계산
+        const calculatedWidth = Math.round(browserWidth * popupWidthPercentage);
+        const calculatedHeight = Math.round(browserHeight * popupHeightPercentage);
+
+        // 팝업 창을 화면 중앙에 띄우기 위한 left, top 위치 계산
+        // (현재 브라우저 너비 - 팝업 너비) / 2
+        const leftPosition = Math.round((browserWidth - calculatedWidth) / 2);
+        // (현재 브라우저 높이 - 팝업 높이) / 2
+        const topPosition = Math.round((browserHeight - calculatedHeight) / 2);
+
+
+        // popupFeatures 문자열 생성
+        // width, height 외에 left와 top 속성을 추가합니다.
+        const popupFeatures = `width=${calculatedWidth},height=${calculatedHeight},left=${leftPosition},top=${topPosition},scrollbars=no,resizable=no,location=no,menubar=no,toolbar=no,status=no`;
+
+        // 새 창 팝업 열기
+        const subscribeWindow = window.open(popupUrl, popupName, popupFeatures);
+
+        // 팝업이 성공적으로 열렸는지 확인
+        if (subscribeWindow) {
+            subscribeWindow.focus(); // 팝업에 포커스 주기
+        } else {
+            alert('팝업 창을 열 수 없습니다. 브라우저의 팝업 차단을 해제해주세요.');
+        }
+    });
+
+	// PWA 서비스 워커 등록
+	if ('serviceWorker' in navigator) {
+	    window.addEventListener('load', function() {
+	        navigator.serviceWorker.register('/sw.js')
+	            .then(function(registration) {
+	                console.log('✅ PWA 서비스 워커 등록 성공');
+	            })
+	            .catch(function(error) {
+	                console.log('❌ PWA 서비스 워커 등록 실패:', error);
+	            });
+	    });
+	}
+
+	// PWA 설치 프롬프트
+	let deferredPrompt;
+	window.addEventListener('beforeinstallprompt', function(e) {
+	    e.preventDefault();
+	    deferredPrompt = e;
+	    
+	    // 설치 배너 표시
+	    const installBanner = document.createElement('div');
+	    installBanner.style.cssText = `
+	        position: fixed;
+	        top: 0;
+	        left: 0;
+	        right: 0;
+	        background: linear-gradient(135deg, #61AFFE, #4a8cd8);
+	        color: white;
+	        padding: 12px 20px;
+	        text-align: center;
+	        font-size: 14px;
+	        font-weight: 500;
+	        z-index: 1000;
+	        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+	    `;
+	    installBanner.innerHTML = `
+	        📱 A.P.T 핑을 홈 화면에 추가하세요! 
+	        <button onclick="installPWA()" style="margin-left: 15px; background: white; color: #61AFFE; border: none; padding: 6px 12px; border-radius: 20px; cursor: pointer; font-weight: 600; font-size: 12px;">설치하기</button>
+	        <button onclick="this.parentElement.remove()" style="margin-left: 8px; background: transparent; color: white; border: 1px solid white; padding: 6px 12px; border-radius: 20px; cursor: pointer; font-size: 12px;">나중에</button>
+	    `;
+	    
+	    document.body.insertBefore(installBanner, document.body.firstChild);
+	});
+
+	function installPWA() {
+	    if (deferredPrompt) {
+	        deferredPrompt.prompt();
+	        deferredPrompt.userChoice.then(function(choiceResult) {
+	            if (choiceResult.outcome === 'accepted') {
+	                console.log('✅ 사용자가 PWA 설치를 승인했습니다');
+	                const banner = document.querySelector('[style*="linear-gradient"]');
+	                if (banner) banner.remove();
+	            }
+	            deferredPrompt = null;
+	        });
+	    }
+	}
+	</script>
+   <!--  </script> -->
+</body>
+</html>

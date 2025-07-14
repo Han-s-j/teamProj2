@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>관리비 매니저 | A.P.T</title>
+
+<!-- Sidebar CSS -->
+<link rel="stylesheet" href="/css/sidebar.css">
+
+<!-- Pretendard Font -->
+<link rel="stylesheet" th:href="@{/css/font.css}" />
+
+<!-- Favicon -->
+<link rel="icon" href="/icons/favicon.png" type="image/png">
+
+<!-- Chart -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {
+	font-family: 'Pretendard', sans-serif;
+	background-color: #FDFDFD;
+	color: #1e1e1e;
+	margin: 0;
+	padding: 0;
+	width: 100vw;
+	overflow-x: hidden;
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
+	height: 100%;
+	align-items: center; /* 세로 중앙 정렬 */
+}
+
+/* 첫 번째 섹션 */
+#main {
+	width: 60%;
+}
+
+#chart_box {
+	background: white;
+	border-radius: 12px;
+	padding: 1rem;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+	margin-bottom: 2rem;
+}
+
+#summary {
+	background: #fff;
+	padding: 2rem;
+	border-radius: 20px;
+	box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 2rem;
+	flex-wrap: wrap;
+	font-size: 1rem;
+	line-height: 1.6;
+	color: #444;
+	margin-bottom: 8%;
+}
+
+.summary-left-wrapper {
+	flex: 1;
+	font-size: 1.3rem;
+	font-weight: 700;
+	color: #292929;
+	margin-left: 15%;
+}
+
+.summary-left-wrapper .highlight {
+	color: #ff4c4c;
+	font-weight: bold;
+	font-size: 1.4rem;
+}
+
+.summary-right-wrapper {
+	flex: 1;
+	text-align: right;
+	font-size: 1.05rem;
+	color: #292929;
+	margin-right: 20%;
+}
+
+.summary-right-wrapper p {
+	margin: 0.4rem 0;
+}
+
+.summary-right-wrapper span {
+	color: #292929;
+	font-weight: 500;
+}
+
+@media ( max-width : 600px) {
+	#summary {
+		flex-direction: column;
+		text-align: left;
+	}
+	.summary-right-wrapper {
+		text-align: left;
+		margin-top: 1rem;
+	}
+}
+
+#summary strong {
+	font-weight: bold;
+	font-size: 1.2rem;
+}
+
+/* 두 번째 섹션 */
+.central-wrap {
+	flex-grow: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	box-sizing: border-box;
+	padding-top: 30px;
+	padding-bottom: 30px;
+}
+
+.container {
+	width: 100%;
+	max-width: 1400px;
+	min-width: 700px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	box-sizing: border-box;
+	margin-bottom: 60px;
+}
+
+.page-title {
+	font-size: 36px;
+	font-weight: 800;
+	margin-bottom: 60px;
+	color: #292929;
+	width: 100%;
+	text-align: left;
+	padding-top: 80px;
+	padding-left: 35%;
+}
+
+.dashboard {
+	width: 100%;
+	display: flex;
+	flex-direction: row;
+	gap: 0;
+	margin-bottom: 20px;
+	margin-right: 100px;
+	box-sizing: border-box;
+	position: relative;
+}
+
+.card {
+	background: none !important;
+	border: none !important;
+	box-shadow: none !important;
+	border-radius: 0 !important;
+	padding: 32px 32px 32px 32px;
+	flex: 1 1 0;
+	min-width: 0;
+	max-width: 100%;
+	min-height: 540px;
+	display: flex;
+	flex-direction: column;
+	position: relative;
+}
+
+.card-contents {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	width: 96%;
+	max-width: 100%;
+	box-sizing: border-box;
+	margin: 0 auto;
+}
+
+.section-title {
+	font-size: 26px;
+	font-weight: 700;
+	margin-bottom: 8px;
+	color: #292929;
+	width: auto;
+	text-align: left;
+	position: absolute;
+	top: 32px;
+	left: 32px;
+	z-index: 2;
+	letter-spacing: -1px;
+}
+
+.info-text, .usage-total {
+	color: #8c8c8c;
+	font-size: 20px;
+	margin-bottom: 0;
+	width: auto;
+	text-align: left;
+	position: absolute;
+	top: 72px;
+	left: 32px;
+	z-index: 2;
+	font-weight: 600;
+}
+
+.highlight-red {
+	color: #FF6B6B;
+	font-weight: 700;
+}
+
+.highlight-blue {
+	color: #4E7CFF;
+	font-weight: 700;
+}
+
+.gauge-container {
+	position: relative;
+	width: 350px;
+	height: 180px;
+	margin: 0 auto 40px auto;
+}
+
+#gaugeCenterText {
+	position: absolute;
+	top: 70%;
+	left: 50%;
+	transform: translate(-50%, -30%);
+	text-align: center;
+	line-height: 1.2;
+	width: 100%;
+}
+
+.gauge-label {
+	font-size: 20px;
+	color: #8c8c8c;
+	font-weight: 500;
+}
+
+.gauge-value {
+	font-size: 34px;
+	font-weight: 800;
+	color: #292929;
+	margin-top: 4px;
+}
+
+.value-grid {
+	display: flex;
+	justify-content: space-between;
+	width: 350px;
+	margin: 0 auto;
+}
+
+.value-item {
+	text-align: center;
+}
+
+.value-label {
+	font-size: 18px;
+	color: #8c8c8c;
+	font-weight: 600;
+	margin-bottom: 8px;
+}
+
+.value-amount {
+	font-size: 24px;
+	font-weight: 700;
+	color: #292929;
+}
+
+.bar-wrapper {
+	height: 18px;
+	background: #f0f0f0;
+	border-radius: 12px;
+	overflow: hidden;
+	margin-bottom: 40px;
+	width: 600px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.bar-electricity {
+	background: #FFD84E;
+	height: 100%;
+	width: 72.1%;
+	float: left;
+}
+
+.bar-water {
+	background: #4E7CFF;
+	height: 100%;
+	width: 27.9%;
+	float: left;
+}
+
+.usage-details {
+	display: flex;
+	flex-direction: column;
+	gap: 28px;
+	width: 600px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.usage-item {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.usage-left {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+}
+
+.usage-icon {
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 16px;
+	max-width: 100%;
+}
+
+.icon-electric {
+	background: #FFD84E;
+}
+
+.icon-water {
+	background: #4E7CFF;
+}
+
+.usage-info {
+	display: flex;
+	flex-direction: column;
+	max-width: 100%;
+	box-sizing: border-box;
+}
+
+.usage-name {
+	font-size: 20px;
+	font-weight: 600;
+	color: #292929;
+	margin-bottom: 2px;
+}
+
+.usage-amount {
+	font-size: 22px;
+	font-weight: 700;
+	color: #292929;
+}
+
+.ai-suggestion {
+	background: #fff;
+	border-radius: 24px;
+	padding: 56px 32px 56px 56px; /* 왼쪽 패딩을 56px로 유지 (원하신다면 더 늘릴 수 있음) */
+	max-height: 250px;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+	display: flex;
+	gap: 32px; /* 아이콘과 텍스트 사이 간격 (필요시 줄일 수 있음) */
+	width: 100%;
+	max-width: 1400px;
+	box-sizing: border-box;
+}
+
+/* 새로운 아이콘 래퍼 스타일 */
+.ai-icon-wrapper {
+	display: flex;
+	align-items: center; /* 이 부분이 아이콘을 세로 중앙에 정렬합니다. */
+	flex-shrink: 0; /* 아이콘 래퍼가 줄어들지 않도록 합니다. */
+	/* ai-suggestion의 전체 높이에 맞춰 아이콘 래퍼가 늘어나도록 하려면 필요시 height: 100%; 추가 */
+}
+
+.ai-icon {
+	width: 90px;
+	height: 90px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 36px;
+	flex-shrink: 0;
+	/* margin-bottom: 10%; 이 부분 제거 */
+}
+
+.ai-icon img {
+	width: 100px;
+	height: 100px;
+	padding-left: 100px;
+	/* padding-right: 80px; */
+}
+
+/* 새로운 텍스트 래퍼 스타일 */
+.ai-text-wrapper {
+	/* 텍스트는 기본 정렬 (Flexbox의 flex-start)을 유지합니다. */
+	display: flex; /* 텍스트 내용이 여러 줄일 경우를 대비하여 flex 사용 */
+	flex-direction: column; /* 텍스트 내용을 세로로 쌓습니다. */
+	justify-content: center; /* 텍스트를 상단에 정렬합니다. */
+	align-items: flex-start;
+	flex-grow: 1; /* 남은 공간을 텍스트 래퍼가 채우도록 합니다. */
+	flex-shrink: 0; /* 이 부분이 중요합니다: 공간이 부족해도 텍스트 래퍼가 줄어들지 않도록 합니다. */
+	min-width: 0; /* Flexbox 아이템의 기본 동작을 오버라이드하여 내용이 넘칠 수 있도록 합니다. */
+}
+
+.ai-text {
+	font-size: 26px;
+	line-height: 1.8;
+	color: #292929;
+	/* padding-left: 5%; */
+	white-space: nowrap;
+	margin-left: 10%;
+}
+
+.ai-text strong {
+	font-weight: 700;
+}
+
+/* 카드 사이 세로 구분선 */
+.dashboard .card:not(:last-child) {
+	margin-right: 28px;
+	position: relative;
+}
+
+.dashboard .card:not(:last-child)::after {
+	content: "";
+	position: absolute;
+	top: 38px;
+	right: -14px;
+	width: 1.5px;
+	height: calc(100% - 76px);
+	background: #e1e1e1;
+	border-radius: 3px;
+	z-index: 3;
+}
+
+@media ( max-width : 1200px) {
+	.container, .ai-suggestion {
+		max-width: 98vw;
+		min-width: 0;
+	}
+	.gauge-container, .value-grid, .bar-wrapper, .usage-details {
+		width: 220px !important;
+		min-width: 0;
+	}
+}
+
+@media ( max-width : 900px) {
+	.dashboard {
+		flex-direction: column;
+		gap: 32px;
+	}
+	.card {
+		min-height: 420px;
+	}
+	.dashboard .card:not(:last-child)::after {
+		display: none;
+	}
+}
+
+.compare-page-btn {
+	border-radius: 40px;
+	position: absolute;
+	background-color: #fff;
+	border: 2px solid #FF9E96;
+	width: 140px;
+	height: 40px;
+	display: flex; /* flexbox 사용 */
+	justify-content: center; /* 가로로 가운데 정렬 */
+	align-items: center; /* 세로로 가운데 정렬 */
+	font-size: 20px;
+	font-weight: 600;
+	color: #FF9E96;
+	top: 120px;
+	right: 380px;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+	transition: background-color 0.3s ease;
+}
+
+.compare-page-btn:hover {
+	color: #fff;
+	background-color: #FF9E96;
+	border: 2px solid #FF9E96;
+}
+
+/* footer */
+footer {
+	background-color: #f2f2f2;
+	padding: 15px 0;
+	text-align: center;
+	font-size: 14px;
+	color: #666;
+	width: 100%;
+	flex-shrink: 0;
+}
+</style>
+</head>
+
+<body>
+	<div th:replace="common/sidebar :: sidebar"></div>
+	<div class="page-title">관리비 매니저</div>
+
+	<a th:href="@{feeCompare}"><div class="compare-page-btn">비교해보기</div></a>
+
+	<div id="main">
+		<div id="chart_box">
+			<canvas id="managerChart"></canvas>
+		</div>
+		<div id="summary">
+			<div class="summary-left-wrapper">
+				<strong>✨ 전월 대비 <span class="highlight">1,980원</span> 절약!
+				</strong>
+			</div>
+			<div class="summary-right-wrapper">
+				<p>
+					이번 달 절약: <span>커피 한 잔</span>
+				</p>
+			</div>
+		</div>
+	</div>
+
+	<div class="central-wrap">
+		<div class="container">
+			<div class="dashboard">
+				<div class="card">
+					<div class="section-title">나의 에너지 소비현황</div>
+					<div class="info-text" id="monthlyDiff"></div>
+					<div class="card-contents">
+						<div class="gauge-container">
+							<canvas id="gaugeChart" width="350" height="180"></canvas>
+							<div id="gaugeCenterText">
+								<div class="gauge-label">전월 대비</div>
+								<div class="gauge-value" id="gaugeValueText"></div>
+							</div>
+						</div>
+						<div class="value-grid" style="width: 350px">
+							<div class="value-item">
+								<div class="value-label">전월 금액</div>
+								<div class="value-amount" id="prevAmount"></div>
+							</div>
+							<div class="value-item">
+								<div class="value-label">이번달 금액</div>
+								<div class="value-amount" id="thisAmount"></div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="card">
+					<div class="section-title">나의 에너지 사용현황</div>
+					<div class="usage-total" id="monthlyTotal"></div>
+					<div class="card-contents">
+						<div class="bar-wrapper" id="usageBarWrapper">
+							<div class="bar-electricity" id="barElectricity"></div>
+							<div class="bar-water" id="barWater"></div>
+						</div>
+						<div class="usage-details">
+							<div class="usage-item">
+								<div class="usage-left">
+									<div class="usage-icon icon-electric">⚡</div>
+									<div class="usage-info">
+										<div class="usage-name">전기요금</div>
+										<div class="usage-unit" id="elecUsageUnit"></div>
+									</div>
+								</div>
+								<div class="usage-amount" id="elecUsageAmount"></div>
+							</div>
+							<div class="usage-item">
+								<div class="usage-left">
+									<div class="usage-icon icon-water">💧</div>
+									<div class="usage-info">
+										<div class="usage-name">수도요금</div>
+										<div class="usage-unit" id="waterUsageUnit"></div>
+									</div>
+								</div>
+								<div class="usage-amount" id="waterUsageAmount"></div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="ai-suggestion">
+				<div class="ai-icon-wrapper">
+					<div class="ai-icon">
+						<img src="/icons/feedback.png">
+					</div>
+				</div>
+				<div class="ai-text-wrapper">
+					<div class="ai-text">
+						<!-- <strong>전기 사용량이 저번달 보다 30% 많네요.</strong><br> 에어컨을 자주 켜두셨나요? -->
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<footer>
+		<div>
+			<p style="margin: 0;">© 2025 A.P.T. All rights reserved.</p>
+			<p style="margin: 5px 0 0;">
+				Made with <span class="computer-icon">💻</span> by 팀 EF
+			</p>
+		</div>
+	</footer>
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<script th:inline="javascript">
+	    const rawData = /*[[${chartData}]]*/ [];
+	    console.log("🔥 rawData", rawData);
+	    
+	    // --- (1) managerChart (라인 그래프) ---
+	    const labels = rawData.map(item => `${item.feeMonth}월`);
+	    const userData = rawData.map(item => item.userFee);
+	    const avgData = rawData.map(item => item.aptAvgFee);
+	    
+	    const managerChartCtx = document.getElementById('managerChart').getContext('2d');
+	    new Chart(managerChartCtx, {
+	        type: 'line',
+	        data: {
+	            labels: labels,
+	            datasets: [
+	                {
+	                    label: '우리집',
+	                    data: userData,
+	                    borderColor: '#ff6384',
+	                    backgroundColor: 'rgba(255, 99, 132, 0.1)',
+	                    fill: false,
+	                    tension: 0.3,
+	                    borderWidth: 3,
+	                    pointRadius: 5,
+	                    pointBackgroundColor: '#ff6384'
+	                },
+	                {
+	                    label: '아파트 평균',
+	                    data: avgData,
+	                    borderColor: '#c7c7c7',
+	                    backgroundColor: 'rgba(54, 162, 235, 0.1)',
+	                    fill: false,
+	                    tension: 0.3,
+	                    borderWidth: 3,
+	                    pointRadius: 5,
+	                    pointBackgroundColor: '#c7c7c7'
+	                }
+	            ]
+	        },
+	        options: {
+	            responsive: true,
+	            plugins: {
+	                legend: {
+	                    display: true,
+	                    position: 'top',
+	                    labels: {
+	                        usePointStyle: true,
+	                        padding: 20,
+	                        font: {
+	                            size: 14
+	                        }
+	                    }
+	                }
+	            },
+	            scales: {
+	                y: {
+	                    beginAtZero: true,
+	                    ticks: {
+	                        stepSize: 50000
+	                    }
+	                }
+	            }
+	        }
+	    });
+	    
+	    // --- (2) 데이터 개수에 따른 모든 조건부 로직 시작 ---
+	    // 이 하나의 if/else 블록에서 모든 동적 UI를 처리.
+	    if (rawData && rawData.length >= 2) { 
+	        // latestData와 previousData는 이 블록 안에서만 선언
+	        const latestData = rawData[rawData.length - 1]; 
+	        const previousData = rawData[rawData.length - 2]; 
+
+	        // --- 2-1. 전월 대비 절약 금액 계산 및 표시 (첫 번째 섹션) ---
+	        const latestUserFee = latestData.userFee;
+	        const previousUserFee = previousData.userFee;
+	        const savings = previousUserFee - latestUserFee; 
+
+	        const summaryHighlightSpan = document.querySelector('.summary-left-wrapper .highlight');
+	        const coffeeSavingsSpan = document.querySelector('.summary-right-wrapper span');
+
+	        if (summaryHighlightSpan) {
+	            summaryHighlightSpan.textContent = savings.toLocaleString() + '원';
+	        }
+
+	        if (coffeeSavingsSpan) {
+	            if (savings >= 30000) { coffeeSavingsSpan.textContent = '맛있는 치킨 한 마리! 🍗'; } 
+	            else if (savings >= 28000) { coffeeSavingsSpan.textContent = '배달비 포함 든든한 야식 세트! 🍜'; } 
+	            else if (savings >= 26000) { coffeeSavingsSpan.textContent = '영화 관람권 두 장! 🎬🎬'; } 
+	            else if (savings >= 24000) { coffeeSavingsSpan.textContent = '유명 브랜드 버거 세트 두 개! 🍔🍔'; } 
+	            else if (savings >= 22000) { coffeeSavingsSpan.textContent = '마사지샵 10분 추가! 💆‍♀️'; } 
+	            else if (savings >= 20000) { coffeeSavingsSpan.textContent = '동네 맛집 점심 특선! 🍚'; } 
+	            else if (savings >= 18000) { coffeeSavingsSpan.textContent = '향기 좋은 디퓨저 하나! 🌿'; } 
+	            else if (savings >= 16000) { coffeeSavingsSpan.textContent = '새로운 취미용품 구매! 🎨'; } 
+	            else if (savings >= 14000) { coffeeSavingsSpan.textContent = '서점에서 베스트셀러 한 권! 📚'; } 
+	            else if (savings >= 12000) { coffeeSavingsSpan.textContent = '프리미엄 커피 두 잔! ☕☕'; } 
+	            else if (savings >= 10030) { coffeeSavingsSpan.textContent = '최저시급만큼 벌었어요! 💰'; } 
+	            else if (savings >= 8000) { coffeeSavingsSpan.textContent = '맛있는 조각 케이크 하나! 🍰'; } 
+	            else if (savings >= 6000) { coffeeSavingsSpan.textContent = '편의점 간식 꾸러미! 🍫'; } 
+	            else if (savings >= 4000) { coffeeSavingsSpan.textContent = '시원한 아이스크림 하나! 🍦'; } 
+	            else if (savings >= 2000) { coffeeSavingsSpan.textContent = '대중교통 요금 한 번! 🚌'; } 
+	            else if (savings > 0) { coffeeSavingsSpan.textContent = '작은 절약도 큰 힘이 돼요! 💪'; } 
+	            else if (savings === 0) { coffeeSavingsSpan.textContent = '이번 달은 또이또이! 😉 다음 달엔 더 노력해봐요!'; } 
+	            else { // 오히려 더 사용한 경우 (savings < 0)
+	                coffeeSavingsSpan.textContent = '이번 달은 아쉽지만 다음 달에 힘내봐요! 😭';
+	                if (summaryHighlightSpan) {
+	                     summaryHighlightSpan.closest('strong').innerHTML = 
+	                         `<strong>✨ 전월 대비 <span class="highlight-negative">${Math.abs(savings).toLocaleString()}원</span> 더 사용했어요! 😭</strong>`;
+	                     summaryHighlightSpan.classList.add('highlight-negative');
+	                     summaryHighlightSpan.classList.remove('highlight');
+	                }
+	            }
+	        }
+	        
+	        // --- 2-2. 전기료 + 수도료 합산 및 게이지 차트 로직 (나의 에너지 소비현황) ---
+	        const currentElecWaterTotal = (latestData.userElecFee || 0) + (latestData.userWaterFee || 0);
+	        const previousElecWaterTotal = (previousData.userElecFee || 0) + (previousData.userWaterFee || 0);
+
+	        let prevAmount = previousElecWaterTotal; // <-- prevAmount _정의
+	        let thisAmount = currentElecWaterTotal;   // <-- thisAmount 정의
+	        let amountDiff = thisAmount - prevAmount; 
+	        let percentDiff = prevAmount > 0 ? Math.round((amountDiff / prevAmount) * 100) : 0; 
+
+	        document.getElementById('prevAmount').innerText = prevAmount.toLocaleString('ko-KR') + '원';
+	        document.getElementById('thisAmount').innerText = thisAmount.toLocaleString('ko-KR') + '원';
+	        document.getElementById('gaugeValueText').innerText = `${percentDiff > 0 ? '+' : ''}${percentDiff}%`;
+
+	        let diffTextClass = amountDiff > 0 ? 'highlight-red' : (amountDiff < 0 ? 'highlight-blue' : ''); 
+	        let diffSign = amountDiff > 0 ? '+' : '';
+	        let diffAction = amountDiff >= 0 ? '더 나왔어요.' : '덜 나왔어요.';
+	        document.getElementById('monthlyDiff').innerHTML = `전월 보다 <span class="${diffTextClass}">${diffSign}${amountDiff.toLocaleString('ko-KR')}원</span> ${diffAction}`;
+
+	        function renderGaugeChart() {
+	            const ctx = document.getElementById('gaugeChart').getContext('2d');
+	            const gradient = ctx.createLinearGradient(0, 0, 350, 0);
+	            
+	            if (amountDiff < 0) {
+	                gradient.addColorStop(0, '#8BC34A'); gradient.addColorStop(0.5, '#689F38'); gradient.addColorStop(1, '#33691E');
+	            } else {
+	                gradient.addColorStop(0, '#FF9B98'); gradient.addColorStop(0.5, '#FFA48F'); gradient.addColorStop(1, '#FFBD7C');
+	            }
+
+	            if (window.gaugeChartInstance) window.gaugeChartInstance.destroy();
+
+	            let gaugeVal = Math.min(Math.abs(percentDiff), 100);
+	            let chartData1 = gaugeVal;
+	            let chartData2 = 100 - gaugeVal;
+	            if (amountDiff < 0) { chartData1 = 100 - gaugeVal; chartData2 = gaugeVal; }
+
+	            window.gaugeChartInstance = new Chart(ctx, {
+	                type: 'doughnut',
+	                data: {
+	                    datasets: [{
+	                        data: [chartData1, chartData2],
+	                        backgroundColor: [gradient, '#E8E8E8'],
+	                        borderWidth: 0,
+	                        cutout: '65%',
+	                        rotation: -90,
+	                        circumference: 180,
+	                        borderRadius: 0
+	                    }]
+	                },
+	                options: {
+	                    responsive: false,
+	                    plugins: { legend: { display: false }, tooltip: { enabled: false } }
+	                }
+	            });
+	        }
+	        renderGaugeChart(); // 차트 렌더링 호출
+            
+	        // --- 2-3. AI 피드백 로직 시작 (블록 안에 정확히 위치) ---
+	        // ... (이전 JavaScript 코드) ...
+
+			// --- AI 피드백 로직 시작 ---
+			const aiTextElement = document.querySelector('.ai-text');
+			if (aiTextElement) {
+			    const latestElecFee = latestData.userElecFee || 0;
+			    const previousElecFee = previousData.userElecFee || 0;
+			
+			    const latestWaterFee = latestData.userWaterFee || 0;
+			    const previousWaterFee = previousData.userWaterFee || 0;
+			
+			    const elecDiff = latestElecFee - previousElecFee;
+			    const waterDiff = latestWaterFee - previousWaterFee;
+			
+			    // 절대값으로 증감률 계산 (증가/감소 폭이 큰 것을 찾기 위함)
+			    let elecPercentDiffAbs = previousElecFee > 0 ? Math.abs((elecDiff / previousElecFee) * 100) : 0;
+			    let waterPercentDiffAbs = previousWaterFee > 0 ? Math.abs((waterDiff / previousWaterFee) * 100) : 0;
+			
+			    let feedbackMessage = "";
+			
+			    // 증감률이 더 높은 항목에 대해 피드백
+			    if (elecPercentDiffAbs >= waterPercentDiffAbs) { // 전기료 증감률이 더 높거나 같을 때
+			        if (elecDiff > 0) { // 전기료 증가
+			            feedbackMessage = `<strong>전기 사용량이 저번 달보다 ${Math.round(elecPercentDiffAbs)}% 많네요.</strong> 혹시 냉난방 기기 사용이 늘었을까요? ❄️`;
+			        } else if (elecDiff < 0) { // 전기료 감소 (절약)
+			            feedbackMessage = `<strong>전기 사용량이 저번 달보다 ${Math.round(elecPercentDiffAbs)}% 줄었어요!</strong> 절전 습관 아주 좋아요! ✨`;
+			        } else { // 전기료 변동 없음
+			            feedbackMessage = `전기 사용량은 전월과 비슷해요. 현상 유지가 중요해요! 💡`;
+			        }
+			    } else { // 수도료 증감률이 더 높을 때
+			        if (waterDiff > 0) { // 수도료 증가
+			            feedbackMessage = `<strong>수도 사용량도 저번 달보다 ${Math.round(waterPercentDiffAbs)}% 증가했어요.</strong> 혹시 누수나 불필요한 물 사용은 없었는지 확인해 보세요. 💦`;
+			        } else if (waterDiff < 0) { // 수도료 감소 (절약)
+			            feedbackMessage = `<strong>수도 사용량이 저번 달보다 ${Math.round(waterPercentDiffAbs)}% 줄었어요!</strong> 물 절약 습관 최고예요! 💧`;
+			        } else { // 수도료 변동 없음
+			            feedbackMessage = `수도 사용량은 전월과 비슷해요. 물 절약은 환경 보호의 시작이죠! 🌍`;
+			        }
+			    }
+			
+			    // 만약 둘 다 변동이 거의 없을 경우를 위한 추가 처리 (선택 사항)
+			    if (elecPercentDiffAbs < 5 && waterPercentDiffAbs < 5 && elecDiff === 0 && waterDiff === 0) {
+			        feedbackMessage = "이번 달 에너지 사용량은 전월과 큰 변동이 없네요. 안정적인 소비습관을 유지하고 있어요! 👍";
+			    }
+			
+			    aiTextElement.innerHTML = feedbackMessage.trim();
+			} else {
+			    console.warn("AI 피드백 요소를 찾을 수 없습니다: .ai-text");
+			}
+			// --- AI 피드백 로직 끝 ---
+	        // --- AI 피드백 로직 끝 ---
+
+	    } else { // rawData.length < 2 일 때 (데이터가 0개 또는 1개일 때)의 처리
+	        // 이 블록은 데이터가 2개 미만일 때 모든 UI를 '데이터 없음'으로 처리합니다.
+
+	        // 첫 번째 섹션 (절약 금액)
+	        const summaryHighlightSpan = document.querySelector('.summary-left-wrapper .highlight');
+	        const summaryLeftStrong = document.querySelector('.summary-left-wrapper strong');
+	        const summaryRightP = document.querySelector('.summary-right-wrapper p');
+
+	        if (summaryLeftStrong) { summaryLeftStrong.innerHTML = '<strong>데이터 부족으로 전월 대비 비교 불가</strong>'; }
+	        if (summaryHighlightSpan) { summaryHighlightSpan.textContent = ''; } 
+	        if (summaryRightP) { summaryRightP.textContent = '아쉽지만 데이터를 더 모아봐요!'; }
+	        
+	        // 두 번째 섹션 (에너지 소비현황 - 게이지 차트)
+	        document.getElementById('prevAmount').innerText = '데이터 없음';
+	        document.getElementById('thisAmount').innerText = '데이터 없음';
+	        document.getElementById('gaugeValueText').innerText = '-';
+	        document.getElementById('monthlyDiff').innerHTML = '전월 대비 비교 불가';
+
+	        // AI 피드백 (데이터 부족)
+	        const aiTextElement = document.querySelector('.ai-text');
+	        if (aiTextElement) {
+	            aiTextElement.innerHTML = `<strong>데이터 부족으로 A.P.T 피드백을 제공할 수 없습니다.</strong>&nbsp;&nbsp;관리비를 입력해 주세요!`;
+	        }
+	    }
+	    
+	    // --- (3) 이번 달 개별 전기료, 수도료 로직 (rawData.length > 0) ---
+	    // 이 블록은 rawData.length가 1개만 있어도 최신 달 데이터는 표시할 수 있으므로,
+	    // 위의 `if (rawData && rawData.length >= 2)` 블록과 별개로 두는 것이 좋습니다.
+	    // 즉, rawData가 있을 경우 (0개만 아니면) 무조건 실행되도록 합니다.
+	    if (rawData && rawData.length > 0) { 
+	        const latestData = rawData[rawData.length - 1]; // latestData는 여기서 다시 선언됩니다.
+
+	        const currentElecFeeValue = latestData.userElecFee || 0;
+	        const currentWaterFeeValue = latestData.userWaterFee || 0;
+
+	        const currentTotalUsageFee = currentElecFeeValue + currentWaterFeeValue; 
+
+	        document.getElementById('monthlyTotal').innerHTML = `이번 달에는 총 <span class="highlight-blue">${currentTotalUsageFee.toLocaleString('ko-KR')}원</span> 나왔어요.`;
+
+	        document.getElementById('elecUsageAmount').innerText = currentElecFeeValue.toLocaleString('ko-KR') + '원';
+	        document.getElementById('waterUsageAmount').innerText = currentWaterFeeValue.toLocaleString('ko-KR') + '원';
+
+	        const total = currentElecFeeValue + currentWaterFeeValue;
+	        const elecWidth = total > 0 ? (currentElecFeeValue / total) * 100 : 0;
+	        const waterWidth = total > 0 ? (currentWaterFeeValue / total) * 100 : 0;
+
+	        document.getElementById('barElectricity').style.width = `${elecWidth}%`; 
+	        document.getElementById('barWater').style.width = `${waterWidth}%`; 
+	        
+	        // 사용량 단위는 VO에 데이터가 없으므로 임시로 빈 값으로 둡니다.
+	        document.getElementById('elecUsageUnit').innerText = ``; 
+	        document.getElementById('waterUsageUnit').innerText = ``; 
+
+	    } else { // rawData.length == 0 일 때 (데이터가 아예 없을 때)
+	        document.getElementById('monthlyTotal').innerHTML = '이번 달 데이터 없음';
+	        document.getElementById('elecUsageAmount').innerText = '-원';
+	        document.getElementById('waterUsageAmount').innerText = '-원';
+	        document.getElementById('barElectricity').style.width = '50%'; 
+	        document.getElementById('barWater').style.width = '50%'; 
+	        document.getElementById('elecUsageUnit').innerText = ``; 
+	        document.getElementById('waterUsageUnit').innerText = ``; 
+	    }
+	</script>
+
+</body>
+
+</html>

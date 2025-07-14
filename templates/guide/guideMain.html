@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+
+<head>
+	<meta charset="UTF-8" />
+	<title>스마트 환기 가이드 | A.P.T</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<link rel="stylesheet" href="/css/sidebar.css">
+	<link rel="stylesheet" th:href="@{/css/font.css}" />
+	<link rel="icon" href="/icons/favicon.png" type="image/png">
+
+	<style>
+		/* --- 기본 레이아웃 및 폰트 --- */
+		html,
+		body {
+			margin: 0;
+			padding: 0;
+			width: 100%;
+			font-family: Pretendard, sans-serif;
+			background-color: #fdfdfd;
+		}
+
+		.container {
+			max-width: 960px;
+			margin: 20px auto;
+			background-color: #fff;
+			padding: 20px;
+		}
+
+		/* --- 페이지 및 섹션 제목 --- */
+		.main-title-text {
+			text-align: left;
+			color: #292929;
+			margin-bottom: 30px;
+		}
+
+		.week-guide-title {
+			color: #2F718F;
+			margin-top: 40px;
+			margin-bottom: 15px;
+		}
+
+		.week-guide-manual {
+			color: #919191;
+			margin-top: -5px;
+		}
+
+		.week-guide-text {
+			color: #919191;
+			margin-top: 20px;
+			margin-bottom: 40px;
+			text-align: center;
+			line-height: 1.6;
+		}
+
+		/* --- 테이블 그룹 스타일 --- */
+		.table-group-wrapper {
+			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+			border-radius: 10px;
+			overflow: hidden;
+			border: 1px solid #e9ecef;
+		}
+
+		#guideTable,
+		#past-info-table {
+			width: 100%;
+			border-collapse: collapse;
+		}
+
+		#guideTable {
+			margin-bottom: 0;
+		}
+
+		#guideTable th {
+			background-color: #A3CAFE;
+			font-weight: bold;
+			color: #fff;
+			padding: 12px;
+			text-align: center;
+			border-bottom: 1px solid #dee2e6;
+		}
+
+		#guideTable td,
+		#past-info-table td {
+			padding: 14px 12px;
+			text-align: center;
+			vertical-align: middle;
+			font-size: 15px;
+			color: #333;
+			border-top: 1px solid #f1f1f1;
+		}
+
+		#guideTable tbody tr:hover,
+		#past-info-table tbody tr:hover {
+			background-color: #f1f7ff;
+		}
+
+		#guideTable td:nth-child(6),
+		#past-info-table td:nth-child(6) {
+			text-align: left;
+			line-height: 1.5;
+			white-space: pre-wrap;
+		}
+
+		#past-info-table thead,
+		h2#past-info-title {
+			display: none;
+		}
+
+		/* 테이블 줄무늬 연속성 스타일 */
+		#guideTable tbody tr:nth-child(even),
+		#past-info-table tbody tr:nth-child(even) {
+			background-color: #f9f9f9;
+		}
+
+		#guideTable:has(tbody tr:nth-last-child(odd))+#past-info-table tbody tr:nth-child(odd) {
+			background-color: #f9f9f9;
+		}
+
+		#guideTable:has(tbody tr:nth-last-child(odd))+#past-info-table tbody tr:nth-child(even) {
+			background-color: transparent;
+		}
+
+
+		/* --- 태그(Tag) 스타일 --- */
+		.tag {
+			font-weight: bold;
+			padding: 3px 8px;
+			border-radius: 6px;
+			display: inline-block;
+			font-size: 14px;
+		}
+		
+		.tag.tag-best {
+			color: #347E9B;
+			background-color: #E0F4FF;
+		}
+
+		.tag.tag-good,
+		#guideTable span.tag-good {
+			/* 상단 테이블용 태그 스타일 추가 */
+			color: #228be6;
+			background-color: #d0ebff;
+		}
+
+		.tag.tag-warning {
+			color: #f59f00;
+			background-color: #fff3bf;
+		}
+
+		.tag.tag-bad,
+		#guideTable span.tag-bad {
+			/* 상단 테이블용 태그 스타일 추가 */
+			color: #c92a2a;
+			background-color: #ffe3e3;
+		}
+		
+		.tag.tag-worst {
+			color: #B94A48;
+			background-color: #F8D7DA;
+		}
+
+		/* --- 기타 컴포넌트 --- */
+		/* 마우스 오버 팝업 */
+		.weather-section {
+			opacity: 0;
+			visibility: hidden;
+			position: absolute;
+			background-color: white;
+			border: 1px solid #ccc;
+			padding: 15px;
+			box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+			z-index: 1000;
+			border-radius: 10px;
+			transition: opacity 0.3s ease-out, transform 0.3s ease-out, visibility 0.5s;
+			transform: scale(0.1);
+			transform-origin: top left;
+		}
+
+		.weather-section.active {
+			opacity: 1;
+			visibility: visible;
+			transform: scale(1);
+		}
+
+		.weather-section h2 {
+			margin-top: 0;
+			margin-bottom: 10px;
+			font-size: 20px;
+			color: #292929;
+		}
+
+		.weekly-weather-table {
+			width: 100%;
+			border-collapse: separate;
+			border-spacing: 0;
+		}
+
+		.weekly-weather-table th {
+			background-color: #4A84D1;
+			color: #fff;
+			font-weight: bold;
+			padding: 12px 10px;
+		}
+
+		.weekly-weather-table td {
+			padding: 12px 10px;
+			font-size: 15px;
+		}
+
+		.weekly-weather-table tbody tr {
+			display: none;
+		}
+
+		.weekly-weather-table tbody tr.active-row {
+			display: table-row;
+		}
+
+		/* '더 많은 정보 보기' 버튼 */
+		.button-container {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+		}
+
+		.full-width-button {
+			position: relative;
+			padding: 12px 18px;
+			transition: all 0.2s ease;
+			border: none;
+			background: none;
+			cursor: pointer;
+			margin: 20px 0 25px 0;
+		}
+
+		.full-width-button:before {
+			content: "";
+			position: absolute;
+			top: 0;
+			left: 0;
+			display: block;
+			border-radius: 50px;
+			background: #A3E1FF;
+			width: 45px;
+			height: 45px;
+			transition: all 0.3s ease;
+		}
+
+		.full-width-button span {
+			position: relative;
+			font-size: 18px;
+			font-weight: 700;
+			letter-spacing: 0.05em;
+			color: #292929;
+		}
+
+		.full-width-button svg {
+			position: relative;
+			top: 0;
+			margin-left: 10px;
+			fill: none;
+			stroke-linecap: round;
+			stroke-linejoin: round;
+			stroke: #292929;
+			stroke-width: 2;
+			transform: translateX(-5px);
+			transition: all 0.3s ease;
+		}
+
+		.full-width-button:hover:before {
+			width: 100%;
+		}
+
+		.full-width-button:hover svg {
+			transform: translateX(0);
+		}
+
+		/* 아코디언 메뉴 (하단 정보 섹션) */
+		.section {
+			background-color: #fff;
+			padding: 20px;
+			margin-bottom: 20px;
+			border-radius: 20px;
+			box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+		}
+
+		.section-title {
+			color: #292929;
+			font-size: 22px;
+			cursor: pointer;
+			position: relative;
+			padding-right: 30px;
+		}
+
+		.section-title::after {
+			content: '▼';
+			position: absolute;
+			right: 0px;
+			top: 50%;
+			transform: translateY(-50%);
+			font-size: 16px;
+			transition: transform 0.3s ease;
+		}
+
+		.section-title.active::after {
+			content: '▲';
+		}
+
+		.section-content {
+			max-height: 0;
+			overflow: hidden;
+			transition: max-height 0.5s ease-out, padding 0.5s ease-out;
+			padding: 0 5px;
+		}
+
+		.section-content.active {
+			padding-top: 20px;
+			padding-bottom: 10px;
+		}
+
+		/* 아코디언 메뉴 내부 콘텐츠 스타일 */
+		.section-content p {
+			line-height: 1.7;
+			font-size: 16px;
+			color: #333;
+			margin-bottom: 1em;
+		}
+
+		.section-content .sub-title {
+			font-size: 18px;
+			font-weight: 600;
+			color: #292929;
+			margin: 20px 0 10px 0;
+		}
+
+		.section-content .type-sub-title {
+			font-size: 17px;
+			font-weight: 600;
+			color: #292929;
+			margin-top: 20px;
+		}
+
+		.section-content .info-text {
+			padding-left: 15px;
+		}
+
+		.section-content b {
+			color: inherit;
+			font-weight: 700;
+		}
+
+		.section-content img {
+			display: block;
+			margin: 20px auto;
+			max-width: 100%;
+		}
+
+		/* 푸터 */
+		footer {
+			padding: 20px 0;
+			text-align: center;
+			font-size: 14px;
+			color: #868e96;
+			background-color: #f8f9fa;
+			width: 100%;
+			margin-top: 30px;
+		}
+
+		/* --- [추가] 두 테이블의 컬럼 너비 강제 정렬 --- */
+		#guideTable,
+		#past-info-table {
+			table-layout: fixed;
+			/* 컬럼 너비를 내용에 따라 자동 조정하지 않고 고정된 너비를 사용하도록 설정 */
+			word-break: break-all;
+			/* 내용이 길 경우 단어 단위로 줄바꿈 */
+		}
+
+		/* 각 컬럼의 너비를 %로 지정 (총합 100%) */
+		/* 날짜 */
+		#guideTable th:nth-child(1),
+		#past-info-table td:nth-child(1) {
+			width: 16%;
+		}
+
+		/* 평균기온 */
+		#guideTable th:nth-child(2),
+		#past-info-table td:nth-child(2) {
+			width: 10%;
+		}
+
+		/* 평균습도 */
+		#guideTable th:nth-child(3),
+		#past-info-table td:nth-child(3) {
+			width: 10%;
+		}
+
+		/* 평균풍속 */
+		#guideTable th:nth-child(4),
+		#past-info-table td:nth-child(4) {
+			width: 10%;
+		}
+
+		/* 건조 적합도 */
+		#guideTable th:nth-child(5),
+		#past-info-table td:nth-child(5) {
+			width: 11%;
+		}
+
+		/* 대기질 정보 */
+		#guideTable th:nth-child(6),
+		#past-info-table td:nth-child(6) {
+			width: 30%;
+		}
+
+		/* 환기추천 */
+		#guideTable th:nth-child(7),
+		#past-info-table td:nth-child(7) {
+			width: 13%;
+		}
+
+		/* 두 테이블의 행 높이와 폰트 사이즈 통일 */
+		#guideTable td,
+		#guideTable th,
+		#past-info-table td,
+		#past-info-table th {
+			padding: 14px 12px;
+			/* 같은 padding */
+			font-size: 15px;
+			/* 같은 폰트 사이즈 */
+			line-height: 1.4;
+			/* 같은 line-height */
+			height: 48px;
+			/* 최소 높이를 지정해 행 높이 통일 */
+			box-sizing: border-box;
+			/* padding 포함하여 높이 계산 */
+		}
+		
+		/* 오늘 날짜 행 강조 */
+		#guideTable tr.today-row {
+		    background-color: #e7f3ff !important; /* 연한 파랑 */
+		    font-weight: bold;
+		}
+
+		.today-badge {
+		    display: inline-block;
+		    background: #4A84D1;
+		    color: #fff;
+		    font-size: 12px;
+		    border-radius: 8px;
+		    padding: 2px 8px;
+		    margin-left: 7px;
+		    font-weight: 600;
+		    vertical-align: middle;
+		}
+	</style>
+</head>
+
+<body>
+
+	<div th:replace="common/sidebar :: sidebar"></div>
+
+	<div class="container">
+		<h1 class="main-title-text">스마트 환기 가이드</h1>
+
+		<h2 class="week-guide-title">주간 환기/생활 추천 가이드</h2>
+		<p class="week-guide-manual">날짜에 마우스를 올리면 환기 추천 시간대를 확인할 수 있어요😊</p>
+		<table id="guideTable">
+			<thead>
+				<tr>
+					<th>날짜</th>
+					<th>평균기온</th>
+					<th>평균습도</th>
+					<th>평균풍속</th>
+					<th>건조 적합도</th>
+					<th>대기질 정보</th>
+					<th>환기추천</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="summary : ${dailySummaries}">
+					<td th:text="${summary.dateDisplay}" th:attr="data-date=${summary.date}"></td>
+					<td th:text="${summary.avgTemperature}"></td>
+					<td th:text="${summary.avgHumidity}"></td>
+					<td th:text="${summary.avgWindSpeed}"></td>
+					<td>
+						<span class="tag" th:text="${summary.dryingGrade}"
+							  th:classappend="${summary.dryingGrade == '매우 추천'} ? 'tag-best' :
+											   (${summary.dryingGrade == '추천'} ? 'tag-good' :
+											   (${summary.dryingGrade == '보통'} ? 'tag-warning' :
+											   (${summary.dryingGrade == '비추천'} ? 'tag-bad' : 'tag-worst')))">
+						</span>
+					</td>
+					<td th:utext="${#strings.replace(
+					    #strings.replace(
+					        #strings.replace(
+					            #strings.replace(
+					                #strings.replace(
+					                    #strings.replace(
+					                        #strings.replace(
+					                            #strings.replace(
+					                                #strings.replace(summary.dustGrade, '미세먼지:좋음', '미세먼지: 😊'),
+					                            '미세먼지:보통', '미세먼지: 😕'),
+					                        '미세먼지:나쁨', '미세먼지: 😡'),
+					                    '초미세먼지:좋음', '초미세먼지: 😊'),
+					                '초미세먼지:보통', '초미세먼지: 😕'),
+					            '초미세먼지:나쁨', '초미세먼지: 😡'),
+					        '오존:좋음', '오존: 😊'),
+					    '오존:보통', '오존: 😕'),
+					'오존:나쁨', '오존: 😡')}">대기질정보</td>
+					<td>
+						<span class="tag" th:text="${summary.ventStatus}"
+							  th:classappend="${summary.ventStatus == '추천'} ? 'tag-good' : 'tag-bad'">
+						</span>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+
+		<table id="past-info-table">
+			<tbody>
+				<tr th:each="day : ${weeklyVentilation}">
+					<td th:text="${#dates.format(new java.util.Date(day.date.replace('-', '/')), 'M월 d일(E)')}"></td>
+					<td th:text="${#numbers.formatDecimal(day.tempAvg, 1, 1)}"></td>
+					<td th:text="${#numbers.formatDecimal(day.humiAvg, 1, 1)}"></td>
+					<td th:text="${#numbers.formatDecimal(day.windAvg, 1, 1)}"></td>
+					<td>
+						<span class="tag" th:text="${day.dryingGrade}"
+							  th:classappend="${day.dryingGrade == '매우 추천'} ? 'tag-best' :
+											   (${day.dryingGrade == '추천'} ? 'tag-good' :
+											   (${day.dryingGrade == '보통'} ? 'tag-warning' :
+											   (${day.dryingGrade == '비추천'} ? 'tag-bad' : 'tag-worst')))">
+						</span>
+					</td>
+					<td th:text="${day.dustReason}"></td>
+					<td>
+						<span class="tag" th:text="${day.finalRecommend}"
+							  th:classappend="${day.finalRecommend == '추천'} ? 'tag-good' : 
+											   (${day.finalRecommend == '보통'} ? 'tag-warning' : 'tag-bad')">
+						</span>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<p class="week-guide-text">
+			이 가이드는 <b>기상청 API</b>를 통해 수집한 기온, 습도, 풍속 등 기상 정보와 대기질 데이터를 바탕으로, <b>WHO
+				등 국제 권고 기준을 참고</b>하여 환기 적정 시기를 안내합니다. <br>어려운 데이터 대신, 직관적인 가이드를
+			만나보세요!
+		</p>
+
+		<div class="weather-section">
+			<h2>날짜별 상세 날씨 정보</h2>
+			<table class="weekly-weather-table">
+				<thead>
+					<tr>
+						<th>날짜</th>
+						<th>시간</th>
+						<th>기온(℃)</th>
+						<th>습도(%)</th>
+						<th>풍속(m/s)</th>
+						<th>풍향</th>
+						<th>하늘</th>
+						<th>강수</th>
+						<th>환기추천</th>
+						<th>환기조건</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr th:each="weather : ${weeklyWeather}" th:attr="data-weather-date-row=${weather.date}">
+						<td th:text="${weather.date}">20250703</td>
+						<td th:text="${weather.time}">14:00</td>
+						<td th:text="${weather.temperature}">27</td>
+						<td th:text="${weather.humidity}">60</td>
+						<td th:text="${weather.windSpeed}">3.1</td>
+						<td th:text="${weather.windDirection}">북서</td>
+						<td th:text="${weather.sky}">맑음</td>
+						<td th:text="${weather.precipitation}">없음</td>
+						<td th:text="${weather.ventRecommend}">추천</td>
+						<td th:text="${weather.ventReason}">습도 적정</td>
+					</tr>
+				</tbody>
+			</table>
+			<div th:if="${#lists.isEmpty(weeklyWeather)}" class="no-data-message">
+				<p>선택하신 날짜의 상세 날씨 정보가 없습니다.</p>
+				<p>마우스를 올린 날짜에 대한 정보만 표시됩니다.</p>
+			</div>
+		</div>
+
+
+		<div class="button-container">
+			<button class="full-width-button">
+				<span>더 많은 정보 보기</span>
+				<svg width="15px" height="10px" viewBox="0 0 13 10">
+					<path d="M1,5 L11,5"></path>
+					<polyline points="8 1 12 5 8 9"></polyline>
+				</svg>
+			</button>
+		</div>
+
+		<div class="section">
+			<h2 class="section-title">환기의 중요성</h2>
+			<div class="section-content">
+				<h4 class="sub-title">🍃 공동주택의 환기 필요성</h4>
+				<div class="info-text">
+					<p style="line-height: 1.6;">
+						공동주택은 바깥보다 공기 흐름이 제한적이에요. 집 안 공간이 상대적으로 작고, 창문을 잘 안 열면 오염물질이 금방 쌓이게 되죠.<br>
+						실제로 PM2.5나 CO₂, 포름알데히드 같은 물질은 환기를 안 할 경우 실외보다 2~5배까지 농도가 높아질 수 있어요.<br>
+						<br>
+						<span style="font-size: 18px; font-weight: 700;">자연환기 vs 기계환기</span><br>
+						<b>어떻게 환기하느냐에 따라 공기질도 달라집니다❗</b> <br>
+						자연환기는 창문을 여는 방식이라 간단하지만, 언제 열고 얼마나 오래 열지는 전적으로 입주자에게 달려 있기 때문에<br>
+						입주자의 생활 패턴에 의존하는 특성상 균형 잡힌 환기가 어려울 수 있어요! <br>
+						<b>반면,</b> 기계식 환기 시스템(예: 전열교환기 등)은 설치만으로 해결될 것 같지만, 사용을 하지 않거나 관리를 소홀히 하면 효과가 크게 떨어집니다.<br>
+						<br>
+						<span style="font-size: 18px; font-weight: 700;">환기효율 실험 결과</span><br>
+						실험 결과, 같은 단지 안에서도 창문의 방향이나 개방 여부, 바람의 세기, 가구 배치에 따라 환기 효율에 50% 이상 차이가 나는 경우가 있었어요.<br>
+						단순히 환기 시스템만 믿기보다는, <b>외부 공기 오염도나 풍향, 창문 위치 등 집 안팎의 조건을 함께 고려한 환기 방법</b>이 필요합니다.
+					</p>
+				</div>
+			</div>
+		</div>
+
+		<div class="section">
+			<h2 class="section-title">환기를 잘 시키기 위한 핵심 조건</h2>
+			<div class="section-content">
+				<h4 class="sub-title">🏢 구조적 조건</h4>
+				<div class="info-text">
+					<p><b>맞통풍 구조가 가장 좋아요</b><br>
+						집 양쪽에 창문이 있다면 바람이 들어오고 나갈 길이 생겨서 환기가 훨씬 잘 돼요. 이걸 <b>‘크로스 환기’</b>라고 해요!</p>
+
+					<p><b>창문, 서로 마주보게 열어주세요</b><br>
+						예를 들어 남쪽과 북쪽, 또는 동쪽과 서쪽에 창이 마주 보고 있다면 공기가 집 안을 쭉 통과하면서 순환되기 좋아요.</p>
+
+					<p><b>창의 높낮이를 다르게 하면 더 좋아요</b><br>
+						높은 창과 낮은 창이 함께 열려 있으면, 따뜻한 공기는 위로, 차가운 공기는 아래로 움직이면서 자연스럽게 공기 흐름이 생겨요. 이걸 <b>‘굴뚝 효과’</b>라고 부르기도
+						해요.</p>
+
+					<p><b>문턱이나 칸막이는 최소한으로!</b><br>
+						실내에서 공기가 흐르려면 장애물이 적어야 해요. 문턱이나 불필요한 칸막이는 공기 순환을 방해할 수 있어요.</p>
+				</div>
+
+				<h4 class="sub-title">🌬️ 환경 및 기후 조건</h4>
+				<div class="info-text">
+					<p><b>외부 바람 유입 가능할 때 효과 증가</b><br>
+						외부에서 바람이 유입될 수 있으면 환기 효과가 더욱 좋아져요.</p>
+
+					<p><b>내부와 외부 온도 차가 클수록 대류효과로 인한 높은 환기 효과!</b><br>
+						내부와 외부 온도 차이가 클수록 대류효과가 발생해 환기 효과가 높아지지만, 겨울철에는 실내 온도가 급격히 떨어질 수 있으니 난방비 절감을 위해 <br> 환기 시간을 조절하는
+						것이 중요해요.</p>
+				</div>
+
+				<h4 class="sub-title">🧍 생활 습관 및 환기 팁</h4>
+				<div class="info-text">
+					<p>
+						<b>하루 2~3회, 10~15분</b> 창문 활짝 열기
+					</p>
+					<p>요리 직후, 욕실 사용 직후 강제 환기 또는 창문 열기</p>
+					<p>
+						공기청정기만으로는 환기 불충분 → 이산화탄소, 라돈 등은 <b>환기로만 제거 가능</b>
+					</p>
+					<p>출입문 아래 틈을 너무 꽉 막지 않기 (기압차 환기 고려)</p>
+				</div>
+			</div>
+		</div>
+
+		<div class="section">
+			<h2 class="section-title">집 구조에 따른 환기 팁</h2>
+			<div class="section-content">
+				<h4 id="a-type-title">A타입</h4>
+				<p style="color: #919191; text-align: center; margin-top: 0;">창문이 마주보고 있는 구조</p>
+				<img src="/images/a_type.png" alt="아파트 구조 A타입">
+				<h4 class="type-sub-title">🔵 특징</h4>
+				<div class="info-text">
+					<p>양쪽에 창문이 있으면 자연스럽게 바람이 흐를 수 있어 환기 효과가 좋아져요. 바람이 원활하게 들어오고 나갈 수 있죠.</p>
+					<p>거실과 주방, 또는 침실 사이에 창문이 있으면 맞통풍이 잘 이루어져 공기 순환이 원활하게 돼요.</p>
+					<p>바람은 직선이나 대각선으로 이동하면서 실내 공기를 자연스럽게 순환시켜요.</p>
+				</div>
+
+				<h4 id="b-type-title">B타입</h4>
+				<p style="color: #919191; text-align: center; margin-top: 0;">창문이 한쪽에만 있는 구조</p>
+				<img src="/images/b_type.png" alt="아파트 구조 B타입">
+				<h4 class="type-sub-title">✔️ 문제점</h4>
+				<div class="info-text">
+					<p>한쪽 벽에만 창문이 있을 경우, 공기 흐름이 막혀서 환기가 제대로 이루어지지 않아요.</p>
+					<p>욕실은 공기가 잘 흐르지 않아 <b>정체 구역</b>이 될 수 있어요. 그래서 환기가 중요해요.</p>
+					<p>공기 순환이 부족하면 습기나 냄새, 이산화탄소 같은 물질이 실내에 오래 머물게 되죠.</p>
+				</div>
+
+				<h4 class="type-sub-title">🔧 B타입 구조의 개선 팁</h4>
+				<div class="info-text">
+					<p>욕실에는 강제 환풍기를 설치해 공기 흐름을 원활하게 해주세요.</p>
+					<p>거실 창문과 현관문을 동시에 잠깐 열면 <b>기압차 환기</b>가 일어나면서 공기가 잘 순환돼요.</p>
+					<p><b>서큘레이터 활용</b>: 서큘레이터를 사용하면 공기를 순환시켜 정체 구간을 제거할 수 있어요.</p>
+				</div>
+
+				<h4 class="type-sub-title">💬 추가 환기 팁</h4>
+				<div class="info-text">
+					<p>아침, 점심, 저녁 3번 환기하는 루틴을 만들어 규칙적으로 공기를 환기시켜 주세요.</p>
+					<p>창문을 비스듬히 여는 틸트 방식으로 바람을 조절하면 더 효율적으로 환기가 이루어져요.</p>
+					<p><b>창문의 위치와 방향</b>: 창문이 서로 마주보는 방향(남북, 동서 방향)으로 있으면 공기가 잘 흐르기 때문에 이상적이에요!</p>
+				</div>
+			</div>
+		</div>
+
+
+		<div class="section">
+			<h2 class="section-title">왜 ‘환기 시스템’이 건물 에너지와 직접 연결될까?</h2>
+			<div class="section-content">
+				<h4 class="sub-title">환기는 ‘에너지 소비’와 직결되는 행위</h4>
+				<div class="info-text">
+					<p>창문을 열면 내부의 따뜻하거나 시원한 공기가 빠져나가고, 외부에서 차갑거나 더운 공기가 들어와요. (겨울에는 차가운 공기, 여름에는 더운 공기)</p>
+					<p>이로 인해 냉난방기(에어컨/보일러)의 에너지 소비가 늘어날 수 있어요.</p>
+					<p>특히 단열과 기밀 성능이 좋은 아파트는 환기 한 번으로도 실내 온도가 급격하게 변할 수 있어요.</p>
+				</div>
+
+				<h4 class="sub-title">과도한 환기는 불필요한 에너지 낭비로 연결</h4>
+				<div class="info-text">
+					<p>필요 이상으로 자주, 오래 환기하면 냉난방이 더 자주 작동하게 되어 에너지 요금이 증가할 수 있어요.</p>
+					<p>반대로 환기를 전혀 하지 않으면 실내 공기질이 악화되어 건강에 문제가 생길 수 있어요.</p>
+				</div>
+			</div>
+		</div>
+
+		<div class="section">
+			<h2 class="section-title">에어컨 가동과 환경 영향</h2>
+			<div class="section-content">
+				<h4 class="sub-title">폐열(열 배출)로 주변 기온 상승</h4>
+				<div class="info-text">
+					<p>에어컨은 실내의 열을 밖으로 내보내는 원리로 작동해요.</p>
+					<p>실내는 시원해지지만, 그 대신 실외로 <b>뜨거운 공기(폐열)</b>를 내보내게 되는데, 이로 인해 아파트 베란다, 실외기 주변, 건물 근처의 기온이 <br> 실제로 상승하게
+						돼요.</p>
+					<p>결국 도시 전체적으로 ‘열섬현상’이 발생하는데, 여름철 도심 한가운데의 기온이 주변 지역보다 2~5도 더 높아지는 원인이 되기도 해요.<br>
+						에어컨 실외기도 한몫하죠.</p>
+					<p><span><strong>열섬현상이란?</strong></span> 도시 지역의 기온이 주변 교외 지역보다 상대적으로 높은 현상을 말해요.</p>
+				</div>
+
+				<h4 class="sub-title">전력 사용량 증가 → 온실가스 배출</h4>
+				<div class="info-text">
+					<p>에어컨이 사용하는 전기의 대부분은 화석연료 발전에서 생산되기 때문에, 이로 인해 <b>CO₂(이산화탄소)와 기타 온실가스가 배출</b>돼요.</p>
+					<p>여름철에는 전력 수요가 급증하면서 블랙아웃 위험이 커지고, 국가적으로도 큰 에너지 부담을 주게 돼요.</p>
+				</div>
+
+				<h4 class="sub-title">냉매(프레온가스) 누출 문제</h4>
+				<div class="info-text">
+					<p>에어컨에는 냉매(주로 HFC, CFC 등)가 들어 있어요.</p>
+					<p>냉매가 누출되면 <b>지구온난화지수(GWP)</b>가 이산화탄소보다 수백~수천 배 더 높아져요. <br>
+						(※ 신형 냉매는 조금 덜하지만, 구형 냉매는 환경에 매우 해로워요.)</p>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<footer>
+		<div>
+			<p style="margin: 0;">© 2025 A.P.T. All rights reserved.</p>
+			<p style="margin: 5px 0 0;">
+				Made with <span class="computer-icon"></span> by 팀 EF
+			</p>
+		</div>
+	</footer>
+
+	<script>
+		document.addEventListener('DOMContentLoaded', function () {
+
+			const button = document.querySelector('.full-width-button');
+			if (button) {
+				button.addEventListener('click', function () {
+					window.location.href = 'guideDetail';
+				});
+			}
+
+			const guideTable = document.getElementById('guideTable');
+			const weatherSection = document.querySelector('.weather-section');
+			const weatherTable = weatherSection ? weatherSection.querySelector('.weekly-weather-table') : null;
+			const noDataMessage = weatherSection ? weatherSection.querySelector('.no-data-message') : null;
+
+			// 필수 요소 체크
+			if (!guideTable || !weatherSection || !weatherTable) { // weatherTable도 필수로 추가
+				console.warn('필수 HTML 요소(guideTable, weather-section, weekly-weather-table)를 찾을 수 없습니다. 스크립트가 제대로 동작하지 않을 수 있습니다.');
+				if (noDataMessage) {
+					noDataMessage.style.display = 'block';
+				}
+				return;
+			}
+			
+			// === 오늘 날짜 강조 ===
+			  const today = new Date();
+			  const yyyy = today.getFullYear();
+			  const mm = String(today.getMonth() + 1).padStart(2, '0');
+			  const dd = String(today.getDate()).padStart(2, '0');
+			  const todayStr = yyyy + '-' + mm + '-' + dd; // 예: '2024-07-08'
+			  // 만약 날짜 포맷이 '20240708' 이런 식이면 아래처럼 조합
+			  // const todayStr = yyyy + mm + dd;
+
+			  const guideRows = document.querySelectorAll('#guideTable tbody tr');
+			  guideRows.forEach(row => {
+			      const dateCell = row.querySelector('td[data-date]');
+			      if (!dateCell) return;
+
+			      // data-date가 오늘이면 today-row 클래스 추가
+			      if (dateCell.dataset.date === todayStr.replace(/-/g, '')) { // '20240708' 방식이면 이렇게
+			          row.classList.add('today-row');
+
+			          // 오늘 뱃지 추가 (이미 있으면 추가하지 않음)
+			          if (!dateCell.querySelector('.today-badge')) {
+			              const badge = document.createElement('span');
+			              badge.className = 'today-badge';
+			              badge.textContent = '오늘';
+			              dateCell.appendChild(badge);
+			          }
+			      }
+			  });
+
+			// 날씨 테이블 행들을 가져옵니다. (DOM이 로드된 후에 쿼리해야 올바른 요소를 가져올 수 있습니다.)
+			const weatherTableRows = weatherTable.querySelectorAll('tbody tr'); // null 체크는 위에서 완료
+
+			// 마우스 오버 이벤트 위임 (guideTable에만 리스너 부착)
+			guideTable.addEventListener('mouseover', (event) => {
+			    const targetCell = event.target.closest('#guideTable tbody td[data-date]');
+			    if (!targetCell) return;
+
+			    const hoveredDate = targetCell.dataset.date;
+			    weatherSection.classList.add('active');
+
+			    const targetWeatherRows = weatherTable.querySelectorAll(`tr[data-weather-date-row="${hoveredDate}"]`);
+
+			    // 먼저 모든 행 숨김
+			    weatherTableRows.forEach(row => {
+			        row.classList.remove('active-row');
+			        row.style.display = 'none';
+			    });
+
+			    if (targetWeatherRows.length > 0) {
+			        let bestAndRecommendRows = [];
+			        let normalRows = [];
+			        let notRecommendRows = [];
+
+			        // 각 등급별로 분류
+			        targetWeatherRows.forEach(row => {
+			            const recommendCell = row.querySelector('td:nth-child(9)');
+			            const recommendText = recommendCell ? recommendCell.textContent.trim() : "";
+
+			            if (recommendText === '매우 추천' || recommendText === '추천') {
+			                bestAndRecommendRows.push({
+			                    row: row,
+			                    grade: (recommendText === '매우 추천') ? 2 : 1 // 매우추천=2, 추천=1로 등급 부여
+			                });
+			            } else if (recommendText === '보통') {
+			                normalRows.push(row);
+			            } else {
+			                notRecommendRows.push(row);
+			            }
+			        });
+
+			        // 매우추천 → 추천 순으로 내림차순 정렬
+			        bestAndRecommendRows.sort((a, b) => b.grade - a.grade);
+
+			        if (bestAndRecommendRows.length > 0) {
+			            bestAndRecommendRows.forEach(obj => {
+			                obj.row.classList.add('active-row');
+			                obj.row.style.display = '';
+			            });
+			        } else if (normalRows.length > 0) {
+			            normalRows.forEach(row => {
+			                row.classList.add('active-row');
+			                row.style.display = '';
+			            });
+			        } else {
+			            notRecommendRows.forEach(row => {
+			                row.classList.add('active-row');
+			                row.style.display = '';
+			            });
+			        }
+
+			    } else {
+			        console.log(`날짜 ${hoveredDate}에 해당하는 날씨 정보가 없습니다.`);
+			        if (noDataMessage) {
+			            noDataMessage.style.display = 'block';
+			        }
+			    }
+				// 날씨 섹션의 위치 조정 (팝업 위치)
+				const cellRect = targetCell.getBoundingClientRect();
+
+				// weatherSection의 실제 크기 계산을 위해 일시적으로 'active' 클래스 추가
+				weatherSection.classList.add('temp-active-for-calc');
+				const containerRect = weatherSection.getBoundingClientRect();
+				weatherSection.classList.remove('temp-active-for-calc');
+
+				let posX = cellRect.left + window.scrollX;
+				let posY = cellRect.bottom + window.scrollY + 5; // 셀 아래에 팝업 표시
+
+				const scaledWidth = containerRect.width;
+				// 화면 오른쪽을 벗어나는 경우 조정
+				if (posX + scaledWidth > window.innerWidth) {
+					posX = window.innerWidth - scaledWidth - 10;
+					if (posX < 0) posX = 0; // 화면 왼쪽을 벗어나지 않도록 최소값 설정
+				}
+
+				const scaledHeight = containerRect.height;
+				// 화면 하단을 벗어나는 경우 위쪽으로 조정
+				if (posY + scaledHeight > window.innerHeight + window.scrollY) {
+					posY = cellRect.top + window.scrollY - scaledHeight - 5; // 셀 위에 팝업 표시
+					if (posY < 0) posY = 0; // 화면 상단을 벗어나지 않도록 최소값 설정
+				}
+
+				weatherSection.style.left = `${posX}px`;
+				weatherSection.style.top = `${posY}px`;
+			});
+
+			// 마우스 아웃 이벤트 위임 (guideTable 전체에서 마우스가 나갔을 때)
+			guideTable.addEventListener('mouseout', (event) => {
+				// relatedTarget이 guideTable 내부에 없는 경우, 또는 weatherSection 내부에 없는 경우
+				if (!guideTable.contains(event.relatedTarget) && !weatherSection.contains(event.relatedTarget)) {
+					weatherSection.classList.remove('active');
+					if (noDataMessage) {
+						noDataMessage.style.display = 'none'; // 데이터 없을 때 메시지 숨기기
+					}
+					// 모든 날씨 행 숨기기
+					if (weatherTableRows.length > 0) {
+						weatherTableRows.forEach(row => {
+							row.classList.remove('active-row');
+						});
+					}
+				}
+			});
+
+			// 날씨 섹션 자체를 벗어날 때도 팝업 숨기기
+			weatherSection.addEventListener('mouseleave', () => {
+				weatherSection.classList.remove('active');
+				if (noDataMessage) {
+					noDataMessage.style.display = 'none'; // 데이터 없을 때 메시지 숨기기
+				}
+				if (weatherTableRows.length > 0) {
+					weatherTableRows.forEach(row => {
+						row.classList.remove('active-row');
+					});
+				}
+			});
+
+			// 환기 추천 컬럼 색상 처리 (7번째 컬럼 기준, 인덱스 확인)
+			const ventRecommendCells = document.querySelectorAll('#guideTable td:nth-child(7)');
+
+			ventRecommendCells.forEach(cell => {
+				const span = cell.querySelector('span');
+				if (!span) return;
+
+				const text = span.textContent.trim();
+
+				if (text === '추천') {
+					span.classList.add('tag-good');
+				} else if (text === '비추천') {
+					span.classList.add('tag-bad');
+				}
+			});
+
+			// 아코디언 스타일 스크립트 코드
+			const sectionTitles = document.querySelectorAll('.section-title');
+
+			sectionTitles.forEach(title => {
+				const sectionContent = title.nextElementSibling; // h2 바로 다음 형제 요소
+
+				// .section-content가 존재하고 해당 클래스를 가지고 있는지 확인
+				if (sectionContent && sectionContent.classList.contains('section-content')) {
+					// 섹션 제목 클릭 이벤트 리스너
+					title.addEventListener('click', function () {
+						// 클릭된 제목에 'active' 클래스 토글
+						title.classList.toggle('active');
+
+						// 콘텐츠 섹션에 'active' 클래스 토글
+						if (sectionContent.classList.contains('active')) {
+							// 이미 열려있었다면 닫기
+							sectionContent.style.maxHeight = '0'; // maxHeight를 0으로 설정하여 접기
+							sectionContent.classList.remove('active');
+						} else {
+							// 닫혀있었다면 열기
+							sectionContent.classList.add('active'); // active 클래스를 먼저 추가 (패딩 적용 위함)
+							// 콘텐츠의 실제 스크롤 높이를 계산하여 max-height로 설정
+							sectionContent.style.maxHeight = sectionContent.scrollHeight + 'px';
+						}
+					});
+				}
+			});
+
+			// 상세 날씨 정보 테이블 필터링
+			const weatherRows = document.querySelectorAll('.weekly-weather-table tbody tr');
+
+			let recommendRows = [];
+			let normalRows = [];
+
+			// 일단 모두 숨기고, 추천/보통 행을 분류
+			weatherRows.forEach(row => {
+			    row.style.display = 'none';
+
+			    const recommendCell = row.querySelector('td:nth-child(9)');
+			    if (!recommendCell) return;
+
+			    const recommendText = recommendCell.textContent.trim();
+
+			    if (recommendText === '추천') {
+			        recommendRows.push(row);
+			    } else if (recommendText === '보통') {
+			        normalRows.push(row);
+			    }
+			});
+
+			// 추천이 있으면 추천만 보여주고, 없으면 보통을 보여줌
+			if (recommendRows.length > 0) {
+			    recommendRows.forEach(row => row.style.display = '');
+			} else if (normalRows.length > 0) {
+			    normalRows.forEach(row => row.style.display = '');
+			} else {
+			    // 추천, 보통 둘 다 없으면 비추천이라도 보여주기
+			    weatherRows.forEach(row => row.style.display = '');
+			}
+		});
+		
+		// --- [추가] 과거 데이터 날짜를 오늘 기준으로 동적으로 변경 ---
+		function updatePastDates() {
+		    // 과거 정보 테이블의 모든 행(tr)을 가져옵니다.
+		    const pastRows = document.querySelectorAll('#past-info-table tbody tr');
+		    if (pastRows.length === 0) return;
+
+		    const today = new Date(); // 오늘 날짜를 기준으로 합니다.
+
+		    // 정렬이 내림차순이므로, 첫 번째 행이 '어제', 두 번째 행이 '그저께'가 됩니다.
+		    pastRows.forEach((row, index) => {
+		        const dateCell = row.querySelector('td:first-child');
+		        
+		        // 몇 일 전으로 표시할지 계산합니다. (index 0 -> 1일 전, index 1 -> 2일 전)
+		        const daysToSubtract = index + 1;
+
+		        const newDate = new Date(); // 항상 오늘 날짜에서 시작
+		        newDate.setDate(today.getDate() - daysToSubtract);
+
+		        // 날짜를 'M월 d일(요일)' 형식으로 변환합니다.
+		        const options = { month: 'long', day: 'numeric', weekday: 'short' };
+		        const formattedDate = new Intl.DateTimeFormat('ko-KR', options).format(newDate);
+
+		        // 셀의 내용을 새로운 날짜로 교체합니다.
+		        dateCell.textContent = formattedDate;
+		    });
+		}
+
+		// 페이지가 모두 로드된 후 함수를 호출하여 날짜를 변경합니다.
+		updatePastDates();
+	</script>
+</body>
+
+</html>

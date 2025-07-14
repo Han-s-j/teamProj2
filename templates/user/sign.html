@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>로그인/회원가입 | A.P.T</title>
+
+<!-- Pretendard(Font) -->
+<link rel="stylesheet" th:href="@{/css/font.css}" />
+	
+<!-- Favicon -->
+<link rel="icon" href="/icons/favicon.png" type="image/png">
+
+<style>
+html, body {
+	margin: 0;
+	padding: 0;
+	height: 100%;
+	font-family: 'Pretendard', sans-serif;
+}
+
+body {
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
+}
+
+.logo {
+	position: absolute;
+	top: 30px;
+	left: 40px;
+	font-size: 30px;
+	font-weight: 800;
+	color: #4281FF;
+}
+
+.login-container {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	perspective: 1000px;
+}
+
+.login-title {
+	font-size: 36px;
+	font-weight: 800;
+	margin-bottom: 24px;
+	color: #4281FF;
+}
+
+.tab-buttons {
+	display: flex;
+	margin-bottom: 16px;
+}
+
+.tab-buttons button {
+	background: none;
+	border: none;
+	font-size: 18px;
+	margin: 0 12px;
+	cursor: pointer;
+	color: #5D5D5D;
+	font-weight: 600;
+	transition: color 0.3s ease, border-bottom 0.3s ease;
+}
+
+.tab-buttons button:hover {
+	color: #4281FF;
+}
+
+.tab-buttons button.active {
+	color: #4281FF;
+}
+
+.login-box {
+	background: #fff;
+	border-radius: 20px;
+	border: 0.7px solid #C7C7C7;
+	box-shadow: 8px 8px 20px rgba(0, 0, 0, 0.15);
+	width: 25%;
+	margin: 0 auto;
+	position: relative;
+	transform-style: preserve-3d;
+	transition: transform 0.6s, height 0.6s ease-in-out;
+	overflow: hidden;
+}
+
+.form-wrapper {
+	position: absolute;
+	width: 100%;
+	backface-visibility: hidden;
+	transition: transform 0.6s ease-in-out, opacity 0.6s ease-in-out;
+	padding: 60px;
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+}
+
+.form-wrapper#login-form {
+	transform: rotateY(0deg);
+	opacity: 1;
+	z-index: 2;
+}
+
+.form-wrapper#signup-form {
+	transform: rotateY(180deg);
+	opacity: 0;
+	z-index: 1;
+}
+
+.login-box.active-login {
+	height: 380px;
+}
+
+.login-box.active-signup {
+	height: 480px;
+}
+
+.login-box.flipped #login-form {
+	transform: rotateY(-180deg);
+	opacity: 0;
+	z-index: 1;
+}
+
+.login-box.flipped #signup-form {
+	transform: rotateY(0deg);
+	opacity: 1;
+	z-index: 2;
+}
+
+.login-box form {
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.login-box input {
+	width: 85%;
+	padding: 12px;
+	margin-bottom: 20px;
+	border: 1px solid #ccc;
+	border-radius: 10px;
+	font-size: 14px;
+	outline: none;
+	transition: border-color 0.3s ease;
+}
+
+.login-box button[type="submit"] {
+	width: 40%;
+	padding: 12px;
+	background-color: #4281FF;
+	color: white;
+	border: none;
+	border-radius: 6px;
+	font-size: 14px;
+	cursor: pointer;
+	margin-top: 40px;
+	transition: background-color 0.3s ease;
+}
+
+.login-box button[type="submit"]:hover {
+	background-color: #366DD6;
+}
+
+label {
+	display: block;
+	width: 90%;
+	text-align: left;
+	margin-bottom: 8px;
+	font-weight: bold;
+	color: #333;
+	font-size: 14px;
+}
+
+.bottom-links {
+	margin-top: 16px;
+	font-size: 16px;
+	color: #5D5D5D;
+	transition: opacity 0.3s ease;
+}
+
+.bottom-links.hidden {
+	opacity: 0;
+	pointer-events: none;
+}
+
+.bottom-links span {
+	margin: 0 8px;
+}
+
+.signup-text {
+	opacity: 0;
+	margin-top: -30px;
+	font-size: 16px;
+	color: #5D5D5D;
+	text-align: center;
+}
+
+a {
+	text-decoration: none;
+	color: #5D5D5D;
+	transition: color 0.3s ease;
+}
+
+a:hover {
+	color: #4281FF;
+}
+
+.login-box input:focus {
+	border-color: #4281FF;
+}
+
+/* 에러 메시지 스타일 */
+.error-message {
+	color: #FF6B6B;
+	font-size: 14px;
+	margin-bottom: 10px;
+	text-align: center;
+}
+
+/* --- Mobile Responsiveness --- */
+@media (max-width: 768px) {
+	.logo {
+		top: 20px;
+		left: 20px;
+		font-size: 24px;
+	}
+
+	.login-title {
+		font-size: 28px;
+		margin-bottom: 16px;
+	}
+
+	.tab-buttons button {
+		font-size: 16px;
+		margin: 0 8px;
+	}
+
+	.login-box {
+		width: 85%; /* Make it wider on mobile */
+		max-width: 350px; /* Keep a max-width for very small screens */
+	}
+
+	.form-wrapper {
+		padding: 30px 20px; /* Reduce padding inside the form wrapper */
+	}
+
+	.login-box input {
+		width: 90%; /* Adjust input width to fit better */
+		padding: 10px;
+		margin-bottom: 15px;
+		font-size: 13px;
+	}
+
+	.login-box button[type="submit"] {
+		width: 50%; /* Make button a bit wider */
+		padding: 10px;
+		font-size: 13px;
+		margin-top: 25px; /* Adjust button margin */
+	}
+
+	label {
+		width: 90%; /* Adjust label width */
+		font-size: 13px;
+		margin-bottom: 5px;
+	}
+
+	.bottom-links {
+		font-size: 14px;
+		margin-top: 10px;
+	}
+
+	.bottom-links span {
+		margin: 0 5px;
+	}
+
+	.signup-text {
+		font-size: 14px;
+		margin-top: 15px; /* Adjust margin for visible signup text */
+	}
+	
+	/* Adjust height for mobile forms */
+	.login-box.active-login {
+		height: 320px; /* Smaller height for login form */
+	}
+
+	.login-box.active-signup {
+		height: 420px; /* Smaller height for signup form */
+	}
+	
+	.error-message {
+		font-size: 12px;
+	}
+}
+
+@media (max-width: 480px) {
+	.logo {
+		font-size: 20px;
+	}
+
+	.login-title {
+		font-size: 24px;
+		margin-bottom: 12px;
+	}
+
+	.tab-buttons button {
+		font-size: 14px;
+		margin: 0 5px;
+	}
+
+	.login-box {
+		width: 90%; /* Even wider on very small screens */
+	}
+
+	.form-wrapper {
+		padding: 25px 15px; /* Further reduce padding */
+	}
+
+	.login-box input {
+		padding: 8px;
+		font-size: 12px;
+	}
+
+	.login-box button[type="submit"] {
+		width: 60%;
+		padding: 8px;
+		font-size: 12px;
+		margin-top: 20px;
+	}
+
+	label {
+		font-size: 12px;
+	}
+
+	.bottom-links {
+		font-size: 12px;
+	}
+
+	.signup-text {
+		font-size: 12px;
+		margin-top: 10px;
+	}
+	
+	.login-box.active-login {
+		height: 280px; /* Smallest height for login form */
+	}
+
+	.login-box.active-signup {
+		height: 380px; /* Smallest height for signup form */
+	}
+	
+	.error-message {
+		font-size: 11px;
+	}
+}
+</style>
+</head>
+
+<body>
+	<div class="login-container">
+		<a th:href="@{/}" class="logo-area-link"><div class="login-title">A.P.T</div></a>
+		<div class="tab-buttons">
+			<button id="login-tab" class="active">로그인</button>
+			<button id="signup-tab">회원가입</button>
+		</div>
+
+		<div class="login-box">
+			<div id="login-form" class="form-wrapper">
+				<!-- 로그인 에러 메시지 표시 -->
+				<div th:if="${loginError}" class="error-message"
+					th:text="${loginError}"></div>
+
+				<form th:action="@{/login}" method="post">
+					<label for="login-userid">아이디</label> <input type="text"
+						id="login-userid" name="userId" placeholder="아이디" required /> <label
+						for="login-password">비밀번호</label> <input type="password"
+						id="login-password" name="userPw" placeholder="비밀번호" required />
+
+					<button type="submit">로그인</button>
+				</form>
+			</div>
+
+			<div id="signup-form" class="form-wrapper">
+				<!-- 회원가입 에러 메시지 표시 -->
+				<div th:if="${signupError}" class="error-message"
+					th:text="${signupError}"></div>
+
+				<form th:action="@{/signup}" method="post">
+					<label for="signup-userid">아이디</label> <input type="text"
+						id="signup-userid" name="userId" placeholder="아이디" required /> <label
+						for="signup-password">비밀번호</label> <input type="password"
+						id="signup-password" name="userPw" placeholder="비밀번호" required />
+
+					<label for="signup-username">닉네임</label> <input type="text"
+						id="signup-username" name="nickname" placeholder="닉네임" required />
+
+					<button type="submit" id="signupButton">회원가입</button>
+				</form>
+			</div>
+		</div>
+
+		<div class="bottom-links">
+			<a href="#">아이디 찾기</a> <span>|</span> <a href="#">비밀번호 찾기</a>
+		</div>
+
+		<div class="signup-text">
+			<p>
+				아파트 인증 후 서비스 이용이 가능합니다.<br>회원가입 후 마이페이지에서 아파트 인증을 진행해주세요!
+			</p>
+		</div>
+	</div>
+
+	<!-- footer 시작 -->
+	<footer
+		style="background-color: #f2f2f2; padding: 15px 0; text-align: center; font-size: 14px; color: #666;">
+		<div>
+			<p style="margin: 0;">© 2025 A.P.T. All rights reserved.</p>
+			<p style="margin: 5px 0 0;">
+				Made with <span class="computer-icon">💻</span> by 팀 EF
+			</p>
+		</div>
+	</footer>
+	<!-- footer 끝 -->
+
+	<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+<script th:inline="javascript">
+    const loginTab = document.getElementById("login-tab");
+    const signupTab = document.getElementById("signup-tab");
+    const loginForm = document.getElementById("login-form");
+    const signupForm = document.getElementById("signup-form");
+    const loginBox = document.querySelector(".login-box");
+    const bottomLinks = document.querySelector(".bottom-links");
+    const signupText = document.querySelector(".signup-text");
+
+    document.addEventListener("DOMContentLoaded", () => {
+      loginTab.classList.add("active");
+      bottomLinks.classList.remove("hidden");
+      loginBox.classList.add("active-login");
+      loginBox.classList.remove("active-signup");
+
+      // 서버에서 회원가입 성공 플래그를 넘겨줬을 때만 작동
+      const signupSuccess = [[${signupSuccess}]]; 
+      
+      if (signupSuccess) {
+          // 회원가입 성공 알림창 띄우기
+          alert("A.P.T의 회원이 되신 걸 환영합니다🎉");
+
+          // 폭죽 효과 실행
+          confetti({
+              particleCount: 100,
+              spread: 70,
+              origin: { y: 0.6 }
+          });
+          
+          // 회원가입 탭으로 전환 (선택 사항, 필요시 활성화)
+          // 회원가입 후 이 페이지로 리다이렉트될 때, 회원가입 탭을 보여주고 싶다면 아래 주석을 풀어주세요.
+          // signupTab.click(); 
+      }
+    });
+
+    loginTab.addEventListener("click", () => {
+      loginTab.classList.add("active");
+      signupTab.classList.remove("active");
+
+      loginBox.classList.remove("flipped");
+      loginBox.classList.remove("active-signup");
+      loginBox.classList.add("active-login");
+
+      loginForm.style.zIndex = "2";
+      signupForm.style.zIndex = "1";
+      signupText.style.opacity = "0";
+
+      bottomLinks.classList.remove("hidden");
+    });
+
+    signupTab.addEventListener("click", () => {
+      signupTab.classList.add("active");
+      loginTab.classList.remove("active");
+
+      loginBox.classList.add("flipped");
+      loginBox.classList.remove("active-login");
+      loginBox.classList.add("active-signup");
+
+      loginForm.style.zIndex = "1";
+      signupForm.style.zIndex = "2";
+      signupText.style.opacity = "1";
+
+      bottomLinks.classList.add("hidden");
+    });
+    
+    // 이전에 추가했던 회원가입 버튼 클릭 이벤트 리스너를 완전히 삭제합니다.
+    // 폭죽 효과와 알림은 오직 서버 응답(signupSuccess)에 의해서만 발생하도록 합니다.
+    /*
+	document.getElementById('signupButton').addEventListener('click', function(event) {
+	    event.preventDefault(); 
+	    alert("A.P.T의 회원이 되신 걸 환영합니다🎉");
+	    confetti({
+	        particleCount: 100, 
+	        spread: 70,         
+	        origin: { y: 0.6 }  
+	    });
+        const form = event.target.closest('form'); 
+	    setTimeout(() => {
+            if (form) {
+                form.submit(); 
+            }
+        }, 1500); 
+	});
+    */
+</script>
+</body>
+
+</html>

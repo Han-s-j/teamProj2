@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>내 활동 | A.P.T</title>
+
+<!-- 사이드바 -->
+<link rel="stylesheet" href="/css/sidebar.css">
+
+<!-- 폰트 -->
+<link rel="stylesheet" th:href="@{/css/font.css}" />
+
+<!-- Favicon -->
+<link rel="icon" href="/icons/favicon.png" type="image/png">
+
+<style>
+body {
+	margin: 0;
+	background-color: #fdfdfd;
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
+	overflow: hidden;
+}
+
+.header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 30px;
+	background-color: #fff;
+	max-width: 1000px;
+	width: 100%;
+	margin: auto;
+}
+
+.header .logo {
+	font-size: 24px;
+	font-weight: 700;
+	color: #292929;
+	transition: background-color 0.3s ease;
+	letter-spacing: 1px;
+}
+
+.logo:hover {
+	color: #61AFFE;
+}
+
+.logo a {
+	color: inherit;
+}
+
+.header .write-button {
+	background-color: #62B0FF;
+	color: #fff;
+	border: 1px solid #62B0FF;
+	border-radius: 10px;
+	cursor: pointer;
+	font-weight: 600;
+	font-size: 14px;
+	transition: background-color 0.3s ease;
+	height: 38px;
+	width: 70px;
+	white-space: nowrap;
+	text-align: center;
+}
+
+.write-button:hover {
+	background-color: #fff;
+	color: #62B0FF;
+	border: 1px solid #62B0FF;
+}
+
+.container {
+	display: flex;
+	flex: 1;
+	padding: 30px; /* 기존 30px로 복구 */
+	max-width: 1000px; /* 전체 컨테이너의 최대 너비 설정 */
+	margin: 0 auto; /* 컨테이너를 가운데 정렬 */
+	width: 100%; /* 너비를 100%로 설정하여 max-width와 함께 사용 */
+}
+
+.content-area {
+	background-color: #fff;
+	border-radius: 20px;
+	box-shadow: 6px 6px 15px rgba(0, 0, 0, 0.1);
+	padding: 30px;
+	width: 800px; /* 고정 너비 설정 */
+	display: flex;
+	flex-direction: column;
+	/* margin-right: 30px; /* 이 부분을 제거하거나 0으로 설정하면 찰싹 붙습니다. */
+	margin-right: 0px; /* 사이드탭과 찰싹 붙도록 0으로 설정 */
+	flex-shrink: 0; /* content-area가 줄어들지 않도록 */
+	overflow-y: auto;
+	height: 560px;
+}
+
+/* "내 활동" 타이틀을 위한 새로운 스타일 */
+.main-title { /* .page-title과 함께 사용하여 더 구체적으로 선택 */
+	font-size: 28px;
+	font-weight: bold;
+	color: #62B0FF;
+	margin-bottom: -20px;
+	padding-left: 500px; /* 컨테이너 좌측 시작점과 맞추기 */
+	margin-top: 30px; /* 헤더와의 간격 조절 */
+	max-width: 1000px; /* container의 max-width와 맞추어 좌우 정렬을 돕습니다 */
+}
+
+.activity-box {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+}
+
+.post-list {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	flex: 1; /* 목록이 공간을 채우도록 */
+}
+
+.post-item {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 15px 10px;
+	border-bottom: 1px solid #eee;
+}
+
+.post-item:last-child {
+	border-bottom: none;
+}
+
+.post-link {
+	display: flex;
+	flex-grow: 1;
+	justify-content: space-between;
+	align-items: center;
+	text-decoration: none;
+	color: #333;
+	overflow: hidden; /* 내용이 넘칠 때 숨김 */
+}
+
+.post-content {
+	white-space: nowrap; /* 줄바꿈 방지 */
+	overflow: hidden; /* 넘치는 부분 숨김 */
+	text-overflow: ellipsis; /* 말줄임표 */
+	max-width: calc(100% - 120px); /* 날짜와 삭제 버튼 공간 확보 */
+	font-size: 18px;
+}
+
+.post-date {
+	font-size: 14px;
+	color: #777;
+	flex-shrink: 0; /* 날짜가 줄어들지 않도록 */
+	margin-left: 20px;
+}
+
+.delete-button {
+	color: #919191;
+	background-color: #fff;
+	border: none;
+	padding: 5px 10px;
+	cursor: pointer;
+	font-size: 14px;
+	margin-left: 15px;
+	text-decoration: underline;
+}
+
+.delete-button:hover {
+	color: #292929;
+}
+
+.sidetab {
+	display: flex;
+	flex-direction: column;
+	/* position: sticky; /* sticky 제거 */
+	/* top: 100px; /* top 제거 */
+	align-self: flex-start; /* flexbox 아이템이 상단에 정렬되도록 */
+	margin-top: 30px; /* 원하는 만큼의 마진을 주어 아래로 내립니다. */
+	/* (기존 top:30px 에서 100px로 변경되었으니 70px만큼 늘어난 효과를 주려면 70px) */
+	/* background-color: transparent; /* 필요하다면 배경색 제거 */
+}
+
+.sidetab-button {
+	background-color: #fff;
+	color: #61AFFE;
+	border: none;
+	margin-bottom: 10px;
+	border-radius: 0 50px 50px 0;
+	cursor: pointer;
+	font-size: 20px;
+	font-weight: bold;
+	box-shadow: 4px 4px 15px rgba(0, 0, 0, 0.1);
+	transition: background-color 0.3s ease;
+	width: 100px;
+	height: 105px;
+	white-space: nowrap; /* 줄바꿈 해제 */
+}
+
+.sidetab-button#commentTab {
+	background-color: #fff; /* 댓글 기본 색상 */
+	color: #61AFFE;
+}
+
+.sidetab-button.selected {
+	background-color: #61AFFE; /* 선택된 게시글 색상 */
+	color: #fff;
+}
+
+.sidetab-button#commentTab.selected {
+	background-color: #61AFFE; /* 선택된 댓글 색상 (게시글과 동일하게) */
+	color: #fff;
+}
+
+/* 모달 스타일 */
+.modal-overlay {
+	display: none; /* 기본적으로 숨김 */
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(0, 0, 0, 0.5);
+	justify-content: center;
+	align-items: center;
+	z-index: 1000;
+}
+
+.modal-content {
+	background-color: #fff;
+	padding: 30px;
+	border-radius: 10px;
+	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+	text-align: center;
+	width: 300px;
+}
+
+.modal-content p {
+	font-size: 18px;
+	margin-bottom: 25px;
+	color: #333;
+}
+
+.modal-buttons button {
+	background-color: #4285f4;
+	color: #fff;
+	border: none;
+	padding: 10px 20px;
+	border-radius: 5px;
+	cursor: pointer;
+	font-size: 16px;
+	margin: 0 10px;
+}
+
+.modal-buttons button#cancelDelete {
+	background-color: #ccc;
+}
+
+/* footer */
+footer {
+	background-color: #f2f2f2;
+	padding: 15px 0;
+	text-align: center;
+	font-size: 14px;
+	color: #666;
+	width: 100%;
+	flex-shrink: 0;
+}
+</style>
+</head>
+<body>
+	<!-- 사이드바 -->
+	<div th:replace="common/sidebar :: sidebar"></div>
+
+	<header class="header">
+		<div class="logo">
+			<a th:href="@{communityMain}">A.P.T톡</a>
+		</div>
+		<button class="write-button">글쓰기</button>
+	</header>
+
+	<h1 class="page-title main-title">내 활동</h1>
+	<main class="container">
+		<div class="content-area">
+			<div class="activity-box">
+				<ul class="post-list" id="postList">
+					<li class="post-item"><a href="#" class="post-link"> <span
+							class="post-content">절약팁 공유해요!</span> <span class="post-date">2025년
+								2월 4일</span>
+					</a>
+						<button class="delete-button" data-type="post">삭제</button></li>
+					<li class="post-item"><a href="#" class="post-link"> <span
+							class="post-content">동네 맛집 추천해주세요</span> <span class="post-date">2025년
+								2월 4일</span>
+					</a>
+						<button class="delete-button" data-type="post">삭제</button></li>
+					<li class="post-item"><a href="#" class="post-link"> <span
+							class="post-content">이사왔어요</span> <span class="post-date">2025년
+								2월 4일</span>
+					</a>
+						<button class="delete-button" data-type="post">삭제</button></li>
+				</ul>
+			</div>
+		</div>
+
+		<aside class="sidetab">
+			<button class="sidetab-button selected" id="postTab">게시글</button>
+			<button class="sidetab-button" id="commentTab">댓글</button>
+		</aside>
+	</main>
+
+	<div class="modal-overlay" id="deleteModal">
+		<div class="modal-content">
+			<p>정말 삭제하시겠습니까?</p>
+			<div class="modal-buttons">
+				<button id="confirmDelete">예</button>
+				<button id="cancelDelete">아니오</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- footer 시작 -->
+	<footer>
+		<div>
+			<p style="margin: 0;">© 2025 A.P.T. All rights reserved.</p>
+			<p style="margin: 5px 0 0;">
+				Made with <span class="computer-icon">💻</span> by 팀 EF
+			</p>
+		</div>
+	</footer>
+	<!-- footer 끝 -->
+
+	<script>
+			document.addEventListener('DOMContentLoaded', () => {
+			    const postTab = document.getElementById('postTab');
+			    const commentTab = document.getElementById('commentTab');
+			    const postList = document.getElementById('postList');
+			    const deleteModal = document.getElementById('deleteModal');
+			    const confirmDeleteButton = document.getElementById('confirmDelete');
+			    const cancelDeleteButton = document.getElementById('cancelDelete');
+
+			    let itemToDelete = null; // 삭제할 항목을 저장할 변수
+			    let currentBoardNo = null; // 현재 삭제할 게시글 번호
+			    let currentReplyNo = null; // 현재 삭제할 댓글 번호
+
+			    // 초기 상태: 게시글 탭이 선택되어 있고 게시글 목록이 표시됨
+			    postTab.classList.add('selected');
+			    loadMyPosts(); // 서버에서 내 게시글 로드
+
+			    // 게시글 탭 클릭 이벤트
+			    postTab.addEventListener('click', () => {
+			        postTab.classList.add('selected');
+			        commentTab.classList.remove('selected');
+			        loadMyPosts(); // 서버에서 내 게시글 로드
+			    });
+
+			    // 댓글 탭 클릭 이벤트
+			    commentTab.addEventListener('click', () => {
+			        commentTab.classList.add('selected');
+			        postTab.classList.remove('selected');
+			        loadMyComments(); // 서버에서 내 댓글 로드
+			    });
+
+			    // 삭제 버튼 클릭 이벤트 (이벤트 위임 사용)
+			    document.body.addEventListener('click', (event) => {
+			        if (event.target.classList.contains('delete-button')) {
+			            itemToDelete = event.target.closest('.post-item'); // 삭제할 li 요소 저장
+			            
+			            // 게시글 삭제인지 댓글 삭제인지 구분
+			            if (event.target.getAttribute('data-board-no')) {
+			                currentBoardNo = event.target.getAttribute('data-board-no');
+			                currentReplyNo = null;
+			            } else if (event.target.getAttribute('data-reply-no')) {
+			                currentReplyNo = event.target.getAttribute('data-reply-no');
+			                currentBoardNo = null;
+			            }
+			            
+			            deleteModal.style.display = 'flex'; // 모달 표시
+			        }
+			    });
+
+			    // '예' 버튼 클릭 시 삭제 수행
+			    confirmDeleteButton.addEventListener('click', () => {
+			        if (currentBoardNo) {
+			            deletePost(currentBoardNo); // 게시글 삭제
+			        } else if (currentReplyNo) {
+			            deleteComment(currentReplyNo); // 댓글 삭제
+			        }
+			        deleteModal.style.display = 'none'; // 모달 숨김
+			    });
+
+			    // '아니오' 버튼 클릭 시 삭제 취소
+			    cancelDeleteButton.addEventListener('click', () => {
+			        itemToDelete = null;
+			        currentBoardNo = null;
+			        currentReplyNo = null;
+			        deleteModal.style.display = 'none'; // 모달 숨김
+			    });
+
+			    // 서버에서 내 게시글 로드
+			    function loadMyPosts() {
+			        fetch('/community/getMyPosts', {
+			            method: 'POST',
+			            headers: {
+			                'Content-Type': 'application/json',
+			            }
+			        })
+			        .then(response => response.json())
+			        .then(data => {
+			            if (data.success) {
+			                renderPosts(data.posts);
+			            } else {
+			                console.error('게시글 로드 실패:', data.message);
+			                postList.innerHTML = '<li style="text-align: center; padding: 50px; color: #666;">게시글이 없습니다.</li>';
+			            }
+			        })
+			        .catch(error => {
+			            console.error('네트워크 오류:', error);
+			            postList.innerHTML = '<li style="text-align: center; padding: 50px; color: #666;">오류가 발생했습니다.</li>';
+			        });
+			    }
+
+			    // 서버에서 내 댓글 로드
+			    function loadMyComments() {
+			        fetch('/community/getMyComments', {
+			            method: 'POST',
+			            headers: {
+			                'Content-Type': 'application/json',
+			            }
+			        })
+			        .then(response => response.json())
+			        .then(data => {
+			            if (data.success) {
+			                renderComments(data.comments);
+			            } else {
+			                console.error('댓글 로드 실패:', data.message);
+			                postList.innerHTML = '<li style="text-align: center; padding: 50px; color: #666;">댓글이 없습니다.</li>';
+			            }
+			        })
+			        .catch(error => {
+			            console.error('네트워크 오류:', error);
+			            postList.innerHTML = '<li style="text-align: center; padding: 50px; color: #666;">오류가 발생했습니다.</li>';
+			        });
+			    }
+
+			    // 게시글 삭제
+			    function deletePost(boardNo) {
+			        fetch('/community/deletePost', {
+			            method: 'POST',
+			            headers: {
+			                'Content-Type': 'application/x-www-form-urlencoded',
+			            },
+			            body: `boardNo=${boardNo}`
+			        })
+			        .then(response => response.json())
+			        .then(data => {
+			            if (data.success) {
+			                // 화면에서 해당 항목 제거
+			                if (itemToDelete) {
+			                    itemToDelete.remove();
+			                    itemToDelete = null;
+			                    currentBoardNo = null;
+			                }
+			                alert('게시글이 삭제되었습니다.');
+			            } else {
+			                alert('삭제 실패: ' + data.message);
+			            }
+			        })
+			        .catch(error => {
+			            console.error('삭제 오류:', error);
+			            alert('삭제 중 오류가 발생했습니다.');
+			        });
+			    }
+
+			    // 댓글 삭제
+			    function deleteComment(replyNo) {
+			        fetch('/community/deleteComment', {
+			            method: 'POST',
+			            headers: {
+			                'Content-Type': 'application/x-www-form-urlencoded',
+			            },
+			            body: `replyNo=${replyNo}`
+			        })
+			        .then(response => response.json())
+			        .then(data => {
+			            if (data.success) {
+			                // 화면에서 해당 항목 제거
+			                if (itemToDelete) {
+			                    itemToDelete.remove();
+			                    itemToDelete = null;
+			                    currentReplyNo = null;
+			                }
+			                alert('댓글이 삭제되었습니다.');
+			            } else {
+			                alert('삭제 실패: ' + data.message);
+			            }
+			        })
+			        .catch(error => {
+			            console.error('삭제 오류:', error);
+			            alert('삭제 중 오류가 발생했습니다.');
+			        });
+			    }
+
+			    // 게시글 목록 렌더링 함수
+			    function renderPosts(posts) {
+			        postList.innerHTML = ''; // 기존 목록 초기화
+			        
+			        if (!posts || posts.length === 0) {
+			            postList.innerHTML = '<li style="text-align: center; padding: 50px; color: #666;">작성한 게시글이 없습니다.</li>';
+			            return;
+			        }
+
+			        posts.forEach(post => {
+			            const li = document.createElement('li');
+			            li.classList.add('post-item');
+			            
+			            // 날짜 표시 - formattedPublishedDate가 있으면 사용, 없으면 publishedDate 사용
+			            const displayDate = post.formattedPublishedDate || formatDate(post.publishedDate) || '날짜 없음';
+			            
+			            li.innerHTML = `
+			                <a href="/communityDetail?boardNo=${post.boardNo}" class="post-link">
+			                    <span class="post-content">${truncateText(post.boardTitle)}</span>
+			                    <span class="post-date">${displayDate}</span>
+			                </a>
+			                <button class="delete-button" data-board-no="${post.boardNo}" data-type="post">삭제</button>
+			            `;
+			            postList.appendChild(li);
+			        });
+			    }
+
+			    // 댓글 목록 렌더링 함수 (실제 구현)
+			    function renderComments(comments) {
+			        postList.innerHTML = ''; // 기존 목록 초기화
+			        
+			        if (!comments || comments.length === 0) {
+			            postList.innerHTML = '<li style="text-align: center; padding: 50px; color: #666;">작성한 댓글이 없습니다.</li>';
+			            return;
+			        }
+
+			        comments.forEach(comment => {
+			            const li = document.createElement('li');
+			            li.classList.add('post-item');
+			            
+			            // 날짜 표시
+			            const displayDate = comment.formattedPublishedDate || formatDate(comment.publishedDate) || '날짜 없음';
+			            
+			            li.innerHTML = `
+			                <a href="/communityDetail?boardNo=${comment.boardNo}" class="post-link">
+			                    <span class="post-content">
+			                        <strong>[${comment.boardTitle || '게시글'}]</strong> ${truncateText(comment.replyContent)}
+			                    </span>
+			                    <span class="post-date">${displayDate}</span>
+			                </a>
+			                <button class="delete-button" data-reply-no="${comment.replyNo}" data-type="comment">삭제</button>
+			            `;
+			            postList.appendChild(li);
+			        });
+			    }
+
+			    // 날짜 포맷 함수
+			    function formatDate(dateString) {
+			        if (!dateString) return '';
+			        
+			        try {
+			            const date = new Date(dateString);
+			            const year = String(date.getFullYear()).slice(-2);
+			            const month = String(date.getMonth() + 1).padStart(2, '0');
+			            const day = String(date.getDate()).padStart(2, '0');
+			            return `${year}/${month}/${day}`;
+			        } catch (e) {
+			            return dateString; // 변환 실패시 원본 반환
+			        }
+			    }
+
+			    // 내용 말줄임표 처리 함수
+			    function truncateText(text, maxLength = 30) {
+			        if (!text) return '';
+			        if (text.length > maxLength) {
+			            return text.substring(0, maxLength) + '...';
+			        }
+			        return text;
+			    }
+			});
+
+			// 글쓰기 버튼 이동 로직
+			const writeButton = document.querySelector('.header .write-button');
+
+			// 글쓰기 버튼이 존재하면 클릭 이벤트를 추가합니다.
+			if (writeButton) {
+			    writeButton.addEventListener('click', function() {
+			        window.location.href = 'communityWrite';
+			    });
+			}
+    </script>
+</body>
+</html>

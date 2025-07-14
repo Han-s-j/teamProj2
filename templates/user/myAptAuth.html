@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>아파트 인증 | A.P.T</title>
+
+<!-- 사이드바 css -->
+<link rel="stylesheet" href="/css/sidebar.css">
+
+<!-- Pretendard(Font) -->
+<link rel="stylesheet" th:href="@{/css/font.css}" />
+
+<!-- Favicon -->
+<link rel="icon" href="/icons/favicon.png" type="image/png">
+
+<style>
+/* 전체 페이지 레이아웃을 위한 flexbox 설정 */
+body {
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh; /* 뷰포트 높이의 100%를 차지하도록 설정 */
+	margin: 0;
+	font-family: 'Pretendard', sans-serif; /* 폰트 적용 */
+	background-color: #fdfdfd;
+}
+
+/* 로딩 스피너 스타일 (간단 예시) */
+.spinner {
+	border: 4px solid rgba(0, 0, 0, 0.1);
+	width: 36px;
+	height: 36px;
+	border-radius: 50%;
+	border-left-color: #09f;
+	animation: spin 1s ease infinite;
+	display: none; /* 초기에는 숨김 */
+	position: absolute;
+	top: 60%; /* 부모 기준으로 세로 중앙 */
+    left: 49%; /* 부모 기준으로 가로 중앙 */
+    transform: translate(-50%, -50%);
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* container div를 화면 중앙에 오도록 하는 스타일 */
+.container {
+	flex-grow: 1; /* 남은 공간을 차지하도록 설정하여 푸터를 아래로 밀어냄 */
+	display: flex;
+	flex-direction: column;
+	justify-content: center; /* 수직 중앙 정렬 */
+	align-items: center; /* 수평 중앙 정렬 */
+	padding: 20px; /* 내부 여백 추가 */
+	box-sizing: border-box; /* 패딩이 너비에 포함되도록 설정 */
+	position: relative;
+}
+
+/* h1 태그의 기본 margin 제거 */
+.container h1 {
+	margin-top: 0;
+	margin-bottom: 0;
+	color: #292929;
+	font-size: 36px;
+}
+
+.container p {
+	color: #919191;
+	font-size: 18px;
+}
+
+/* 버튼 스타일 추가 */
+#uploadBtn {
+	padding: 10px 20px;
+	background-color: #4281FF;
+	color: white;
+	border: none;
+	border-radius: 20px;
+	cursor: pointer;
+	font-size: 18px;
+	font-weight: 600;
+	margin-bottom: 15px;
+    transition: all 0.3s ease; /* 부드러운 전환 효과를 위해 추가 */
+    font-family: 'Pretendard', sans-serif;
+    position: relative; /* 툴팁 위치 기준 */
+}
+
+#uploadBtn:hover {
+	/* background-color: #0056b3; */ /* 배경색 변경은 주석 처리 또는 삭제 */
+    transform: translateY(-3px); /* 버튼을 위로 살짝 이동 */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* 그림자 효과 추가 */
+}
+
+/* OCR 결과와 이미지를 가로 정렬하기 위한 컨테이너 */
+.ocr-results-wrapper {
+    display: flex;
+    justify-content: center; /* 내부 요소 수평 중앙 정렬 */
+    align-items: flex-start; /* 세로 상단 정렬 */
+    width: 100%; /* 부모 컨테이너 너비 100% 사용 */
+    flex-wrap: wrap; /* 화면이 작아지면 자동으로 줄바꿈 */
+    gap: 30px;
+}
+
+#ocrResultDisplay {
+	display: none; /* OCR 결과가 없을 때는 숨김 */
+	padding: 15px;
+	margin-top: 20px;
+	background-color: #fdfdfd;
+	border-radius: 20px;
+	box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+	min-width: 300px; /* 현재 설정된 최소 너비 */
+    max-width: 400px; /* 원하는 최대 너비로 설정 (예: 400px) */
+    min-height: 400px;
+    color: #292929;
+}
+
+#ocrResultDisplay h3 {
+	font-size: 30px;
+	text-align: center;
+}
+
+#ocrResultDisplay p {
+	font-size: 16px;
+	text-align: center;
+	margin-top: 70px;
+	margin-bottom: 0;
+}
+
+#ocrResultDisplay ul {
+    list-style-type: none; /* 기본 점(bullet) 없애기 */
+    padding-left: 0; /* ul의 기본 왼쪽 패딩 제거 */
+    margin-top: 0;
+}
+
+#ocrResultDisplay li {
+	font-size: 20px;
+	font-weight: 600;
+}
+
+#ocrResultDisplay ul li {
+    position: relative; /* 가상 요소를 위한 위치 기준 설정 */
+    padding-left: 40px; /* 새로운 심볼 공간 확보 */
+    margin-bottom: 10px; /* li 항목 간 간격 조정 */
+}
+
+#ocrResultDisplay ul li::before {
+    content: "👉"; /* 원하는 유니코드 심볼이나 문자열 */
+    /* content: "✔"; */
+    /* content: "•"; */ /* 다른 점 모양도 가능 */
+    position: absolute;
+    left: 0; /* li의 시작 지점에 위치 */
+}
+
+#confirmBtn {
+	margin-top: 50px;
+	padding: 10px 20px;
+	background-color: #fff;
+	color: #4281FF;
+	border: 1px solid #4281FF;
+	border-radius: 20px;
+	cursor: pointer;
+	font-size: 16px;
+	display: block; /* 블록 레벨 요소로 변경하여 margin: auto가 작동하도록 합니다. */
+    width: fit-content; /* 버튼 내용에 맞춰 너비를 조절합니다. */
+    /* width: 200px; 등으로 고정 너비를 지정할 수도 있습니다. */
+    margin-left: auto; /* 왼쪽 마진을 자동으로 설정 */
+    margin-right: auto; /* 오른쪽 마진을 자동으로 설정하여 가운데 정렬 */
+    transition: all 0.3s ease;
+}
+
+#confirmBtn:hover {
+	background-color: #4281FF;
+	color: #fff;
+}
+
+#ocrImage {
+    display: none; /* 초기에는 숨김 */
+    width: 550px;
+    max-width: 100%; /* 부모 너비에 맞게 조절 */
+    height: auto; /* 비율 유지 */
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    margin-left: 20px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* ocrResultDisplay ul의 기본 패딩/마진 제거 */
+#ocrResultDisplay ul {
+    padding-left: 20px;
+    margin-top: 0;
+}
+
+/* 설명 툴팁 기본 스타일 */
+.tooltip-message {
+  position: absolute;
+  top: 100%;
+  left: -85%;
+  transform: translateY(40%);
+  background-color: #333;
+  color: #fff;
+  font-size: 15px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  white-space: nowrap;
+  z-index: 10;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.tooltip-message::before {
+  content: "";
+  position: absolute;
+  top: -11px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: transparent transparent #333 transparent;
+}
+
+/* hover 시 보이게 */
+#uploadBtn:hover .tooltip-message {
+  opacity: 1;
+}
+
+footer {
+	background-color: #f2f2f2;
+	padding: 15px 0;
+	text-align: center;
+	font-size: 14px;
+	color: #666;
+	width: 100%;
+	flex-shrink: 0; /* 푸터가 줄어들지 않도록 설정 */
+}
+</style>
+
+</head>
+<body>
+	<!-- 사이드바 포함 -->
+	<div th:replace="common/sidebar :: sidebar"></div>
+
+	<div class="container">
+		<h1>아파트 인증</h1>
+		<p>관리비 고지서 이미지를 업로드하고 <b>A.P.T</b>의 다양한 기능을 이용해보세요.</p>
+		
+		<form id="uploadForm">
+			<input type="file" name="file" id="fileInput" style="display: none;"
+				accept="image/*" />
+			<button type="button" id="uploadBtn">📤 업로드
+			<div class="tooltip-message">관리비 납입영수증 (입주자용)이 보이게 찍어주세요.</div>
+			</button>
+			
+		</form>
+
+		<p id="error" style="color: red;"></p>
+
+		<!-- 로딩 애니메이션 -->
+		<div class="spinner" id="loadingSpinner"></div>
+		
+		<!-- 인식 결과가 나오는 부분 -->
+		<div class="ocr-results-wrapper">
+		
+			<img id="ocrImage">
+		
+			<div id="ocrResultDisplay">
+				<h3>인식된 정보</h3>
+				<ul>
+					<li>아파트 이름: <span id="aptName"></span></li>
+					<li><span id="dong"></span> 동</li>
+					<li><span id="ho"></span> 호</li>
+					<li style="display: none;">관리소전화번호: <span id="callNum"></span></li>
+					<li style="display: none;">KaptCode: <span id="kaptCodeHidden"></span></li>
+				</ul>
+				<p>위 정보가 맞는지 확인해주세요!</p>
+				<button type="button" id="confirmBtn">이 정보로 인증하기</button>
+			</div>
+		</div>
+
+	</div>
+
+	<!-- footer 시작 -->
+	<footer>
+		<div>
+			<p style="margin: 0;">© 2025 A.P.T. All rights reserved.</p>
+			<p style="margin: 5px 0 0;">
+				Made with <span class="computer-icon">💻</span> by 팀 EF
+			</p>
+		</div>
+	</footer>
+	<!-- footer 끝 -->
+
+	<script>
+	// 전역 변수로 OCR 결과를 저장 (확인 버튼 클릭 시 사용)
+    let ocrDataForConfirmation = null;
+	
+	document.getElementById("uploadBtn").addEventListener("click", () => {
+		  document.getElementById("fileInput").click();  // 파일 선택 창 열기
+		});
+
+		document.getElementById("fileInput").addEventListener("change", async (event) => {
+		  const file = event.target.files[0];
+		  if (!file) return;
+
+		  const formData = new FormData();
+		  formData.append("file", file);
+
+		  const errorEl = document.getElementById("error");
+		  const loadingSpinner = document.getElementById("loadingSpinner");
+		  const ocrResultDisplay = document.getElementById("ocrResultDisplay");
+		  const confirmBtn = document.getElementById("confirmBtn");
+		  
+		  errorEl.textContent = "";
+	  	  ocrResultDisplay.style.display = "none"; // 이전 결과 숨김
+      	  confirmBtn.style.display = "none"; // 확인 버튼 숨김
+	  	  document.getElementById("ocrImage").style.display = "none"; // 이미지 숨김
+      	  loadingSpinner.style.display = "block"; // 로딩 스피너 표시
+
+		  try {
+			// Spring Boot 서버의 OCR 처리 엔드포인트로 요청 (DB 저장 없음)
+		    const res = await fetch("/aptAuthProcess", {
+		      method: "POST",
+		      body: formData
+		    });
+			
+		    loadingSpinner.style.display = "none"; // 로딩 스피너 숨김
+
+		    if (!res.ok) {
+		      const errData = await res.json();
+		      errorEl.textContent = errData.error || "서버 오류 발생";
+		      return;
+		    }
+
+		    const data = await res.json();
+		 	// Spring Boot 컨트롤러에서 보낸 JSON 응답 구조에 맞춰 데이터를 파싱
+		    const resultText = data.message; // OCR 결과 (동, 호, 전화번호)
+		    const aptName = data.aptName;
+		    const kaptCode = data.kaptCode;
+		    const imageBase64 = data.image;	// 인식된 고지서 이미지
+		 	// 화면에 인식된 정보 표시
+		    document.getElementById("dong").textContent = resultText.dong_result || "없음";
+		    document.getElementById("ho").textContent = resultText.ho_result || "없음";
+            document.getElementById("aptName").textContent = aptName || "정보 없음"; // 아파트명 표시
+		    document.getElementById("callNum").textContent = resultText.number_result || "없음";
+            document.getElementById("kaptCodeHidden").textContent = kaptCode || ""; // KaptCode 숨겨서 저장
+
+            // OCR 결과 표시 영역 보이게 함
+             ocrResultDisplay.style.display = "block";
+             confirmBtn.style.display = "block"; // 확인 버튼 보이게 함
+             
+          	// 확인 버튼 클릭 시 DB 저장에 사용될 데이터를 전역 변수에 저장
+             ocrDataForConfirmation = {
+                 dong: resultText.dong_result,
+                 ho: resultText.ho_result,
+                 callNum: resultText.number_result,
+                 kaptCode: kaptCode
+             };
+             
+			    const imgTag = document.getElementById("ocrImage");
+			    imgTag.src = "data:image/png;base64," + imageBase64;
+			    imgTag.style.display = "block";
+
+			  } catch (err) {
+			    loadingSpinner.style.display = "none"; // 로딩 스피너 숨김
+			    errorEl.textContent = "네트워크 오류 또는 서버 연결 실패";
+			    console.error(err);
+			  }
+			});
+		// '확인' 버튼 클릭 이벤트 리스너
+		document.getElementById("confirmBtn").addEventListener("click", async () => {
+        if (!ocrDataForConfirmation) {
+            document.getElementById("error").textContent = "인증 정보가 없습니다. 다시 시도해주세요.";
+            return;
+        }
+
+        const confirmBtn = document.getElementById("confirmBtn");
+        const loadingSpinner = document.getElementById("loadingSpinner");
+        const errorEl = document.getElementById("error");
+
+        confirmBtn.disabled = true; // 버튼 비활성화
+        loadingSpinner.style.display = "block"; // 로딩 스피너 표시
+        errorEl.textContent = "";
+
+        try {
+            // '확인' 버튼 클릭 시 DB 저장 요청을 보낼 새로운 엔드포인트
+            const res = await fetch("/saveAptAuthInfo", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json" // JSON 형태로 데이터 전송
+                },
+                body: JSON.stringify(ocrDataForConfirmation) // 전역 변수에 저장된 데이터 전송
+            });
+
+            loadingSpinner.style.display = "none"; // 로딩 스피너 숨김
+            confirmBtn.disabled = false; // 버튼 다시 활성화
+
+            if (!res.ok) {
+                const errData = await res.json();
+                errorEl.textContent = errData.error || "인증 정보 저장 실패.";
+                return;
+            }
+
+            const successData = await res.json();
+            alert(successData.message || "아파트 인증 정보가 성공적으로 저장되었습니다!");
+            window.location.href = "/mypage"; // 인증 성공 후 홈으로 이동하거나 다른 페이지로 이동
+
+        } catch (err) {
+            loadingSpinner.style.display = "none"; // 로딩 스피너 숨김
+            confirmBtn.disabled = false; // 버튼 다시 활성화
+            errorEl.textContent = "인증 정보 저장 중 네트워크 오류 또는 서버 연결 실패";
+            console.error(err);
+        }
+    });
+		
+    </script>
+</body>
+</html>
